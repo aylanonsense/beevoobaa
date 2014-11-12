@@ -1,7 +1,7 @@
 //configure requirejs
 requirejs.config({ baseUrl: '/' });
 
-//run ClientMain.js
-requirejs([ 'client/ClientMain' ], function(ClientMain) {
+//start client
+requirejs([ 'client/Main' ], function(ClientMain) {
 	ClientMain();
 });

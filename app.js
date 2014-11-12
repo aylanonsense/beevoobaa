@@ -16,4 +16,4 @@ app.use('/shared', express.static(__dirname + '/javascripts/shared'));
 app.listen(3000);
 
 //start server
-require('server/ServerMain')();
+require('server/Main')();
