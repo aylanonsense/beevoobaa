@@ -9,8 +9,11 @@ define([
 	var FRAMES_BETWEEN_UPDATES = Math.floor(
 		ClientConstants.TARGET_FRAMES_PER_SECOND /
 		SharedConstants.SERVER_UPDATES_PER_SECOND);
-	function DriftingValue(initialValue) {
-		this._value = initialValue || 0;
+	function DriftingValue(params) {
+		params = params || {};
+		this._value = (typeof params.initial === 'number' ? params.initial : 0);
+		this._minValue = (typeof params.min === 'number' ? params.min : null);
+		this._maxValue = (typeof params.max === 'number' ? params.max : null);
 		this._rateOfChange = 0;
 		this._tempRateOfChange = 0;
 		this._tempRateOfChangeFramesLeft = 0;
@@ -20,19 +23,20 @@ define([
 	DriftingValue.prototype.getValue = function() {
 		return this._value;
 	};
-	DriftingValue.prototype.receiveUpdate = function(value, rateOfChange, stopValue) {
-		if(rateOfChange) {
+	DriftingValue.prototype.receiveUpdate = function(value, changePerSecond, stopValue) {
+		if(changePerSecond) {
+			var rateOfChange = changePerSecond / ClientConstants.TARGET_FRAMES_PER_SECOND;
 			var eventualValue = value + FRAMES_BETWEEN_UPDATES * rateOfChange;
-			this._rateOfChange = rateOfChange;
-			this._tempRateOfChange = (eventualValue - value) / FRAMES_BETWEEN_UPDATES;
+			this._tempRateOfChange = (eventualValue - this._value) / FRAMES_BETWEEN_UPDATES;
 			this._tempRateOfChangeFramesLeft = FRAMES_BETWEEN_UPDATES;
-			if(typeof stopValue === 'number') {
+			this._rateOfChange = rateOfChange;
+			this._stopValue = eventualValue + FRAMES_BETWEEN_UPDATES * rateOfChange;
+			this._stopValueIsUpper = (rateOfChange > 0);
+			if(typeof stopValue === 'number' &&
+				((this._stopValueIsUpper && stopValue < this._stopValue) ||
+				(!this._stopValueIsUpper && stopValue > this._stopValue))) {
 				this._stopValue = stopValue;
 			}
-			else {
-				this._stopValue = eventualValue + FRAMES_BETWEEN_UPDATES * rateOfChange;
-			}
-			this._stopValueIsUpper = (rateOfChange > 0);
 		}
 		else {
 			this._rateOfChange = 2 * (value - this._value) / FRAMES_BETWEEN_UPDATES;
@@ -43,19 +47,16 @@ define([
 		}
 	};
 	DriftingValue.prototype.tick = function() {
-		if(this._rateOfChange !== 0) {
-			//determine rate of change
-			var d;
-			if(this._tempRateOfChangeFramesLeft > 0) {
-				this._tempRateOfChangeFramesLeft--;
-				d = this._tempRateOfChange / ClientConstants.TARGET_FRAMES_PER_SECOND;
-			}
-			else {
-				d = this._rateOfChange / ClientConstants.TARGET_FRAMES_PER_SECOND;
-			}
+		//determine rate of change
+		if(this._tempRateOfChangeFramesLeft > 0) {
+			this._tempRateOfChangeFramesLeft--;
+			this._value += this._tempRateOfChange;
+		}
+		else if(this._rateOfChange !== 0) {
 			//we may hit the stop value
-			if(this._stopValue !== null && ((this._stopValueIsUpper && d > 0 && this._value + d >= this._stopValue) ||
-				(!this._stopValueIsUpper && d < 0 && this._value + d <= this._stopValue))) {
+			if(this._stopValue !== null &&
+				((this._stopValueIsUpper && this._value + this._rateOfChange >= this._stopValue) ||
+				(!this._stopValueIsUpper && this._value + this._rateOfChange <= this._stopValue))) {
 				this._value = this._stopValue;
 				this._stopValue = null;
 				this._rateOfChange = 0;
@@ -64,8 +65,15 @@ define([
 			}
 			//otherwise just increment
 			else {
-				this._value += d;
+				this._value += this._rateOfChange;
 			}
+		}
+		//check for min and max
+		if(this._maxValue !== null && this._value > this._maxValue) {
+			this._value = this._maxValue;
+		}
+		if(this._minValue !== null && this._value < this._minValue) {
+			this._value = this._minValue;
 		}
 	};
 	return DriftingValue;
