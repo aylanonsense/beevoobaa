@@ -1,16 +1,19 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'client/ui/Console'
+	'client/sprite/SpriteLoader'
 ], function(
-	Console
+	SpriteLoader
 ) {
-	var SUPERCLASS = Console;
+	var SPRITE = SpriteLoader.loadSpriteSheet('SPEEDOMETER');
 	function Speedometer() {
-		SUPERCLASS.prototype.call(this);
+		this._frame = 0;
 	}
-	Speedometer.prototype = Object.create(SUPERCLASS.prototype);
 	Speedometer.prototype.receiveUpdate = function(update) {};
-	Speedometer.prototype.tick = function() {};
-	Speedometer.prototype.render = function(ctx, camera) {};
+	Speedometer.prototype.tick = function() {
+		this._frame += 0.2;
+	};
+	Speedometer.prototype.render = function(ctx) {
+		SPRITE.render(ctx, 100, 100, this._frame);
+	};
 	return Speedometer;
 });
