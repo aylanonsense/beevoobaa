@@ -3,6 +3,8 @@ define([
 ], function(
 ) {
 	return {
-		TARGET_FRAMES_PER_SECOND: 60
+		TARGET_FRAMES_PER_SECOND: 60,
+		CANVAS_WIDTH: 800,
+		CANVAS_HEIGHT: 600
 	};
 });
