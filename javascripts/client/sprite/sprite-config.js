@@ -4,7 +4,7 @@ define({
 		imagePath: '/image/consoles.gif',
 		width: 55,
 		height: 27,
-		scale: 4,
+		scale: 3,
 		flip: false,
 		crop: { x: 0, y: 0, width: 275, height: 216 },
 		loadingColor: '#fff'
@@ -13,7 +13,7 @@ define({
 		imagePath: '/image/consoles.gif',
 		width: 15,
 		height: 43,
-		scale: 4,
+		scale: 3,
 		flip: false,
 		crop: { x: 0, y: 216, width: 150, height: 172 },
 		loadingColor: '#fff'
@@ -22,7 +22,7 @@ define({
 		imagePath: '/image/consoles.gif',
 		width: 63,
 		height: 9,
-		scale: 4,
+		scale: 3,
 		flip: false,
 		crop: { x: 0, y: 216, width: 252, height: 135 },
 		loadingColor: '#fff'

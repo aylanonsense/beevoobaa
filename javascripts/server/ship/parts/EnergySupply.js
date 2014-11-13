@@ -21,9 +21,6 @@ define([
 		this._energy += this._allocatedEnergy;
 		this._allocatedEnergy = 0;
 	};
-	EnergySupply.prototype.tick = function(t) {
-		SUPERCLASS.prototype.tick.call(this, t);
-	};
 	EnergySupply.prototype.getEnergy = function() {
 		return this._energy + this._allocatedEnergy;
 	};
