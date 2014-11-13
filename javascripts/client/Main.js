@@ -1,35 +1,27 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 	'client/Constants',
-	'client/ui/PowerLevel',
-	'client/ui/DummyPowerLevel'
+	'client/net/Connection',
+	'client/ship/console-config'
 ], function(
 	ClientConstants,
-	PowerLevel,
-	DummyPowerLevel
+	Connection,
+	consoleConfig
 ) {
 	return function() {
-		var powerLevel = new PowerLevel();
-		var dummyPowerLevel = new DummyPowerLevel(100);
-		var dummyPowerLevel2 = new DummyPowerLevel(300);
-
-		setInterval(function() {
-			var r = 100 * Math.random();
-			var r2 = 100 * Math.random();
-			powerLevel.receiveUpdate({ powerLevel: { value: r, changePerSecond: (r2 - r) } });
-			dummyPowerLevel.setPowerLevel(r);
-			dummyPowerLevel2.setPowerLevel(r2);
-		}, 1000 * 2);
+		var consoles = [];
 
 		function tick() {
-			powerLevel.tick();
+			for(var i = 0; i < consoles.length; i++) {
+				consoles[i].tick();
+			}
 		}
 		function render(ctx) {
 			ctx.fillStyle = '#222';
 			ctx.fillRect(0, 0, ClientConstants.CANVAS_WIDTH, ClientConstants.CANVAS_HEIGHT);
-			powerLevel.render(ctx);
-			dummyPowerLevel.render(ctx);
-			dummyPowerLevel2.render(ctx);
+			for(var i = 0; i < consoles.length; i++) {
+				consoles[i].render(ctx);
+			}
 		}
 
 		//set up loop
@@ -40,8 +32,30 @@ define([
 			requestAnimationFrame(loop);
 		}
 		requestAnimationFrame(loop);
-		/*var socket = io();
-		socket.emit('hello', 'world', '!');
-		socket.on('woop', function() {});*/
+
+		Connection.onDisconnected(function() {
+			console.log("Disconnected!");
+			consoles = [];
+		});
+		Connection.onReceive(function(msg) {
+			if(msg.type === 'console-update') {
+				for(var i = 0; i < msg.reports.length; i++) {
+					var report = msg.reports[i];
+					var consoleExists = false;
+					//update existing console
+					for(var j = 0; j < consoles.length; j++) {
+						if(report.id === consoles[j].getId()) {
+							consoles[j].receiveUpdate(report);
+							consoleExists = true;
+							break;
+						}
+					}
+					//add a new console
+					if(!consoleExists) {
+						consoles.push(new consoleConfig[report.type](report));
+					}
+				}
+			}
+		});
 	};
 });

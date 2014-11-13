@@ -1,15 +1,14 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 	'shared/Constants',
-	'server/ship/Ship'
+	'server/SpaceSimulator'
 ], function(
 	SharedConstants,
-	Ship
+	SpaceSimulator
 ) {
 	return function() {
-		var ship = new Ship();
 		setInterval(function() {
-			ship.tick(1 / SharedConstants.SERVER_UPDATES_PER_SECOND);
+			SpaceSimulator.tick(1 / SharedConstants.SERVER_UPDATES_PER_SECOND);
 		}, 1000 / SharedConstants.SERVER_UPDATES_PER_SECOND);
 	};
 });

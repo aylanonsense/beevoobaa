@@ -19,16 +19,7 @@ app.use('/client', express.static(__dirname + '/javascripts/client'));
 app.use('/shared', express.static(__dirname + '/javascripts/shared'));
 var Connection = require('server/net/Connection');
 Connection.setSocketServer(socketServer);
-socketServer.on('connection', function(socket){
-	Connection.handleSocket(socket);
-	/*console.log('a user connected');
-	socket.on('disconnect', function(){
-		console.log('user disconnected');
-	});
-	socket.on('hello', function(place, punctuation){
-		console.log('hello', place, punctuation);
-	});*/
-});
+socketServer.on('connection', Connection.handleSocket);
 server.listen(3000);
 
 //start server

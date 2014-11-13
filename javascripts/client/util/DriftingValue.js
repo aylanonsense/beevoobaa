@@ -23,7 +23,19 @@ define([
 	DriftingValue.prototype.getValue = function() {
 		return this._value;
 	};
+	DriftingValue.prototype.getMinValue = function() {
+		return this._minValue;
+	};
+	DriftingValue.prototype.getMaxValue = function() {
+		return this._maxValue;
+	};
 	DriftingValue.prototype.receiveUpdate = function(value, changePerSecond, stopValue) {
+		//can be called with an object as the first param
+		if(arguments.length === 1 && value !== null && typeof value === 'object') {
+			stopValue = value.stopValue;
+			changePerSecond = value.changePerSecond;
+			value = value.value;
+		}
 		if(changePerSecond) {
 			var rateOfChange = changePerSecond / ClientConstants.TARGET_FRAMES_PER_SECOND;
 			var eventualValue = value + FRAMES_BETWEEN_UPDATES * rateOfChange;

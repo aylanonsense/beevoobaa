@@ -27,6 +27,9 @@ define([
 	EnergySupply.prototype.getEnergy = function() {
 		return this._energy + this._allocatedEnergy;
 	};
+	EnergySupply.prototype.getMaxEnergy = function() {
+		return this._maxEnergy;
+	};
 	EnergySupply.prototype.allocateEnergy = function(amount, part) {
 		if(this._energy >= amount) {
 			this._energy -= amount;
