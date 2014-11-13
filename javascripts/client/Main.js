@@ -40,5 +40,8 @@ define([
 			requestAnimationFrame(loop);
 		}
 		requestAnimationFrame(loop);
+		/*var socket = io();
+		socket.emit('hello', 'world', '!');
+		socket.on('woop', function() {});*/
 	};
 });
