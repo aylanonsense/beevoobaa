@@ -1,19 +1,34 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 	'server/net/Connection',
+	'server/utils/FloatingMass',
 	'server/ship/parts/EnergySupply',
 	'server/ship/parts/EnergySink',
-	'server/ship/consoles/EnergyLevelConsole'
+	'server/ship/parts/Thruster',
+	'server/ship/consoles/EnergyLevelConsole',
+	'server/ship/consoles/ShipPositionConsole'
 ], function(
 	Connection,
+	FloatingMass,
 	EnergySupply,
 	EnergySink,
-	EnergyLevelConsole
+	Thruster,
+	EnergyLevelConsole,
+	ShipPositionConsole
 ) {
 	function Ship() {
-		this._parts = [ new EnergySupply(501), new EnergySink(3) ];
-		this._consoles = [ new EnergyLevelConsole(this._parts[0]) ];
+		this._parts = [
+			new EnergySupply(this, 501),
+			new EnergySink(this, 3),
+			new Thruster(this, 500, 1, 1, 45)
+		];
+		this._consoles = [
+			new EnergyLevelConsole(this._parts[0]),
+			new ShipPositionConsole(this)
+		];
 		this._crew = [];
+		this.heading = 0;
+		this._pointMass = new FloatingMass(0, 0, 0, 10, 10);
 	}
 	Ship.prototype.tick = function(t) {
 		//prep phase
@@ -33,6 +48,8 @@ define([
 		for(i = 0; i < this._consoles.length; i++) {
 			this._consoles[i].tick(t);
 		}
+		//move ship
+		this._pointMass.tick(t);
 		//generate reports
 		var reports = [];
 		for(i = 0; i < this._consoles.length; i++) {
@@ -43,6 +60,15 @@ define([
 			type: 'console-update',
 			reports: reports
 		});
+	};
+	Ship.prototype.applyForce = function(x, y, rotational) {
+		this._pointMass.applyForce(x, y, rotational);
+	};
+	Ship.prototype.applyForceRelativeToHeading = function(forward, lateral, rotational) {
+		this._pointMass.applyForceRelativeToHeading(forward, lateral, rotational);
+	};
+	Ship.prototype.getPosition = function() {
+		return { x: this._pointMass.pos.x, y: this._pointMass.pos.y };
 	};
 	Ship.prototype.addCrewMember = function(player) {
 		if(player.ship) {

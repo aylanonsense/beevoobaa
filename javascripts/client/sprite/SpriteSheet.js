@@ -1,5 +1,9 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
-define(function() {
+define([
+	'client/Constants',
+], function(
+	Constants
+) {
 	function SpriteSheet(params, spriteKey) {
 		//init private vars
 		this._canvas = null;
@@ -9,6 +13,7 @@ define(function() {
 		this._flipped = params.flip || false;
 		this._replacements = params.replacements || null;
 		this._crop = params.crop || null;
+		this._outlineInDebugMode = params.outlineInDebugMode !== false;
 
 		//init public vars
 		this.width = this._scale * params.width; //width of one frame
@@ -75,6 +80,16 @@ define(function() {
 			ctx.fillStyle = this._preLoadedColor;
 			ctx.fillRect(x, y, this.width, this.height);
 		}
+		if(Constants.DEBUG_RENDER_MODE && this._outlineInDebugMode) {
+			ctx.strokeStyle = '#ff0';
+			ctx.lineWidth = 1;
+			ctx.strokeRect(x, y, this.width, this.height);
+		}
+		return {
+			width: this.width, height: this.height,
+			left: x, right: x + this.width,
+			top: y, bottom: y + this.height
+		};
 	};
 
 	//helper methods

@@ -6,8 +6,8 @@ define([
 	SUPERCLASS,
 	EnergyRequirements
 ) {
-	function EnergySink(energyUsagePerSecond) {
-		SUPERCLASS.call(this);
+	function EnergySink(ship, energyUsagePerSecond) {
+		SUPERCLASS.call(this, ship);
 		this.energyRequirements = new EnergyRequirements(energyUsagePerSecond);
 	}
 	EnergySink.prototype = Object.create(SUPERCLASS.prototype);

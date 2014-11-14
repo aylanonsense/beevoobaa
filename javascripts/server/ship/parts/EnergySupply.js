@@ -4,8 +4,8 @@ define([
 ], function(
 	SUPERCLASS
 ) {
-	function EnergySupply(energy) {
-		SUPERCLASS.call(this);
+	function EnergySupply(ship, energy) {
+		SUPERCLASS.call(this, ship);
 
 		//set vars
 		this._maxEnergy = energy;

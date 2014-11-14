@@ -2,7 +2,8 @@ if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 ], function(
 ) {
-	function Part() {
+	function Part(ship) {
+		this._ship = ship;
 		this.energyRequirements = null;
 	}
 	Part.prototype.prep = function(t) {
