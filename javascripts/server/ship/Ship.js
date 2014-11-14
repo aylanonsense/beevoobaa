@@ -5,6 +5,8 @@ define([
 	'server/ship/parts/EnergySupply',
 	'server/ship/parts/EnergySink',
 	'server/ship/parts/Thruster',
+	'server/ship/consoles/CompassConsole',
+	'server/ship/consoles/CourseDriftConsole',
 	'server/ship/consoles/EnergyLevelConsole',
 	'server/ship/consoles/ShipPositionConsole',
 	'server/ship/consoles/SpeedometerConsole'
@@ -14,6 +16,8 @@ define([
 	EnergySupply,
 	EnergySink,
 	Thruster,
+	CompassConsole,
+	CourseDriftConsole,
 	EnergyLevelConsole,
 	ShipPositionConsole,
 	SpeedometerConsole
@@ -25,6 +29,8 @@ define([
 			new Thruster(this, 1000, 1, 1, 45)
 		];
 		this._consoles = [
+			new CompassConsole(this),
+			new CourseDriftConsole(this),
 			new EnergyLevelConsole(this._parts[0]),
 			new ShipPositionConsole(this),
 			new SpeedometerConsole(this)
@@ -32,6 +38,7 @@ define([
 		this._crew = [];
 		this.heading = 0;
 		this._pointMass = new FloatingMass(0, 0, 0, 10, 10);
+		this._pointMass.vel.rotational = Math.PI / 8; //TODO remove
 	}
 	Ship.prototype.tick = function(t) {
 		//prep phase
@@ -68,13 +75,16 @@ define([
 		this._pointMass.applyForce(x, y, rotational);
 	};
 	Ship.prototype.applyForceRelativeToHeading = function(forward, lateral, rotational) {
-		this._pointMass.applyForceRelativeToHeading(forward, lateral, rotational);
+		this._pointMass.applyForceRelativeToFacing(forward, lateral, rotational);
 	};
 	Ship.prototype.getPosition = function() {
 		return { x: this._pointMass.pos.x, y: this._pointMass.pos.y };
 	};
 	Ship.prototype.getVelocity = function() {
 		return { x: this._pointMass.vel.x, y: this._pointMass.vel.y };
+	};
+	Ship.prototype.getHeading = function() {
+		return this._pointMass.facing;
 	};
 	Ship.prototype.addCrewMember = function(player) {
 		if(player.ship) {

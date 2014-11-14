@@ -7,8 +7,23 @@ define({
 		scale: 3,
 		flip: false,
 		crop: { x: 402, y: 325, width: 130, height: 14 },
-		loadingColor: '#fff',
 		outlineInDebugMode: false
+	},
+	COMPASS_CONSOLE: {
+		imagePath: '/image/consoles.gif',
+		width: 77,
+		height: 13,
+		scale: 3,
+		flip: false,
+		crop: { x: 468, y: 221, width: 77, height: 104 }
+	},
+	COURSE_DRIFT_CONSOLE: {
+		imagePath: '/image/consoles.gif',
+		width: 37,
+		height: 37,
+		scale: 3,
+		flip: false,
+		crop: { x: 275, y: 0, width: 222, height: 222 }
 	},
 	SPEEDOMETER_CONSOLE: {
 		imagePath: '/image/consoles.gif',
@@ -16,8 +31,7 @@ define({
 		height: 27,
 		scale: 3,
 		flip: false,
-		crop: { x: 0, y: 0, width: 275, height: 216 },
-		loadingColor: '#fff'
+		crop: { x: 0, y: 0, width: 275, height: 216 }
 	},
 	ENERGY_LEVEL_CONSOLE: {
 		imagePath: '/image/consoles.gif',
@@ -25,8 +39,7 @@ define({
 		height: 43,
 		scale: 3,
 		flip: false,
-		crop: { x: 0, y: 216, width: 150, height: 172 },
-		loadingColor: '#fff'
+		crop: { x: 0, y: 216, width: 150, height: 172 }
 	},
 	SHIP_POSITION_CONSOLE: {
 		imagePath: '/image/consoles.gif',
@@ -34,8 +47,7 @@ define({
 		height: 66,
 		scale: 3,
 		flip: false,
-		crop: { x: 0, y: 400, width: 198, height: 132 },
-		loadingColor: '#fff'
+		crop: { x: 0, y: 400, width: 198, height: 132 }
 	},
 	THRUST_LEVEL: {
 		imagePath: '/image/consoles.gif',
@@ -43,7 +55,6 @@ define({
 		height: 9,
 		scale: 3,
 		flip: false,
-		crop: { x: 0, y: 216, width: 252, height: 135 },
-		loadingColor: '#fff'
+		crop: { x: 0, y: 216, width: 252, height: 135 }
 	}
 });

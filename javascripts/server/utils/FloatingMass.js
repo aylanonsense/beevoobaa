@@ -19,7 +19,7 @@ define([
 		this._forces.y += y;
 		this._forces.rotational += rotational;
 	};
-	FloatingMass.prototype.applyForceRelativeToHeading = function(forward, lateral, rotational) {
+	FloatingMass.prototype.applyForceRelativeToFacing = function(forward, lateral, rotational) {
 		this._forces.forward += forward;
 		this._forces.lateral += lateral;
 		this._forces.rotational += rotational;
