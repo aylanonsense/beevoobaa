@@ -17,6 +17,22 @@ define({
 		flip: false,
 		crop: { x: 468, y: 221, width: 77, height: 104 }
 	},
+	MINIMAP_CONSOLE: {
+		imagePath: '/image/consoles.gif',
+		width: 57,
+		height: 57,
+		scale: 3,
+		flip: false,
+		crop: { x: 198, y: 357, width: 285, height: 171 }
+	},
+	MINI_SHIP: {
+		imagePath: '/image/consoles.gif',
+		width: 11,
+		height: 14,
+		scale: 3,
+		flip: false,
+		crop: { x: 402, y: 222, width: 66, height: 84 }
+	},
 	COURSE_DRIFT_CONSOLE: {
 		imagePath: '/image/consoles.gif',
 		width: 37,

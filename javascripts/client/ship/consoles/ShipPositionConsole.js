@@ -34,18 +34,23 @@ define([
 		SUPERCLASS.prototype.render.call(this, ctx);
 		var posX = this._positionX.getValue();
 		var posY = this._positionY.getValue();
-		var gridLineOffsetX = Math.floor(-posX / UNITS_PER_PIXEL_CHANGE) % (8 * 3) + 8 * 3;
-		var gridLineOffsetY = Math.floor(posY / UNITS_PER_PIXEL_CHANGE) % (8 * 3);
-		var majorGridLineOffsetX = Math.floor(-posX / UNITS_PER_PIXEL_CHANGE) % (8 * 3 * 4) + 8 * 3 * 4;
-		var majorGridLineOffsetY = Math.floor(posY / UNITS_PER_PIXEL_CHANGE) % (8 * 3 * 4);
+		var k = 8 * 3;
+		var gridLineOffsetX = Math.floor(-posX / UNITS_PER_PIXEL_CHANGE) % k;
+		if(gridLineOffsetX < 0) { gridLineOffsetX += k; }
+		var gridLineOffsetY = Math.floor(posY / UNITS_PER_PIXEL_CHANGE) % k;
+		if(gridLineOffsetY < 0) { gridLineOffsetY += k; }
+		var majorGridLineOffsetX = Math.floor(-posX / UNITS_PER_PIXEL_CHANGE) % (4 * k);
+		if(majorGridLineOffsetX < 0) { majorGridLineOffsetX += 4 * k; }
+		var majorGridLineOffsetY = Math.floor(posY / UNITS_PER_PIXEL_CHANGE) % (4 * k);
+		if(majorGridLineOffsetY < 0) { majorGridLineOffsetY += 4 * k; }
 		var x = 400;
 		var y = 300;
 		//minor gridlines
 		SPRITE.render(ctx, x + gridLineOffsetX, y, 1);
-		SPRITE.render(ctx, x, y + gridLineOffsetY, 2);
+		SPRITE.render(ctx, x, y + gridLineOffsetY - k, 2);
 		//major gridlines
 		SPRITE.render(ctx, x + majorGridLineOffsetX, y, 3);
-		SPRITE.render(ctx, x, y + majorGridLineOffsetY, 4);
+		SPRITE.render(ctx, x, y + majorGridLineOffsetY - 4 * k, 4);
 		//white border
 		var renderArea = SPRITE.render(ctx, x, y, 0);
 		//position text
