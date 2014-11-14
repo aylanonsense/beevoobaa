@@ -10,7 +10,7 @@ define({
 		loadingColor: '#fff',
 		outlineInDebugMode: false
 	},
-	SPEEDOMETER: {
+	SPEEDOMETER_CONSOLE: {
 		imagePath: '/image/consoles.gif',
 		width: 55,
 		height: 27,

@@ -6,7 +6,8 @@ define([
 	'server/ship/parts/EnergySink',
 	'server/ship/parts/Thruster',
 	'server/ship/consoles/EnergyLevelConsole',
-	'server/ship/consoles/ShipPositionConsole'
+	'server/ship/consoles/ShipPositionConsole',
+	'server/ship/consoles/SpeedometerConsole'
 ], function(
 	Connection,
 	FloatingMass,
@@ -14,17 +15,19 @@ define([
 	EnergySink,
 	Thruster,
 	EnergyLevelConsole,
-	ShipPositionConsole
+	ShipPositionConsole,
+	SpeedometerConsole
 ) {
 	function Ship() {
 		this._parts = [
 			new EnergySupply(this, 501),
 			new EnergySink(this, 3),
-			new Thruster(this, 500, 1, 1, 45)
+			new Thruster(this, 1000, 1, 1, 45)
 		];
 		this._consoles = [
 			new EnergyLevelConsole(this._parts[0]),
-			new ShipPositionConsole(this)
+			new ShipPositionConsole(this),
+			new SpeedometerConsole(this)
 		];
 		this._crew = [];
 		this.heading = 0;
@@ -69,6 +72,9 @@ define([
 	};
 	Ship.prototype.getPosition = function() {
 		return { x: this._pointMass.pos.x, y: this._pointMass.pos.y };
+	};
+	Ship.prototype.getVelocity = function() {
+		return { x: this._pointMass.vel.x, y: this._pointMass.vel.y };
 	};
 	Ship.prototype.addCrewMember = function(player) {
 		if(player.ship) {

@@ -9,7 +9,7 @@ define([
 	function Thruster(ship, maxThrust, x, y, angle) {
 		SUPERCLASS.call(this, ship);
 		this._maxThrust = maxThrust;
-		this._percentThrust = 0.5;
+		this._percentThrust = 1.0;
 		this.energyRequirements = new EnergyRequirements();
 
 		//calculate proportion of thrust that goes to forward/lateral/rotational velocity
