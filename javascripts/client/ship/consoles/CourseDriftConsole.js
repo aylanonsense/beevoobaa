@@ -15,7 +15,7 @@ define([
 	var SPRITE = SpriteLoader.loadSpriteSheet('COURSE_DRIFT_CONSOLE');
 	function CourseDriftConsole(update) {
 		SUPERCLASS.call(this, update);
-		this._drift = new DriftingValue({ initial: update.drift.value });
+		this._drift = new DriftingValue({ initial: update.drift.value, wrap: { from: -Math.PI, to: Math.PI } });
 	}
 	CourseDriftConsole.prototype = Object.create(SUPERCLASS.prototype);
 	CourseDriftConsole.prototype.receiveUpdate = function(update) {

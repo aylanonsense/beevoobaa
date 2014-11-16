@@ -2,11 +2,15 @@ if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 	'client/ship/Console',
 	'client/Constants',
+	'client/util/TextWriter',
+	'client/util/StringUtils',
 	'client/sprite/SpriteLoader',
 	'client/util/DriftingValue'
 ], function(
 	SUPERCLASS,
 	Constants,
+	TextWriter,
+	StringUtils,
 	SpriteLoader,
 	DriftingValue
 ) {
@@ -17,7 +21,7 @@ define([
 		SUPERCLASS.call(this, update);
 		this._velX = new DriftingValue({ initial: update.velX.value });
 		this._velY = new DriftingValue({ initial: update.velY.value });
-		this._heading = new DriftingValue({ intitial: update.heading.value });
+		this._heading = new DriftingValue({ intitial: update.heading.value, wrap: { from: -Math.PI, to: Math.PI } });
 		this._posX = 0;
 		this._posY = 0;
 	}
@@ -46,9 +50,14 @@ define([
 		SPRITE.render(ctx, x, y, 5 + Math.floor(this._posX / 10) % 5);
 		SPRITE.render(ctx, x, y, Math.floor(this._posY / 10) % 5);
 		//render white border
-		SPRITE.render(ctx, x, y, 10);
+		var renderArea = SPRITE.render(ctx, x, y, 10);
 		//render ship
-		SHIP_SPRITE.render(ctx, x + 3 * 23, y + 3 * 23, Math.round(heading / 10));
+		SHIP_SPRITE.render(ctx, x + 3 * 23, y + 3 * 23, (9 + 36) - Math.round(heading / 10));
+		//render (debug) velocity text
+		TextWriter.write(ctx, StringUtils.formatNumber(this._velX.getValue(), 0) +
+				', ' + StringUtils.formatNumber(this._velY.getValue(), 0),
+			renderArea.left + Math.floor(renderArea.width / 2), renderArea.bottom,
+			{ align: 'center', vAlign: 'top', size: 'small' });
 	};
 	return MinimapConsole;
 });

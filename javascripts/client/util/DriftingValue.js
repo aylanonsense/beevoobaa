@@ -14,6 +14,12 @@ define([
 		this._value = (typeof params.initial === 'number' ? params.initial : 0);
 		this._minValue = (typeof params.min === 'number' ? params.min : null);
 		this._maxValue = (typeof params.max === 'number' ? params.max : null);
+		this._wrap = params.wrap || null;
+		if(this._wrap && this._wrap.from > this._wrap.to) {
+			var temp = this._wrap.to;
+			this._wrap.to = this._wrap.from;
+			this._wrap.from = temp;
+		}
 		this._rateOfChange = 0;
 		this._tempRateOfChange = 0;
 		this._tempRateOfChangeFramesLeft = 0;
@@ -37,6 +43,7 @@ define([
 			value = value.value;
 		}
 		if(changePerSecond) {
+			//TODO handle calculating wrap value... ?
 			var rateOfChange = changePerSecond / ClientConstants.TARGET_FRAMES_PER_SECOND;
 			var eventualValue = value + FRAMES_BETWEEN_UPDATES * rateOfChange;
 			this._tempRateOfChange = (eventualValue - this._value) / FRAMES_BETWEEN_UPDATES;
@@ -51,7 +58,16 @@ define([
 			}
 		}
 		else {
-			this._rateOfChange = 2 * (value - this._value) / FRAMES_BETWEEN_UPDATES;
+			var diff = value - this._value;
+			if(this._wrap) {
+				var value2 = value - (this._wrap.to - this._wrap.from);
+				var diff2 = value2 - this._value;
+				if(Math.abs(diff2) < Math.abs(diff)) { diff = diff2; }
+				var value3 = value + (this._wrap.to - this._wrap.from);
+				var diff3 = value3 - this._value;
+				if(Math.abs(diff3) < Math.abs(diff)) { diff = diff3; }
+			}
+			this._rateOfChange = diff / FRAMES_BETWEEN_UPDATES;
 			this._tempRateOfChange = 0;
 			this._tempRateOfChangeFramesLeft = 0;
 			this._stopValue = value;
@@ -59,6 +75,7 @@ define([
 		}
 	};
 	DriftingValue.prototype.tick = function() {
+		var rateOfChangeRemaining;
 		//determine rate of change
 		if(this._tempRateOfChangeFramesLeft > 0) {
 			this._tempRateOfChangeFramesLeft--;
@@ -69,11 +86,26 @@ define([
 			if(this._stopValue !== null &&
 				((this._stopValueIsUpper && this._value + this._rateOfChange >= this._stopValue) ||
 				(!this._stopValueIsUpper && this._value + this._rateOfChange <= this._stopValue))) {
-				this._value = this._stopValue;
-				this._stopValue = null;
-				this._rateOfChange = 0;
-				this._tempRateOfChange = 0;
-				this._tempRateOfChangeFramesLeft = 0;
+				this._stopAtStopValue();
+			}
+			//we might pass by the wrap (decreasing)
+			else if(this._wrap && this._value + this._rateOfChange <= this._wrap.from) {
+				rateOfChangeRemaining = this._rateOfChange + (this._value - this._wrap.from);
+				if(this._stopValue !== null && !this._stopValueIsUpper && this._wrap.to + rateOfChangeRemaining <= this._stopValue) {
+					this._stopAtStopValue();
+				}
+				else {
+					this._value = this._wrap.to + rateOfChangeRemaining;
+				}
+			}
+			else if(this._wrap && this._value + this._rateOfChange > this._wrap.to) {
+				rateOfChangeRemaining = this._rateOfChange - (this._wrap.to - this._value);
+				if(this._stopValue !== null && this._stopValueIsUpper && this._wrap.from + rateOfChangeRemaining >= this._stopValue) {
+					this._stopAtStopValue();
+				}
+				else {
+					this._value = this._wrap.from + rateOfChangeRemaining;
+				}
 			}
 			//otherwise just increment
 			else {
@@ -87,6 +119,13 @@ define([
 		if(this._minValue !== null && this._value < this._minValue) {
 			this._value = this._minValue;
 		}
+	};
+	DriftingValue.prototype._stopAtStopValue = function() {
+		this._value = this._stopValue;
+		this._stopValue = null;
+		this._rateOfChange = 0;
+		this._tempRateOfChange = 0;
+		this._tempRateOfChangeFramesLeft = 0;
 	};
 	return DriftingValue;
 });

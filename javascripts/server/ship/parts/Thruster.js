@@ -40,10 +40,10 @@ define([
 
 	//helper methods
 	function calcEnergyUse(thrust) {
-		return thrust / 50;
+		return thrust / 200;
 	}
 	function calcThrust(energy) {
-		return energy * 50;
+		return energy * 200;
 	}
 
 	return Thruster;

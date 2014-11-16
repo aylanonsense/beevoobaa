@@ -28,7 +28,7 @@ define([
 		this._parts = [
 			new EnergySupply(this, 501),
 			new EnergySink(this, 3),
-			new Thruster(this, 1000, 0, 0, 0)
+			new Thruster(this, 3000, 0, 0, 0)
 		];
 		this._consoles = [
 			new CompassConsole(this),

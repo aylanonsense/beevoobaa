@@ -15,7 +15,7 @@ define([
 	var SPRITE = SpriteLoader.loadSpriteSheet('COMPASS_CONSOLE');
 	function CompassConsole(update) {
 		SUPERCLASS.call(this, update);
-		this._heading = new DriftingValue({ initial: update.heading.value });
+		this._heading = new DriftingValue({ initial: update.heading.value, wrap: { from: -Math.PI, to: Math.PI } });
 	}
 	CompassConsole.prototype = Object.create(SUPERCLASS.prototype);
 	CompassConsole.prototype.receiveUpdate = function(update) {
