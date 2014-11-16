@@ -5,14 +5,16 @@ define([
 	'client/ship/consoles/EnergyLevelConsole',
 	'client/ship/consoles/MinimapConsole',
 	'client/ship/consoles/ShipPositionConsole',
-	'client/ship/consoles/SpeedometerConsole'
+	'client/ship/consoles/SpeedometerConsole',
+	'client/ship/consoles/ThrusterControlsConsole'
 ], function(
 	CompassConsole,
 	CourseDriftConsole,
 	EnergyLevelConsole,
 	MinimapConsole,
 	ShipPositionConsole,
-	SpeedometerConsole
+	SpeedometerConsole,
+	ThrusterControlsConsole
 ) {
 	return {
 		CompassConsole: CompassConsole,
@@ -20,6 +22,7 @@ define([
 		EnergyLevelConsole: EnergyLevelConsole,
 		MinimapConsole: MinimapConsole,
 		ShipPositionConsole: ShipPositionConsole,
-		SpeedometerConsole: SpeedometerConsole
+		SpeedometerConsole: SpeedometerConsole,
+		ThrusterControlsConsole: ThrusterControlsConsole
 	};
 });

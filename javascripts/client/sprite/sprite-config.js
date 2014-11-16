@@ -17,6 +17,22 @@ define({
 		flip: false,
 		crop: { x: 468, y: 221, width: 77, height: 104 }
 	},
+	THRUSTER_CONTROLS_CONSOLE_BAR: {
+		imagePath: '/image/consoles.gif',
+		width: 63,
+		height: 9,
+		scale: 3,
+		flip: false,
+		crop: { x: 150, y: 222, width: 252, height: 135 }
+	},
+	THRUSTER_CONTROLS_CONSOLE_SLIDER: {
+		imagePath: '/image/consoles.gif',
+		width: 7,
+		height: 8,
+		scale: 3,
+		flip: false,
+		crop: { x: 155, y: 357, width: 14, height: 8 }
+	},
 	MINIMAP_CONSOLE: {
 		imagePath: '/image/consoles.gif',
 		width: 57,

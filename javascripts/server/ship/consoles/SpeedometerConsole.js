@@ -16,7 +16,7 @@ define([
 			id: this._consoleId,
 			type: 'SpeedometerConsole',
 			speed: { value: speed },
-			maxSpeed: 150
+			maxSpeed: 1000
 		};
 	};
 	return SpeedometerConsole;

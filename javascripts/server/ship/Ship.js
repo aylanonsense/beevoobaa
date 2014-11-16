@@ -10,7 +10,8 @@ define([
 	'server/ship/consoles/EnergyLevelConsole',
 	'server/ship/consoles/MinimapConsole',
 	'server/ship/consoles/ShipPositionConsole',
-	'server/ship/consoles/SpeedometerConsole'
+	'server/ship/consoles/SpeedometerConsole',
+	'server/ship/consoles/ThrusterControlsConsole'
 ], function(
 	Connection,
 	FloatingMass,
@@ -22,13 +23,15 @@ define([
 	EnergyLevelConsole,
 	MinimapConsole,
 	ShipPositionConsole,
-	SpeedometerConsole
+	SpeedometerConsole,
+	ThrusterControlsConsole
 ) {
 	function Ship() {
 		this._parts = [
 			new EnergySupply(this, 501),
 			new EnergySink(this, 3),
-			new Thruster(this, 3000, 0, 0, 0)
+			new Thruster(this, 500, 0, 0, 0),
+			new Thruster(this, 500, 0, 0, 0)
 		];
 		this._consoles = [
 			new CompassConsole(this),
@@ -36,11 +39,12 @@ define([
 			new EnergyLevelConsole(this._parts[0]),
 			new MinimapConsole(this),
 			new ShipPositionConsole(this),
-			new SpeedometerConsole(this)
+			new SpeedometerConsole(this),
+			new ThrusterControlsConsole([ this._parts[2], this._parts[3] ])
 		];
 		this._crew = [];
 		this.heading = 0;
-		this._pointMass = new FloatingMass(0, 0, 0, 1, 10);
+		this._pointMass = new FloatingMass(0, 0, 0, 10, 10);
 		this._pointMass.vel.rotational = Math.PI / 8; //TODO remove
 	}
 	Ship.prototype.tick = function(t) {
