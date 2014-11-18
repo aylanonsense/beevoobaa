@@ -14,8 +14,10 @@ define([
 ) {
 	var SPRITE = SpriteLoader.loadSpriteSheet('SHIP_POSITION_CONSOLE');
 	var UNITS_PER_PIXEL_CHANGE = 5;
-	function ShipPositionConsole(update) {
-		SUPERCLASS.call(this, update);
+	function ShipPositionConsole(x, y, update) {
+		SUPERCLASS.call(this, x, y, update);
+		this._width = SPRITE.width;
+		this._height = SPRITE.height;
 		this._positionX = new DriftingValue({ initial: update.positionX.value });
 		this._positionY = new DriftingValue({ initial: update.positionY.value });
 	}
@@ -46,13 +48,13 @@ define([
 		var x = 400;
 		var y = 300;
 		//minor gridlines
-		SPRITE.render(ctx, x + gridLineOffsetX, y, 1);
-		SPRITE.render(ctx, x, y + gridLineOffsetY - k, 2);
+		SPRITE.render(ctx, this._x + gridLineOffsetX, this._y, 1);
+		SPRITE.render(ctx, this._x, this._y + gridLineOffsetY - k, 2);
 		//major gridlines
-		SPRITE.render(ctx, x + majorGridLineOffsetX, y, 3);
-		SPRITE.render(ctx, x, y + majorGridLineOffsetY - 4 * k, 4);
+		SPRITE.render(ctx, this._x + majorGridLineOffsetX, this._y, 3);
+		SPRITE.render(ctx, this._x, this._y + majorGridLineOffsetY - 4 * k, 4);
 		//white border
-		var renderArea = SPRITE.render(ctx, x, y, 0);
+		var renderArea = SPRITE.render(ctx, this._x, this._y, 0);
 		//position text
 		TextWriter.write(ctx, StringUtils.formatNumber(posX, 0) + ',' + StringUtils.formatNumber(posY, 0),
 			renderArea.right, renderArea.bottom, { size: 'small', align: 'right', vAlign: 'top' });

@@ -17,11 +17,13 @@ define([
 	var SPRITE = SpriteLoader.loadSpriteSheet('MINIMAP_CONSOLE');
 	var SHIP_SPRITE = SpriteLoader.loadSpriteSheet('MINI_SHIP');
 	var UNITS_PER_PIXEL_CHANGE = 5;
-	function MinimapConsole(update) {
-		SUPERCLASS.call(this, update);
+	function MinimapConsole(x, y, update) {
+		SUPERCLASS.call(this, x, y, update);
+		this._width = SPRITE.width;
+		this._height = SPRITE.height;
 		this._velX = new DriftingValue({ initial: update.velX.value });
 		this._velY = new DriftingValue({ initial: update.velY.value });
-		this._heading = new DriftingValue({ intitial: update.heading.value, wrap: { from: -Math.PI, to: Math.PI } });
+		this._heading = new DriftingValue({ initial: update.heading.value, wrap: { from: -Math.PI, to: Math.PI } });
 		this._posX = 0;
 		this._posY = 0;
 	}
@@ -44,15 +46,13 @@ define([
 		SUPERCLASS.prototype.render.call(this, ctx);
 		var heading = (this._heading.getValue() * 180 / Math.PI) % 360;
 		if(heading < 0) { heading += 360; }
-		var x = 25;
-		var y = 250;
 		//render grid lines
-		SPRITE.render(ctx, x, y, 5 + Math.floor(this._posX / 10) % 5);
-		SPRITE.render(ctx, x, y, Math.floor(this._posY / 10) % 5);
+		SPRITE.render(ctx, this._x, this._y, 5 + Math.floor(this._posX / 10) % 5);
+		SPRITE.render(ctx, this._x, this._y, Math.floor(this._posY / 10) % 5);
 		//render white border
-		var renderArea = SPRITE.render(ctx, x, y, 10);
+		var renderArea = SPRITE.render(ctx, this._x, this._y, 10);
 		//render ship
-		SHIP_SPRITE.render(ctx, x + 3 * 23, y + 3 * 23, (9 + 36) - Math.round(heading / 10));
+		SHIP_SPRITE.render(ctx, this._x + 3 * 23, this._y + 3 * 23, (9 + 36) - Math.round(heading / 10));
 		//render (debug) velocity text
 		TextWriter.write(ctx, StringUtils.formatNumber(this._velX.getValue(), 0) +
 				', ' + StringUtils.formatNumber(this._velY.getValue(), 0),

@@ -13,8 +13,10 @@ define([
 	DriftingValue
 ) {
 	var SPRITE = SpriteLoader.loadSpriteSheet('COURSE_DRIFT_CONSOLE');
-	function CourseDriftConsole(update) {
-		SUPERCLASS.call(this, update);
+	function CourseDriftConsole(x, y, update) {
+		SUPERCLASS.call(this, x, y, update);
+		this._width = SPRITE.width;
+		this._height = SPRITE.height;
 		this._drift = new DriftingValue({ initial: update.drift.value, wrap: { from: -Math.PI, to: Math.PI } });
 	}
 	CourseDriftConsole.prototype = Object.create(SUPERCLASS.prototype);
@@ -32,7 +34,7 @@ define([
 		if(drift > 180) { drift -= 360; }
 		else if(drift <= -180) { drift += 360; }
 		var frame = (drift >= -5 ? Math.floor((drift + 5) / 10) : 36 + Math.floor((drift + 5) / 10));
-		var renderArea = SPRITE.render(ctx, 500, 100, frame);
+		var renderArea = SPRITE.render(ctx, this._x, this._y, frame);
 		TextWriter.write(
 			ctx,
 			StringUtils.formatNumber(drift, 1),

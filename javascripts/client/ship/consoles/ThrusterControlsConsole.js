@@ -1,27 +1,41 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 	'client/ship/Console',
+	'client/Constants',
 	'client/sprite/SpriteLoader',
 	'client/util/TextWriter',
 	'client/util/StringUtils',
-	'client/util/DriftingValue'
+	'client/util/DriftingValue',
+	'client/util/Rect'
 ], function(
 	SUPERCLASS,
+	Constants,
 	SpriteLoader,
 	TextWriter,
 	StringUtils,
-	DriftingValue
+	DriftingValue,
+	Rect
 ) {
 	var BAR_SPRITE = SpriteLoader.loadSpriteSheet('THRUSTER_CONTROLS_CONSOLE_BAR');
 	var SLIDER_SPRITE = SpriteLoader.loadSpriteSheet('THRUSTER_CONTROLS_CONSOLE_SLIDER');
-	function ThrusterControlsConsole(update) {
-		SUPERCLASS.call(this, update);
-		this._thrusters = update.thrusters.map(function(thruster) {
+	function ThrusterControlsConsole(x, y, update) {
+		var self = this;
+		SUPERCLASS.call(this, x, y, update);
+		this._thrusters = update.thrusters.map(function(thruster, i) {
 			return {
-				thrust: new DriftingValue({ intial: thruster.thrust.value, min: 0, max: thruster.maxThrust }),
-				targetThrust: new DriftingValue({ intial: thruster.targetThrust.value, min: 0, max: thruster.maxThrust })
+				thrust: new DriftingValue({ initial: thruster.thrust.value, min: 0, max: thruster.maxThrust }),
+				targetThrust: new DriftingValue({ initial: thruster.targetThrust.value, min: 0, max: thruster.maxThrust }),
+				clickArea: new Rect(self._x + 21, self._y + (12 + BAR_SPRITE.height) * i, 183, 33),
+				isHovering: false,
+				dragX: null,
+				framesToRetainDrag: -1,
+				minDragX: self._x + 15,
+				maxDragX: self._x + 189
 			};
 		});
+		this._width = 20 + BAR_SPRITE.width;
+		this._height = (BAR_SPRITE.height + 12) * this._thrusters.length;
+		this._dragIndex = null;
 	}
 	ThrusterControlsConsole.prototype = Object.create(SUPERCLASS.prototype);
 	ThrusterControlsConsole.prototype.receiveUpdate = function(update) {
@@ -36,22 +50,70 @@ define([
 		for(var i = 0; i < this._thrusters.length; i++) {
 			this._thrusters[i].thrust.tick();
 			this._thrusters[i].targetThrust.tick();
+			if(this._thrusters[i].framesToRetainDrag >= 0) {
+				this._thrusters[i].framesToRetainDrag--;
+			}
 		}
 	};
 	ThrusterControlsConsole.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);
-		var x = 0;
-		var y = 0;
 		var paddingBottom = 12;
-		var renderArea = { bottom: x + 9 - paddingBottom };
+		var renderArea = { bottom: this._y + 9 - paddingBottom };
 		for(var i = 0; i < this._thrusters.length; i++) {
+			//determine frames
 			var barFrame = Math.ceil(59 * this._thrusters[i].thrust.getValue() / this._thrusters[i].thrust.getMaxValue());
-			renderArea = BAR_SPRITE.render(ctx, x + 18, renderArea.bottom + paddingBottom, barFrame);
+			var sliderFrame = 1;
+			if(i === this._dragIndex) { sliderFrame = 2; }
+			else if(this._thrusters[i].isHovering) { sliderFrame = 0; }
+			//draw bar and text
+			renderArea = BAR_SPRITE.render(ctx, this._x + 18, renderArea.bottom + paddingBottom, barFrame);
 			TextWriter.write(ctx, '' + (i + 1), renderArea.left - 3, renderArea.top + Math.floor(renderArea.height / 2),
 				{ size: 'small', align: 'right', vAlign: 'center' });
-			var sliderPos = Math.ceil(180 * this._thrusters[i].targetThrust.getValue() /
+			//draw slider
+			var sliderPos = renderArea.left - 3 + Math.ceil(174 * this._thrusters[i].targetThrust.getValue() /
 				this._thrusters[i].targetThrust.getMaxValue());
-			SLIDER_SPRITE.render(ctx, renderArea.left - 6 + sliderPos, renderArea.top - 9, 0);
+			if(this._dragIndex === i || this._thrusters[i].framesToRetainDrag >= 0) {
+				sliderPos = this._thrusters[i].dragX - 11;
+				if(sliderPos < this._thrusters[i].minDragX) { sliderPos = this._thrusters[i].minDragX; }
+				else if(sliderPos > this._thrusters[i].maxDragX) { sliderPos = this._thrusters[i].maxDragX; }
+			}
+			SLIDER_SPRITE.render(ctx, sliderPos, renderArea.top - 9, sliderFrame);
+		}
+		if(Constants.DEBUG_RENDER_MODE) {
+			for(i = 0; i < this._thrusters.length; i++) {
+				this._thrusters[i].clickArea.render(ctx);
+			}
+		}
+	};
+	ThrusterControlsConsole.prototype.onMouse = function(evt, x, y) {
+		var i;
+		if(evt === 'mousemove') {
+			if(this._dragIndex === null) {
+				for(i = 0; i < this._thrusters.length; i++) {
+					this._thrusters[i].isHovering = this._thrusters[i].clickArea.containsPoint(x, y);
+				}
+			}
+			else {
+				i = this._dragIndex;
+				this._thrusters[i].dragX = x;
+				return true;
+			}
+		}
+		else if(evt === 'mousedown') {
+			for(i = 0; i < this._thrusters.length; i++) {
+				if(this._thrusters[i].clickArea.containsPoint(x, y)) {
+					this._dragIndex = i;
+					this._thrusters[i].dragX = x;
+					return true;
+				}
+			}
+		}
+		else if(evt === 'mouseup' && this._dragIndex !== null) {
+			i = this._dragIndex;
+			this._thrusters[i].framesToRetainDrag = 30;
+			this._thrusters[i].dragX = x;
+			this._thrusters[i].isHovering = this._thrusters[i].clickArea.containsPoint(x, y);
+			this._dragIndex = null;
 		}
 	};
 	return ThrusterControlsConsole;

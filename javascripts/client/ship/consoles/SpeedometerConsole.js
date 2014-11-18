@@ -14,8 +14,10 @@ define([
 ) {
 	var SPRITE = SpriteLoader.loadSpriteSheet('SPEEDOMETER_CONSOLE');
 	var FRAMES = 38;
-	function SpeedometerConsole(update) {
-		SUPERCLASS.call(this, update);
+	function SpeedometerConsole(x, y, update) {
+		SUPERCLASS.call(this, x, y, update);
+		this._width = SPRITE.width;
+		this._height = SPRITE.height;
 		this._speed = new DriftingValue({ initial: update.speed.value, min: 0, max: update.maxSpeed });
 	}
 	SpeedometerConsole.prototype = Object.create(SUPERCLASS.prototype);
@@ -30,7 +32,7 @@ define([
 	SpeedometerConsole.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);
 		var speed = this._speed.getValue();
-		var renderArea = SPRITE.render(ctx, 200, 400, Math.ceil((FRAMES - 1) * speed / this._speed.getMaxValue()));
+		var renderArea = SPRITE.render(ctx, this._x, this._y, Math.ceil((FRAMES - 1) * speed / this._speed.getMaxValue()));
 		TextWriter.write(
 			ctx,
 			StringUtils.formatNumber(speed, 1),

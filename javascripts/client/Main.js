@@ -1,15 +1,18 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
+	'jquery',
 	'client/Constants',
 	'client/net/Connection',
 	'client/ship/console-config'
 ], function(
+	$,
 	ClientConstants,
 	Connection,
 	consoleConfig
 ) {
 	return function() {
 		var consoles = [];
+		var lastConsoleToHandleAnEvent = null;
 
 		function tick() {
 			for(var i = 0; i < consoles.length; i++) {
@@ -25,7 +28,7 @@ define([
 		}
 
 		//set up loop
-		var ctx = document.getElementById('game-canvas').getContext('2d');
+		var ctx = $('#game-canvas')[0].getContext('2d');
 		function loop() {
 			tick();
 			render(ctx);
@@ -52,7 +55,20 @@ define([
 					}
 					//add a new console
 					if(!consoleExists) {
-						consoles.push(new consoleConfig[report.type](report));
+						var console = consoleConfig[report.type];
+						consoles.push(new console.module(console.x, console.y, report));
+					}
+				}
+			}
+		});
+
+		//add user mouse input support
+		$('#game-canvas').on('mousemove mouseup mousedown', function(evt) {
+			if(!lastConsoleToHandleAnEvent || !lastConsoleToHandleAnEvent.onMouse(evt.type, evt.offsetX, evt.offsetY)) {
+				for(var i = consoles.length - 1; i >= 0; i--) {
+					if(consoles[i].onMouse(evt.type, evt.offsetX, evt.offsetY)) {
+						lastConsoleToHandleAnEvent = consoles[i];
+						break;
 					}
 				}
 			}

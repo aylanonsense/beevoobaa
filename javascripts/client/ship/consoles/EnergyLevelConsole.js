@@ -14,8 +14,10 @@ define([
 ) {
 	var SPRITE = SpriteLoader.loadSpriteSheet('ENERGY_LEVEL_CONSOLE');
 	var FRAMES = 40;
-	function EnergyLevelConsole(update) {
-		SUPERCLASS.call(this, update);
+	function EnergyLevelConsole(x, y, update) {
+		SUPERCLASS.call(this, x, y, update);
+		this._width = SPRITE.width;
+		this._height = SPRITE.height;
 		this._energy = new DriftingValue({ initial: update.energy.value, min: 0, max: update.maxEnergy });
 	}
 	EnergyLevelConsole.prototype = Object.create(SUPERCLASS.prototype);
@@ -30,7 +32,7 @@ define([
 	EnergyLevelConsole.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);
 		var val = Math.max(0, Math.min(this._energy.getValue(), this._energy.getMaxValue()));
-		var renderArea = SPRITE.render(ctx, 200, 50, Math.ceil((FRAMES - 1) * val / this._energy.getMaxValue()));
+		var renderArea = SPRITE.render(ctx, this._x, this._y, Math.ceil((FRAMES - 1) * val / this._energy.getMaxValue()));
 		TextWriter.write(
 			ctx,
 			StringUtils.formatNumber(val, 0) + '¥',

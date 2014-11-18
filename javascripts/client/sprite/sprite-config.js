@@ -31,7 +31,7 @@ define({
 		height: 8,
 		scale: 3,
 		flip: false,
-		crop: { x: 155, y: 357, width: 14, height: 8 }
+		crop: { x: 155, y: 357, width: 21, height: 8 }
 	},
 	MINIMAP_CONSOLE: {
 		imagePath: '/image/consoles.gif',

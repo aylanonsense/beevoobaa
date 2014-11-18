@@ -1,5 +1,5 @@
 //configure requirejs
-requirejs.config({ baseUrl: '/' });
+requirejs.config({ baseUrl: '/', paths: { jquery: '/client/lib/jquery' } });
 
 //start client
 requirejs([ 'client/Main' ], function(ClientMain) {

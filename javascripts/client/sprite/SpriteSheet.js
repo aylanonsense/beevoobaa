@@ -81,7 +81,7 @@ define([
 			ctx.fillRect(x, y, this.width, this.height);
 		}
 		if(Constants.DEBUG_RENDER_MODE && this._outlineInDebugMode) {
-			ctx.strokeStyle = '#ff0';
+			ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
 			ctx.lineWidth = 1;
 			ctx.strokeRect(x, y, this.width, this.height);
 		}
