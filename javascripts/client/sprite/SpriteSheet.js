@@ -88,7 +88,8 @@ define([
 		return {
 			width: this.width, height: this.height,
 			left: x, right: x + this.width,
-			top: y, bottom: y + this.height
+			top: y, bottom: y + this.height,
+			center: { x: x + Math.floor(this.width / 2), y: y + Math.round(this.height / 2) }
 		};
 	};
 

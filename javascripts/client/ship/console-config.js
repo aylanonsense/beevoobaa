@@ -6,7 +6,8 @@ define([
 	'client/ship/consoles/MinimapConsole',
 	'client/ship/consoles/ShipPositionConsole',
 	'client/ship/consoles/SpeedometerConsole',
-	'client/ship/consoles/ThrusterControlsConsole'
+	'client/ship/consoles/ThrusterControlsConsole',
+	'client/ship/consoles/ThrusterLayoutConsole'
 ], function(
 	CompassConsole,
 	CourseDriftConsole,
@@ -14,7 +15,8 @@ define([
 	MinimapConsole,
 	ShipPositionConsole,
 	SpeedometerConsole,
-	ThrusterControlsConsole
+	ThrusterControlsConsole,
+	ThrusterLayoutConsole
 ) {
 	return {
 		CompassConsole: { module: CompassConsole, x: 30, y: 30 },
@@ -23,6 +25,7 @@ define([
 		MinimapConsole: { module: MinimapConsole, x: 275, y: 30 },
 		ShipPositionConsole: { module: ShipPositionConsole, x: 245, y: 230 },
 		SpeedometerConsole: { module: SpeedometerConsole, x: 30, y: 235 },
-		ThrusterControlsConsole: { module: ThrusterControlsConsole, x: 460, y: 30 }
+		ThrusterControlsConsole: { module: ThrusterControlsConsole, x: 460, y: 30 },
+		ThrusterLayoutConsole: { module: ThrusterLayoutConsole, x: 450, y: 230 }
 	};
 });

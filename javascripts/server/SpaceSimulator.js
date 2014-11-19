@@ -22,7 +22,9 @@ define([
 		player.ship.removeCrewMember(player);
 	});
 	Connection.onReceive(function(player, msg) {
-		console.log(msg);
+		if(msg.type === 'console-input') {
+			player.ship.processConsoleInput(player, msg);
+		}
 	});
 
 	return {

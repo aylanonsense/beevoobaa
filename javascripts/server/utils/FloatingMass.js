@@ -7,7 +7,7 @@ define([
 		this.vel = { x: 0 , y: 0, rotational: 0 };
 		this.acc = { x: 0 , y: 0, rotational: 0 };
 		this._forces = { x: 0 , y: 0, forward: 0, lateral: 0, rotational: 0 };
-		this.facing = facing || 0; //0: right, PI/2 up, PI: left, -PI/2: down
+		this.facing = facing || 0; //0: right, PI/2: up, PI: left, -PI/2: down
 		this.mass = mass || 1;
 		var radius = size || 1;
 		this._momentOfInertia = this.mass * radius * radius / 2; //assume a cylinder

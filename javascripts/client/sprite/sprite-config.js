@@ -17,6 +17,22 @@ define({
 		flip: false,
 		crop: { x: 468, y: 221, width: 77, height: 104 }
 	},
+	THRUSTER_LAYOUT_CONSOLE: {
+		imagePath: '/image/consoles.gif',
+		width: 43,
+		height: 53,
+		scale: 3,
+		flip: false,
+		crop: { x: 497, y: 144, width: 43, height: 53 }
+	},
+	THRUSTER_LAYOUT_CONSOLE_THRUSTER: {
+		imagePath: '/image/consoles.gif',
+		width: 9,
+		height: 9,
+		scale: 3,
+		flip: false,
+		crop: { x: 497, y: 0, width: 54, height: 144 }
+	},
 	THRUSTER_CONTROLS_CONSOLE_BAR: {
 		imagePath: '/image/consoles.gif',
 		width: 63,

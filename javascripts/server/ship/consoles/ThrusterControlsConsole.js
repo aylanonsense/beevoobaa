@@ -17,10 +17,14 @@ define([
 				return {
 					thrust: { value: thruster.getThrust() },
 					maxThrust: thruster.getMaxThrust(),
-					targetThrust: { value: Math.floor(thruster.getMaxThrust() / 2) }
+					targetThrust: { value: thruster.getTargetThrust() }
 				};
 			})
 		};
+	};
+	ThrusterControlsConsole.prototype.processInput = function(player, input) {
+		SUPERCLASS.prototype.processInput.call(this, player, input);
+		this._thrusters[input.thrusterIndex].setTargetThrust(input.targetThrust);
 	};
 	return ThrusterControlsConsole;
 });

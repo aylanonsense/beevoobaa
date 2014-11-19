@@ -3,6 +3,7 @@ define([
 	'client/ship/Console',
 	'client/Constants',
 	'client/sprite/SpriteLoader',
+	'client/net/Connection',
 	'client/util/TextWriter',
 	'client/util/StringUtils',
 	'client/util/DriftingValue',
@@ -11,6 +12,7 @@ define([
 	SUPERCLASS,
 	Constants,
 	SpriteLoader,
+	Connection,
 	TextWriter,
 	StringUtils,
 	DriftingValue,
@@ -27,7 +29,7 @@ define([
 				targetThrust: new DriftingValue({ initial: thruster.targetThrust.value, min: 0, max: thruster.maxThrust }),
 				clickArea: new Rect(self._x + 21, self._y + (12 + BAR_SPRITE.height) * i, 183, 33),
 				isHovering: false,
-				dragX: null,
+				thrustPercent: null,
 				framesToRetainDrag: -1,
 				minDragX: self._x + 15,
 				maxDragX: self._x + 189
@@ -73,9 +75,8 @@ define([
 			var sliderPos = renderArea.left - 3 + Math.ceil(174 * this._thrusters[i].targetThrust.getValue() /
 				this._thrusters[i].targetThrust.getMaxValue());
 			if(this._dragIndex === i || this._thrusters[i].framesToRetainDrag >= 0) {
-				sliderPos = this._thrusters[i].dragX - 11;
-				if(sliderPos < this._thrusters[i].minDragX) { sliderPos = this._thrusters[i].minDragX; }
-				else if(sliderPos > this._thrusters[i].maxDragX) { sliderPos = this._thrusters[i].maxDragX; }
+				sliderPos = this._thrusters[i].minDragX + this._thrusters[i].thrustPercent *
+						(this._thrusters[i].maxDragX - this._thrusters[i].minDragX);
 			}
 			SLIDER_SPRITE.render(ctx, sliderPos, renderArea.top - 9, sliderFrame);
 		}
@@ -95,7 +96,8 @@ define([
 			}
 			else {
 				i = this._dragIndex;
-				this._thrusters[i].dragX = x;
+				this._thrusters[i].thrustPercent =  Math.max(0, Math.min((x - 11 - this._thrusters[i].minDragX) /
+						(this._thrusters[i].maxDragX - this._thrusters[i].minDragX), 1));
 				return true;
 			}
 		}
@@ -103,18 +105,30 @@ define([
 			for(i = 0; i < this._thrusters.length; i++) {
 				if(this._thrusters[i].clickArea.containsPoint(x, y)) {
 					this._dragIndex = i;
-					this._thrusters[i].dragX = x;
+					this._thrusters[i].thrustPercent =  Math.max(0, Math.min((x - 11 - this._thrusters[i].minDragX) /
+							(this._thrusters[i].maxDragX - this._thrusters[i].minDragX), 1));
 					return true;
 				}
 			}
 		}
 		else if(evt === 'mouseup' && this._dragIndex !== null) {
 			i = this._dragIndex;
-			this._thrusters[i].framesToRetainDrag = 30;
-			this._thrusters[i].dragX = x;
+			this._thrusters[i].framesToRetainDrag = Constants.TARGET_FRAMES_PER_SECOND;
+			this._thrusters[i].thrustPercent =  Math.max(0, Math.min((x - 11 - this._thrusters[i].minDragX) /
+					(this._thrusters[i].maxDragX - this._thrusters[i].minDragX), 1));
 			this._thrusters[i].isHovering = this._thrusters[i].clickArea.containsPoint(x, y);
+			this._sendDragInput();
 			this._dragIndex = null;
 		}
+	};
+	ThrusterControlsConsole.prototype._sendDragInput = function() {
+		Connection.send({
+			id: this._consoleId,
+			type: 'console-input',
+			thrusterIndex: this._dragIndex,
+			targetThrust: this._thrusters[this._dragIndex].thrustPercent *
+					this._thrusters[this._dragIndex].targetThrust.getMaxValue()
+		});
 	};
 	return ThrusterControlsConsole;
 });

@@ -7,5 +7,6 @@ define([
 		this._consoleId = NEXT_CONSOLE_ID++;
 	}
 	Console.prototype.tick = function(t) {};
+	Console.prototype.processInput = function(player, input) {};
 	return Console;
 });

@@ -11,7 +11,8 @@ define([
 	'server/ship/consoles/MinimapConsole',
 	'server/ship/consoles/ShipPositionConsole',
 	'server/ship/consoles/SpeedometerConsole',
-	'server/ship/consoles/ThrusterControlsConsole'
+	'server/ship/consoles/ThrusterControlsConsole',
+	'server/ship/consoles/ThrusterLayoutConsole'
 ], function(
 	Connection,
 	FloatingMass,
@@ -24,14 +25,15 @@ define([
 	MinimapConsole,
 	ShipPositionConsole,
 	SpeedometerConsole,
-	ThrusterControlsConsole
+	ThrusterControlsConsole,
+	ThrusterLayoutConsole
 ) {
 	function Ship() {
 		this._parts = [
 			new EnergySupply(this, 501),
 			new EnergySink(this, 3),
-			new Thruster(this, 500, 0, 0, 0),
-			new Thruster(this, 500, 0, 0, 0)
+			new Thruster(this, 500, 0, 1, 90),
+			new Thruster(this, 500, -1, 0, 180)
 		];
 		this._consoles = [
 			new CompassConsole(this),
@@ -40,12 +42,12 @@ define([
 			new MinimapConsole(this),
 			new ShipPositionConsole(this),
 			new SpeedometerConsole(this),
-			new ThrusterControlsConsole([ this._parts[2], this._parts[3] ])
+			new ThrusterControlsConsole([ this._parts[2], this._parts[3] ]),
+			new ThrusterLayoutConsole([ this._parts[2], this._parts[3] ])
 		];
 		this._crew = [];
 		this.heading = 0;
 		this._pointMass = new FloatingMass(0, 0, 0, 10, 10);
-		this._pointMass.vel.rotational = Math.PI / 8; //TODO remove
 	}
 	Ship.prototype.tick = function(t) {
 		//prep phase
@@ -125,6 +127,14 @@ define([
 			}
 		}
 		return 0;
+	};
+	Ship.prototype.processConsoleInput = function(player, input) {
+		for(var i = 0; i < this._consoles.length ; i++) {
+			if(this._consoles[i]._consoleId === input.id) {
+				this._consoles[i].processInput(player, input);
+				break;
+			}
+		}
 	};
 
 	return Ship;
