@@ -29,7 +29,7 @@ define([
 		var forceForward = this._forces.forward;
 		var forceLateral = this._forces.lateral;
 		var forceRotational = this._forces.rotational;
-		var forceX = Math.cos(this.facing) * forceForward + Math.sin(this.facing) * forceLateral + this._forces.x;
+		var forceX = Math.cos(this.facing) * forceForward - Math.sin(this.facing) * forceLateral + this._forces.x;
 		var forceY = Math.sin(this.facing) * forceForward + Math.cos(this.facing) * forceLateral + this._forces.y;
 		this.acc = {
 			x: forceX / this.mass,

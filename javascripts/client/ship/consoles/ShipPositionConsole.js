@@ -13,7 +13,7 @@ define([
 	DriftingValue
 ) {
 	var SPRITE = SpriteLoader.loadSpriteSheet('SHIP_POSITION_CONSOLE');
-	var UNITS_PER_PIXEL_CHANGE = 5;
+	var UNITS_PER_PIXEL_CHANGE = 65;
 	function ShipPositionConsole(x, y, update) {
 		SUPERCLASS.call(this, x, y, update);
 		this._width = SPRITE.width;

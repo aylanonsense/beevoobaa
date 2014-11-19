@@ -15,17 +15,15 @@ define([
 		this.energyRequirements = new EnergyRequirements();
 
 		//calculate proportion of thrust that goes to forward/lateral/rotational velocity
-		this._offsetX = x || 0; //+x: towards front of ship, -x: back of ship
-		this._offsetY = y || 0; //+y: towards port, -y: starboard
-		this._angle = (angle || 0) * Math.PI / 180; //0: thrusting ship backward, PI/2 or 90: left, PI or 180: forward, -PI/2 or 270: right
+		this._offset = { x: x || 0, y: y || 0 };
+		this._angle = (angle || 0) * Math.PI / 180;
 		if(this._angle > Math.PI) { this._angle -= Math.PI * 2; }
-		//0: right, PI/2: up, PI: left, -PI/2: down
-		//var distX = this._offsetX * ship.getRadius();
-		//var distY = this._offsetY * ship.getRadius();
+		//var distX = this._offset.x * ship.getRadius();
+		//var distY = this._offset.y * ship.getRadius();
 		//var distToCenterOfMass = Math.sqrt(distX * distX + distY * distY);
 		//var angleToCenterOfMass = Math.atan2(distY, distX);
-		this._multForward = -Math.cos(this._angle); //1: thrusting the ship forward, -1: backward
-		this._multLateral = Math.sin(this._angle); //1: thrusting ship left, -1: right
+		this._multForward = Math.cos(this._angle);
+		this._multLateral = Math.sin(this._angle);
 		this._multRotational = 0.00;//distToCenterOfMass * Math.cos(angleToCenterOfMass);
 	}
 	Thruster.prototype = Object.create(SUPERCLASS.prototype);
@@ -54,7 +52,7 @@ define([
 		return this._maxThrust;
 	};
 	Thruster.prototype.getOffset = function() {
-		return { x: this._offsetX, y: this._offsetY };
+		return { x: this._offset.x, y: this._offset.y };
 	};
 	Thruster.prototype.getAngle = function() {
 		return this._angle;

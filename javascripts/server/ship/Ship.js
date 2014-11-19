@@ -32,8 +32,8 @@ define([
 		this._parts = [
 			new EnergySupply(this, 501),
 			new EnergySink(this, 0.5),
-			new Thruster(this, 500, -1.25, 0, 180), //forward thruster (on back)
-			new Thruster(this, 500, 1.25, 0, 0), //reverse thruster (on front)
+			new Thruster(this, 500, -1.25, 0, 0), //forward thruster (on back)
+			new Thruster(this, 500, 1.25, 0, 180), //reverse thruster (on front)
 			new Thruster(this, 500, 0, 1.25, 270), //side thruster (on port)
 			new Thruster(this, 500, 0, -1.25, 90) //side thruster (on starboard)
 		];
@@ -48,8 +48,8 @@ define([
 			new ThrusterLayoutConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ])
 		];
 		this._crew = [];
-		this.heading = 0;
 		this._pointMass = new FloatingMass(0, 0, 0, 10, 10);
+		this._pointMass.facing = 0;
 	}
 	Ship.prototype.tick = function(t) {
 		//prep phase

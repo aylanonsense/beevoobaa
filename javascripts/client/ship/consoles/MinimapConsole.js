@@ -16,7 +16,7 @@ define([
 ) {
 	var SPRITE = SpriteLoader.loadSpriteSheet('MINIMAP_CONSOLE');
 	var SHIP_SPRITE = SpriteLoader.loadSpriteSheet('MINI_SHIP');
-	var UNITS_PER_PIXEL_CHANGE = 5;
+	var UNITS_PER_PIXEL_CHANGE = 10;
 	function MinimapConsole(x, y, update) {
 		SUPERCLASS.call(this, x, y, update);
 		this._width = SPRITE.width;
@@ -47,9 +47,9 @@ define([
 		var heading = (this._heading.getValue() * 180 / Math.PI) % 360;
 		if(heading < 0) { heading += 360; }
 		//render grid lines
-		var f = Math.floor(this._posX / 100) % 5;
+		var f = Math.floor(this._posX / UNITS_PER_PIXEL_CHANGE) % 5;
 		SPRITE.render(ctx, this._x, this._y, 5 + (f < 0 ? f + 5 : f));
-		f = Math.floor(this._posY / 100) % 5;
+		f = Math.floor(this._posY / UNITS_PER_PIXEL_CHANGE) % 5;
 		SPRITE.render(ctx, this._x, this._y, (f < 0 ? f + 5 : f));
 		//render white border
 		var renderArea = SPRITE.render(ctx, this._x, this._y, 10);
