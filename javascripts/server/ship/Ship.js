@@ -31,9 +31,11 @@ define([
 	function Ship() {
 		this._parts = [
 			new EnergySupply(this, 501),
-			new EnergySink(this, 3),
-			new Thruster(this, 500, 0, 1, 90),
-			new Thruster(this, 500, -1, 0, 180)
+			new EnergySink(this, 0.5),
+			new Thruster(this, 500, -1.25, 0, 180), //forward thruster (on back)
+			new Thruster(this, 500, 1.25, 0, 0), //reverse thruster (on front)
+			new Thruster(this, 500, 0, 1.25, 270), //side thruster (on port)
+			new Thruster(this, 500, 0, -1.25, 90) //side thruster (on starboard)
 		];
 		this._consoles = [
 			new CompassConsole(this),
@@ -42,8 +44,8 @@ define([
 			new MinimapConsole(this),
 			new ShipPositionConsole(this),
 			new SpeedometerConsole(this),
-			new ThrusterControlsConsole([ this._parts[2], this._parts[3] ]),
-			new ThrusterLayoutConsole([ this._parts[2], this._parts[3] ])
+			new ThrusterControlsConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ]),
+			new ThrusterLayoutConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ])
 		];
 		this._crew = [];
 		this.heading = 0;

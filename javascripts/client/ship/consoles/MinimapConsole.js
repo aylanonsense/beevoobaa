@@ -47,8 +47,10 @@ define([
 		var heading = (this._heading.getValue() * 180 / Math.PI) % 360;
 		if(heading < 0) { heading += 360; }
 		//render grid lines
-		SPRITE.render(ctx, this._x, this._y, 5 + Math.floor(this._posX / 10) % 5);
-		SPRITE.render(ctx, this._x, this._y, Math.floor(this._posY / 10) % 5);
+		var f = Math.floor(this._posX / 100) % 5;
+		SPRITE.render(ctx, this._x, this._y, 5 + (f < 0 ? f + 5 : f));
+		f = Math.floor(this._posY / 100) % 5;
+		SPRITE.render(ctx, this._x, this._y, (f < 0 ? f + 5 : f));
 		//render white border
 		var renderArea = SPRITE.render(ctx, this._x, this._y, 10);
 		//render ship

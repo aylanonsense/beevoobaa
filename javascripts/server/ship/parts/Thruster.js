@@ -24,8 +24,8 @@ define([
 		//var distY = this._offsetY * ship.getRadius();
 		//var distToCenterOfMass = Math.sqrt(distX * distX + distY * distY);
 		//var angleToCenterOfMass = Math.atan2(distY, distX);
-		this._multForward = Math.cos(this._angle);
-		this._multLateral = -Math.sin(this._angle);
+		this._multForward = -Math.cos(this._angle); //1: thrusting the ship forward, -1: backward
+		this._multLateral = Math.sin(this._angle); //1: thrusting ship left, -1: right
 		this._multRotational = 0.00;//distToCenterOfMass * Math.cos(angleToCenterOfMass);
 	}
 	Thruster.prototype = Object.create(SUPERCLASS.prototype);

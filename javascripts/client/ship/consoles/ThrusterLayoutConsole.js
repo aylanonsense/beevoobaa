@@ -47,7 +47,8 @@ define([
 		SUPERCLASS.prototype.render.call(this, ctx);
 		SPRITE.render(ctx, this._x, this._y, 0);
 		for(var i = 0; i < this._thrusters.length; i++) {
-			var frame = 1 + Math.floor(this._thrusters[i].thrustPercent.getValue() * 4);
+			var frame = 2 + Math.floor(this._thrusters[i].thrustPercent.getValue() * 3);
+			if(this._thrusters[i].thrustPercent.getValue() === 0) { frame = 1; }
 			var angle = this._thrusters[i].angle * 180 / Math.PI;
 			if(angle < 0) { angle += 360; }
 			frame += 6 * Math.round(16 * angle / 360);
