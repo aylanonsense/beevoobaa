@@ -13,18 +13,22 @@ define([
 		this._actualThrust = 0;
 		this._targetThrust = 0;
 		this.energyRequirements = new EnergyRequirements();
-
-		//calculate proportion of thrust that goes to forward/lateral/rotational velocity
+		//calculate proportion of thrust that goes to forward/lateral
 		this._offset = { x: x || 0, y: y || 0 };
 		this._angle = (angle || 0) * Math.PI / 180;
 		if(this._angle > Math.PI) { this._angle -= Math.PI * 2; }
-		//var distX = this._offset.x * ship.getRadius();
-		//var distY = this._offset.y * ship.getRadius();
-		//var distToCenterOfMass = Math.sqrt(distX * distX + distY * distY);
-		//var angleToCenterOfMass = Math.atan2(distY, distX);
 		this._multForward = Math.cos(this._angle);
 		this._multLateral = Math.sin(this._angle);
-		this._multRotational = 0.00;//distToCenterOfMass * Math.cos(angleToCenterOfMass);
+		//calculate proportyion of thrust that goes to rotational velocity
+		var distX = this._offset.x * ship.getRadius();
+		var distY = this._offset.y * ship.getRadius();
+		var distFromCenterOfMass = Math.sqrt(distX * distX + distY * distY);
+		//torque = r * F, given a force F on this thruster what % of the force do we use?
+		var angleFromCenterOfMass = Math.atan2(distY, distX);
+		var angleDiff = (this._angle - angleFromCenterOfMass) % (2 * Math.PI);
+		if(angleDiff < -Math.PI) { angleDiff += 2 * Math.PI; }
+		else if(angleDiff > Math.PI) { angleDiff -= 2 * Math.PI; }
+		this._multRotational = distFromCenterOfMass * Math.sin(angleDiff);
 	}
 	Thruster.prototype = Object.create(SUPERCLASS.prototype);
 	Thruster.prototype.prep = function(t) {

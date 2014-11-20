@@ -29,13 +29,15 @@ define([
 	ThrusterLayoutConsole
 ) {
 	function Ship() {
+		this._crew = [];
+		this._pointMass = new FloatingMass(0, 0, 0, 50, 10);
 		this._parts = [
 			new EnergySupply(this, 501),
 			new EnergySink(this, 0.5),
-			new Thruster(this, 500, -1.25, 0, 0), //forward thruster (on back)
+			new Thruster(this, 500, -1.3, 0, 0), //forward thruster (on back)
 			new Thruster(this, 500, 1.25, 0, 180), //reverse thruster (on front)
-			new Thruster(this, 500, 0, 1.25, 270), //side thruster (on port)
-			new Thruster(this, 500, 0, -1.25, 90) //side thruster (on starboard)
+			new Thruster(this, 500, 0.5, 1, 270), //side thruster (on port)
+			new Thruster(this, 500, 0.5, -1, 90) //side thruster (on starboard)
 		];
 		this._consoles = [
 			new CompassConsole(this),
@@ -47,9 +49,6 @@ define([
 			new ThrusterControlsConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ]),
 			new ThrusterLayoutConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ])
 		];
-		this._crew = [];
-		this._pointMass = new FloatingMass(0, 0, 0, 10, 10);
-		this._pointMass.facing = 0;
 	}
 	Ship.prototype.tick = function(t) {
 		//prep phase
@@ -96,6 +95,9 @@ define([
 	};
 	Ship.prototype.getHeading = function() {
 		return this._pointMass.facing;
+	};
+	Ship.prototype.getRadius = function() {
+		return this._pointMass.radius;
 	};
 	Ship.prototype.addCrewMember = function(player) {
 		if(player.ship) {

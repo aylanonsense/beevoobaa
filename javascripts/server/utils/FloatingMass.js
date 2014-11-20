@@ -2,15 +2,15 @@ if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 ], function(
 ) {
-	function FloatingMass(x, y, facing, mass, size) {
+	function FloatingMass(x, y, facing, mass, radius) {
 		this.pos = { x: x || 0, y: y || 0 };
 		this.vel = { x: 0 , y: 0, rotational: 0 };
 		this.acc = { x: 0 , y: 0, rotational: 0 };
 		this._forces = { x: 0 , y: 0, forward: 0, lateral: 0, rotational: 0 };
 		this.facing = facing || 0; //0: right, PI/2: up, PI: left, -PI/2: down
 		this.mass = mass || 1;
-		var radius = size || 1;
-		this._momentOfInertia = this.mass * radius * radius / 2; //assume a cylinder
+		this.radius = radius || 1;
+		this._momentOfInertia = this.mass * this.radius * this.radius / 2; //assume a cylinder
 		this.friction = 0;
 		this.rotationalFriction = 0;
 	}
@@ -24,7 +24,6 @@ define([
 		this._forces.lateral += lateral;
 		this._forces.rotational += rotational;
 	};
-	FloatingMass.prototype.prep = function(t) {};
 	FloatingMass.prototype.tick = function(t) {
 		var forceForward = this._forces.forward;
 		var forceLateral = this._forces.lateral;
