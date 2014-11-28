@@ -98,8 +98,11 @@ define([
 			var velPerpendicular = sin * this.vel.x - cos * this.vel.y;
 			var otherVelTowards = -cos * other.vel.x - sin * other.vel.y;
 			var otherVelPerpendicular = -sin * other.vel.x + cos * other.vel.y;
-			var newVelTowards = otherVelTowards;
-			var otherNewVelTowards = velTowards;
+			var coefficientOfRestitution = 0.5; //1.0 = complete transfer of momentum
+			var newVelTowards = (this.mass * velTowards + other.mass * otherVelTowards + other.mass *
+				coefficientOfRestitution * (otherVelTowards - velTowards)) / (this.mass + other.mass);
+			var otherNewVelTowards = (this.mass * velTowards + other.mass * otherVelTowards + this.mass *
+				coefficientOfRestitution * (velTowards - otherVelTowards)) / (this.mass + other.mass);
 			this.vel.x = -cos * newVelTowards + sin * velPerpendicular;
 			this.vel.y = -sin * newVelTowards - cos * velPerpendicular;
 			other.vel.x = cos * otherNewVelTowards - sin * otherVelPerpendicular;
