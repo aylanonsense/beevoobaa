@@ -10,7 +10,7 @@ define([
 		this._pointMass.vel.y = params.velY || 0;
 	}
 	Asteroid.prototype.tick = function(t) {
-		this._pointMass.tick(t);
+		//this._pointMass.tick(t);
 	};
 	return Asteroid;
 });

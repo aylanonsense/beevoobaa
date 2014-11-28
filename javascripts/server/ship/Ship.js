@@ -69,7 +69,7 @@ define([
 			this._consoles[i].tick(t);
 		}
 		//move ship
-		this._pointMass.tick(t);
+		//this._pointMass.tick(t);
 		//generate reports
 		var reports = [];
 		for(i = 0; i < this._consoles.length; i++) {

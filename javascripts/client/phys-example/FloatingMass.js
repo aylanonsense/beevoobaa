@@ -66,7 +66,7 @@ define([
 		this._endPos = { x: this.pos.x + this.vel.x * t, y: this.pos.y + this.vel.y * t };
 		this._timeOfCurrentFrame = t;
 	};
-	FloatingMass.prototype.checkForCollison = function(other) {
+	FloatingMass.prototype.checkForCollision = function(other) {
 		var offset = { x: this._endPos.x - this._startPos.x, y: this._endPos.y - this._startPos.y };
 
 		//reduce problem to a circle and a line
@@ -76,9 +76,136 @@ define([
 			end: { x: other._endPos.x - offset.x, y: other._endPos.y - offset.y }
 		};
 
+		//if the line is headed "away from" the circle, we ignore all collisions
+		if((line.start.x > circle.x + circle.radius && line.end.x > circle.x + circle.radius) ||
+			(line.start.x < circle.x - circle.radius && line.end.x < circle.x - circle.radius) ||
+			(line.start.y > circle.y + circle.radius && line.end.y > circle.y + circle.radius) ||
+			(line.start.y < circle.y - circle.radius && line.end.y < circle.y - circle.radius)) {
+			debugger;
+			return false;
+		}
+
 		//check to see if the line is colliding with the circle
 
-		return false;
+		//m = line slope
+		//b = line y-intercept
+		//h = circle x
+		//k = circle y
+		//r = circle radius
+
+		//y = mx + b
+		//(x - h)*(x - h) + (y - k)*(y - k) = r*r
+		//solve for x and y
+		//(x - h)*(x - h) = r*r - (y - k)*(y - k)
+		//x - h = sqrt(r*r - (y - k)*(y - k))
+		//x = sqrt(r*r - (y - k)*(y - k)) + h
+		//y = m*(sqrt(r*r - (y - k)*(y - k)) + h) + b
+		//y = m*sqrt(r*r - (y - k)*(y - k)) + m*h + b
+
+		// compute the euclidean distance between A and B
+		var diffX = line.end.x - line.start.x;
+		var diffY = line.end.y - line.start.y;
+		var lineLength = Math.sqrt(diffX * diffX + diffY * diffY);
+		// LAB = sqrt( (Bx-Ax)²+(By-Ay)² )
+
+		// compute the direction vector D from A to B
+		var dirX = diffX / lineLength;
+		var dirY = diffY / lineLength;
+		// Dx = (Bx-Ax)/LAB
+		// Dy = (By-Ay)/LAB
+
+		// Now the line equation is x = Dx*t + Ax, y = Dy*t + Ay with 0 <= t <= 1.
+
+		// compute the value t of the closest point to the circle center
+		var t = dirX * (circle.x - line.start.x) + dirY * (circle.y - line.start.y);
+		// t = Dx*(Cx-Ax) + Dy*(Cy-Ay)    
+
+		// This is the projection of C on the line from A to B.
+
+		// compute the coordinates of the point E on line and closest to C
+		var closestPointOnLine = { x: t * dirX + line.start.x, y: t * dirY + line.start.y };
+		// Ex = t*Dx+Ax
+		// Ey = t*Dy+Ay
+
+		// compute the euclidean distance from E to C
+		diffX = closestPointOnLine.x - circle.x;
+		diffY = closestPointOnLine.y - circle.y;
+		var distFromCircleToPoint = Math.sqrt(diffX * diffX + diffY * diffY);
+		//LEC = sqrt( (Ex-Cx)²+(Ey-Cy)² )
+
+		// test if the line intersects the circle
+		var intersection = null;
+		var squareDistToIntersection = null;
+		if(distFromCircleToPoint < circle.radius) {
+		//if( LEC < R ) {
+
+			// compute distance from t to circle intersection point
+			var dt = Math.sqrt(circle.radius * circle.radius + distFromCircleToPoint * distFromCircleToPoint);
+			//dt = sqrt( R² - LEC²)
+			
+			// compute first intersection point
+			var intersection1 = { x: (t - dt) * dirX + line.start.x, y: (t - dt) * dirY + line.start.y };
+			//Fx = (t-dt)*Dx + Ax
+			// Fy = (t-dt)*Dy + Ay
+			
+			// compute second intersection point
+			var intersection2 = { x: (t + dt) * dirX + line.start.x, y: (t + dt) * dirY + line.start.y };
+			//Gx = (t+dt)*Dx + Ax
+			//Gy = (t+dt)*Dy + Ay
+
+			//figure out which intersection point to choose
+			var intersection1IsOnLineSegment =
+				!(intersection1.x > line.start.x && intersection1.x > line.end.x) &&
+				!(intersection1.x < line.start.x && intersection1.x < line.end.x) &&
+				!(intersection1.y > line.start.y && intersection1.y > line.end.y) &&
+				!(intersection1.y < line.start.y && intersection1.y < line.end.y);
+			var intersection2IsOnLineSegment =
+				!(intersection2.x > line.start.x && intersection2.x > line.end.x) &&
+				!(intersection2.x < line.start.x && intersection2.x < line.end.x) &&
+				!(intersection2.y > line.start.y && intersection2.y > line.end.y) &&
+				!(intersection2.y < line.start.y && intersection2.y < line.end.y);
+			if(intersection1IsOnLineSegment && intersection2IsOnLineSegment) {
+				//find the intersection point closest to the start of the line
+				diffX = intersection1.x - line.start.x;
+				diffY = intersection1.y - line.start.y;
+				var squareDistToIntersection1 = diffX * diffX + diffY * diffY;
+				diffX = intersection2.x - line.start.x;
+				diffY = intersection2.y - line.start.y;
+				var squareDistToIntersection2 = diffX * diffX + diffY * diffY;
+				if(squareDistToIntersection1 < squareDistToIntersection2) {
+					intersection = intersection1;
+				}
+				else {
+					intersection = intersection2;
+				}
+			}
+			else if(intersection1IsOnLineSegment) {
+				intersection = intersection1;
+			}
+			else if(intersection2IsOnLineSegment) {
+				intersection = intersection2;
+			}
+		}
+		// else test if the line is tangent to circle
+		else if(distFromCircleToPoint === circle.radius) {
+			var closestPointIsOnLineSegment =
+				!(closestPointOnLine.x > line.start.x && closestPointOnLine.x > line.end.x) &&
+				!(closestPointOnLine.x < line.start.x && closestPointOnLine.x < line.end.x) &&
+				!(closestPointOnLine.y > line.start.y && closestPointOnLine.y > line.end.y) &&
+				!(closestPointOnLine.y < line.start.y && closestPointOnLine.y < line.end.y);
+			if(closestPointIsOnLineSegment) {
+				intersection = closestPointOnLine;
+			}
+		}
+
+		if(intersection) {
+			debugger;
+			return true;
+		}
+		else {
+			debugger;
+			return false;
+		}
 	};
 	FloatingMass.prototype.adjustTrajectory = function(collision) {
 		//find angle between onjects
@@ -123,7 +250,6 @@ define([
 	FloatingMass.prototype.move = function() {
 		this.pos.x = this._endPos.x;
 		this.pos.y = this._endPos.y;
-		this.facing = this._endPos.facing;
 		this._endPos = null;
 	};
 

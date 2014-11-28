@@ -23,7 +23,6 @@ define([
 		var distX = this._offset.x * ship.getRadius();
 		var distY = this._offset.y * ship.getRadius();
 		var distFromCenterOfMass = Math.sqrt(distX * distX + distY * distY);
-		//torque = r * F, given a force F on this thruster what % of the force do we use?
 		var angleFromCenterOfMass = Math.atan2(distY, distX);
 		var angleDiff = (this._angle - angleFromCenterOfMass) % (2 * Math.PI);
 		if(angleDiff < -Math.PI) { angleDiff += 2 * Math.PI; }
