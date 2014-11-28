@@ -1,6 +1,6 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/Player'
+	'server/net/Player'
 ], function(
 	Player
 ) {

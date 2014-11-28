@@ -1,7 +1,7 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/ship/Part',
-	'server/ship/mechanics/EnergyRequirements'
+	'server/space/ship/Part',
+	'server/space/ship/mechanics/EnergyRequirements'
 ], function(
 	SUPERCLASS,
 	EnergyRequirements
@@ -20,8 +20,8 @@ define([
 		this._multForward = Math.cos(this._angle);
 		this._multLateral = Math.sin(this._angle);
 		//calculate proportyion of thrust that goes to rotational velocity
-		var distX = this._offset.x * ship.getRadius();
-		var distY = this._offset.y * ship.getRadius();
+		var distX = this._offset.x * ship.physics.radius;
+		var distY = this._offset.y * ship.physics.radius;
 		var distFromCenterOfMass = Math.sqrt(distX * distX + distY * distY);
 		var angleFromCenterOfMass = Math.atan2(distY, distX);
 		var angleDiff = (this._angle - angleFromCenterOfMass) % (2 * Math.PI);
@@ -44,7 +44,7 @@ define([
 		this._actualThrust = calcThrust(this.energyRequirements.getProvidedEnergy()) / t;
 		if(this._actualThrust > this._maxThrust) { this._actualThrust = this._maxThrust; }
 		if(this._actualThrust > 0) {
-			this._ship.applyForceRelativeToHeading(this._multForward * this._actualThrust,
+			this._ship.physics.applyForceRelativeToFacing(this._multForward * this._actualThrust,
 				this._multLateral * this._actualThrust, this._multRotational * this._actualThrust);
 		}
 	};

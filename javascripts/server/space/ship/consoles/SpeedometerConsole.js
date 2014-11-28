@@ -1,6 +1,6 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/ship/Console'
+	'server/space/ship/Console'
 ], function(
 	SUPERCLASS
 ) {
@@ -10,7 +10,7 @@ define([
 	}
 	SpeedometerConsole.prototype = Object.create(SUPERCLASS.prototype);
 	SpeedometerConsole.prototype.generateReport = function() {
-		var vel = this._ship.getVelocity();
+		var vel = this._ship.physics.vel;
 		var speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
 		return {
 			id: this._consoleId,

@@ -1,7 +1,7 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/ship/Part',
-	'server/ship/mechanics/EnergyRequirements'
+	'server/space/ship/Part',
+	'server/space/ship/mechanics/EnergyRequirements'
 ], function(
 	SUPERCLASS,
 	EnergyRequirements

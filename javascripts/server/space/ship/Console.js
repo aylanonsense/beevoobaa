@@ -1,7 +1,5 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
-define([
-], function(
-) {
+define(function() {
 	var NEXT_CONSOLE_ID = 0;
 	function Console() {
 		this._consoleId = NEXT_CONSOLE_ID++;

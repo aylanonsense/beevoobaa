@@ -1,7 +1,5 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
-define([
-], function(
-) {
+define(function() {
 	function Part(ship) {
 		this._ship = ship;
 		this.energyRequirements = null;

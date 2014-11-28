@@ -1,21 +1,23 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
+	'server/space/SpaceObject',
 	'server/net/Connection',
-	'server/utils/FloatingMass',
-	'server/ship/parts/EnergySupply',
-	'server/ship/parts/EnergySink',
-	'server/ship/parts/Thruster',
-	'server/ship/consoles/CompassConsole',
-	'server/ship/consoles/CourseDriftConsole',
-	'server/ship/consoles/EnergyLevelConsole',
-	'server/ship/consoles/MinimapConsole',
-	'server/ship/consoles/ShipPositionConsole',
-	'server/ship/consoles/SpeedometerConsole',
-	'server/ship/consoles/ThrusterControlsConsole',
-	'server/ship/consoles/ThrusterLayoutConsole'
+	'server/utils/PhysicsObject',
+	'server/space/ship/parts/EnergySupply',
+	'server/space/ship/parts/EnergySink',
+	'server/space/ship/parts/Thruster',
+	'server/space/ship/consoles/CompassConsole',
+	'server/space/ship/consoles/CourseDriftConsole',
+	'server/space/ship/consoles/EnergyLevelConsole',
+	'server/space/ship/consoles/MinimapConsole',
+	'server/space/ship/consoles/ShipPositionConsole',
+	'server/space/ship/consoles/SpeedometerConsole',
+	'server/space/ship/consoles/ThrusterControlsConsole',
+	'server/space/ship/consoles/ThrusterLayoutConsole'
 ], function(
+	SUPERCLASS,
 	Connection,
-	FloatingMass,
+	PhysicsObject,
 	EnergySupply,
 	EnergySink,
 	Thruster,
@@ -29,8 +31,8 @@ define([
 	ThrusterLayoutConsole
 ) {
 	function Ship() {
+		SUPERCLASS.call(this, { radius: 50, mass: 10 });
 		this._crew = [];
-		this._pointMass = new FloatingMass(0, 0, 0, 50, 10);
 		this._parts = [
 			new EnergySupply(this, 501),
 			new EnergySink(this, 0.5),
@@ -50,7 +52,9 @@ define([
 			new ThrusterLayoutConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ])
 		];
 	}
+	Ship.prototype = Object.create(SUPERCLASS.prototype);
 	Ship.prototype.tick = function(t) {
+		SUPERCLASS.prototype.tick.call(this, t);
 		//prep phase
 		for(var i = 0; i < this._parts.length; i++) {
 			this._parts[i].prep(t);
@@ -68,8 +72,9 @@ define([
 		for(i = 0; i < this._consoles.length; i++) {
 			this._consoles[i].tick(t);
 		}
-		//move ship
-		//this._pointMass.tick(t);
+	};
+	Ship.prototype.endOfFrame = function(t) {
+		SUPERCLASS.prototype.endOfFrame.call(this, t);
 		//generate reports
 		var reports = [];
 		for(i = 0; i < this._consoles.length; i++) {
@@ -80,24 +85,6 @@ define([
 			type: 'console-update',
 			reports: reports
 		});
-	};
-	Ship.prototype.applyForce = function(x, y, rotational) {
-		this._pointMass.applyForce(x, y, rotational);
-	};
-	Ship.prototype.applyForceRelativeToHeading = function(forward, lateral, rotational) {
-		this._pointMass.applyForceRelativeToFacing(forward, lateral, rotational);
-	};
-	Ship.prototype.getPosition = function() {
-		return { x: this._pointMass.pos.x, y: this._pointMass.pos.y };
-	};
-	Ship.prototype.getVelocity = function() {
-		return { x: this._pointMass.vel.x, y: this._pointMass.vel.y };
-	};
-	Ship.prototype.getHeading = function() {
-		return this._pointMass.facing;
-	};
-	Ship.prototype.getRadius = function() {
-		return this._pointMass.radius;
 	};
 	Ship.prototype.addCrewMember = function(player) {
 		if(player.ship) {
@@ -140,6 +127,5 @@ define([
 			}
 		}
 	};
-
 	return Ship;
 });

@@ -1,6 +1,6 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/ship/Console'
+	'server/space/ship/Console'
 ], function(
 	SUPERCLASS
 ) {
@@ -10,7 +10,7 @@ define([
 	}
 	ShipPositionConsole.prototype = Object.create(SUPERCLASS.prototype);
 	ShipPositionConsole.prototype.generateReport = function() {
-		var pos = this._ship.getPosition();
+		var pos = this._ship.physics.pos;
 		return {
 			id: this._consoleId,
 			type: 'ShipPositionConsole',

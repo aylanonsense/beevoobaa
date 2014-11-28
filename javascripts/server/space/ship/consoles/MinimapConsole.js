@@ -1,6 +1,6 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/ship/Console'
+	'server/space/ship/Console'
 ], function(
 	SUPERCLASS
 ) {
@@ -10,8 +10,8 @@ define([
 	}
 	MinimapConsole.prototype = Object.create(SUPERCLASS.prototype);
 	MinimapConsole.prototype.generateReport = function() {
-		var vel = this._ship.getVelocity();
-		var heading = this._ship.getHeading();
+		var vel = this._ship.physics.vel;
+		var heading = this._ship.physics.facing;
 		if(heading > Math.PI) { heading -= 2 * Math.PI; }
 		else if(heading <= -Math.PI) { heading += 2 * Math.PI; }
 		return {

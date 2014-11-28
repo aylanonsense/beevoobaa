@@ -1,6 +1,6 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/ship/Console'
+	'server/space/ship/Console'
 ], function(
 	SUPERCLASS
 ) {
@@ -10,7 +10,7 @@ define([
 	}
 	CompassConsole.prototype = Object.create(SUPERCLASS.prototype);
 	CompassConsole.prototype.generateReport = function() {
-		var heading = this._ship.getHeading();
+		var heading = this._ship.physics.facing;
 		if(heading > Math.PI) { heading -= 2 * Math.PI; }
 		else if(heading <= -Math.PI) { heading += 2 * Math.PI; }
 		return {

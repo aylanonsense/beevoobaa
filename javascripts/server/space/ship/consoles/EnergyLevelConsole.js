@@ -1,6 +1,6 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'server/ship/Console'
+	'server/space/ship/Console'
 ], function(
 	SUPERCLASS
 ) {

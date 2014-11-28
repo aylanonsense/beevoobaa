@@ -66,6 +66,8 @@ define([
 
 	return {
 		tick: tick,
-		render: render
+		render: render,
+		onDisconnected: function() {},
+		onReceive: function() {}
 	};
 });
