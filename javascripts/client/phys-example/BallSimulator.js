@@ -8,10 +8,10 @@ define([
 ) {
 	var PHYSICS_STEPS_PER_FRAME = 5;
 	var balls = [
-		new Ball(250, 200, 0, 100),
-		new Ball(400, 215, -100, 0),
-		new Ball(300, 300, 150, 150),
-		new Ball(500, 500, -300, -100)
+		new Ball(200, 200, 200, 0, 70, 250),
+		new Ball(400, 200, 0, 0, 50, 100),
+		new Ball(200, 400, -100, -100, 50, 100),
+		new Ball(400, 400, 0, 200, 10, 3),
 	];
 
 	function tick(t) {

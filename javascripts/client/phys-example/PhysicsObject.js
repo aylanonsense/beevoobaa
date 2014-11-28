@@ -2,6 +2,8 @@ if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 ], function(
 ) {
+	var COEFFICIENT_OF_RESTITUTION = 0.2;
+	var EXTRA_NUDGE_DIST = 1;
 	function PhysicsObject(params) {
 		this.pos = { x: params.x || 0, y: params.y || 0 };
 		this.vel = { x: params.velX || 0 , y: params.velY || 0, rotational: 0 };
@@ -80,8 +82,8 @@ define([
 			var dist = Math.sqrt(squareDist);
 			var dirX = distX / dist;
 			var dirY = distY / dist;
-			var nudgeX = (this.radius + other.radius - dist) * dirX;
-			var nudgeY = (this.radius + other.radius - dist) * dirY;
+			var nudgeX = (EXTRA_NUDGE_DIST + this.radius + other.radius - dist) * dirX;
+			var nudgeY = (EXTRA_NUDGE_DIST + this.radius + other.radius - dist) * dirY;
 			var squareSpeed = this.vel.x * this.vel.x + this.vel.y * this.vel.y;
 			var otherSquareSpeed = other.vel.x * other.vel.x + other.vel.y * other.vel.y;
 			var percentForOther = otherSquareSpeed / (squareSpeed + otherSquareSpeed);
@@ -96,15 +98,14 @@ define([
 			var sin = Math.sin(angle);
 			var velTowards = cos * this.vel.x + sin * this.vel.y;
 			var velPerpendicular = sin * this.vel.x - cos * this.vel.y;
-			var otherVelTowards = -cos * other.vel.x - sin * other.vel.y;
+			var otherVelTowards = cos * other.vel.x + sin * other.vel.y;
 			var otherVelPerpendicular = -sin * other.vel.x + cos * other.vel.y;
-			var coefficientOfRestitution = 0.5; //1.0 = complete transfer of momentum
 			var newVelTowards = (this.mass * velTowards + other.mass * otherVelTowards + other.mass *
-				coefficientOfRestitution * (otherVelTowards - velTowards)) / (this.mass + other.mass);
+				COEFFICIENT_OF_RESTITUTION * (otherVelTowards - velTowards)) / (this.mass + other.mass);
 			var otherNewVelTowards = (this.mass * velTowards + other.mass * otherVelTowards + this.mass *
-				coefficientOfRestitution * (velTowards - otherVelTowards)) / (this.mass + other.mass);
-			this.vel.x = -cos * newVelTowards + sin * velPerpendicular;
-			this.vel.y = -sin * newVelTowards - cos * velPerpendicular;
+				COEFFICIENT_OF_RESTITUTION * (velTowards - otherVelTowards)) / (this.mass + other.mass);
+			this.vel.x = cos * newVelTowards + sin * velPerpendicular;
+			this.vel.y = sin * newVelTowards - cos * velPerpendicular;
 			other.vel.x = cos * otherNewVelTowards - sin * otherVelPerpendicular;
 			other.vel.y = sin * otherNewVelTowards + cos * otherVelPerpendicular;
 

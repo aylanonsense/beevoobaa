@@ -4,8 +4,8 @@ define([
 ], function(
 	PhysicsObject
 ) {
-	function Ball(x, y, velX, velY) {
-		this.physics = new PhysicsObject({ x: x, y: y, mass: 10, radius: 50, velX: velX, velY: velY });
+	function Ball(x, y, velX, velY, radius, mass) {
+		this.physics = new PhysicsObject({ x: x, y: y, mass: mass, radius: radius, velX: velX, velY: velY });
 	}
 	Ball.prototype.tick = function(t) {};
 	Ball.prototype.render = function(ctx) {
