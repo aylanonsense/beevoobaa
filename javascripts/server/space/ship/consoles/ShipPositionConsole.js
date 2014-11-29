@@ -5,8 +5,7 @@ define([
 	SUPERCLASS
 ) {
 	function ShipPositionConsole(ship) {
-		SUPERCLASS.call(this);
-		this._ship = ship;
+		SUPERCLASS.call(this, ship);
 	}
 	ShipPositionConsole.prototype = Object.create(SUPERCLASS.prototype);
 	ShipPositionConsole.prototype.generateReport = function() {

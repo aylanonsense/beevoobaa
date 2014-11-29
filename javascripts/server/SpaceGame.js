@@ -2,14 +2,16 @@ if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
 	'server/Constants',
 	'server/net/Connection',
-	'server/space/ship/Ship'
+	'server/space/ship/Ship',
+	'server/space/environment/Asteroid'
 ], function(
 	Constants,
 	Connection,
-	Ship
+	Ship,
+	Asteroid
 ) {
 	var playerShip = new Ship();
-	var objects = [ playerShip ];
+	var objects = [ playerShip, new Asteroid({ x: 500, y: 0, radius: 50, mass: 100 }) ];
 
 	function tick(t) {
 		//start of frame

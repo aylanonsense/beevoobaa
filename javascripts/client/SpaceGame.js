@@ -1,8 +1,10 @@
 if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'client/ship/console-config'
+	'client/ship/console-config',
+	'client/util/DrawingUtils'
 ], function(
-	consoleConfig
+	consoleConfig,
+	DrawingUtils
 ) {
 	var consoles = [];
 	var lastConsoleToHandleAnEvent = null;

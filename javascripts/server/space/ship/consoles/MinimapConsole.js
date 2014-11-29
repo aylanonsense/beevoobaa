@@ -5,8 +5,7 @@ define([
 	SUPERCLASS
 ) {
 	function MinimapConsole(ship) {
-		SUPERCLASS.call(this);
-		this._ship = ship;
+		SUPERCLASS.call(this, ship);
 	}
 	MinimapConsole.prototype = Object.create(SUPERCLASS.prototype);
 	MinimapConsole.prototype.generateReport = function() {
