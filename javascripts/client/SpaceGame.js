@@ -44,6 +44,7 @@ define([
 	function onDisconnected() {
 		console.log("Disconnected!");
 		consoles = [];
+		lastConsoleToHandleAnEvent = null;
 	}
 
 	function onMouseEvent(evt) {
