@@ -5,8 +5,7 @@ define([
 	SUPERCLASS
 ) {
 	function CompassConsole(ship) {
-		SUPERCLASS.call(this);
-		this._ship = ship;
+		SUPERCLASS.call(this, ship);
 	}
 	CompassConsole.prototype = Object.create(SUPERCLASS.prototype);
 	CompassConsole.prototype.generateReport = function() {

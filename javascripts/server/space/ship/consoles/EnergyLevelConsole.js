@@ -4,8 +4,8 @@ define([
 ], function(
 	SUPERCLASS
 ) {
-	function EnergyLevelConsole(energySupply) {
-		SUPERCLASS.call(this);
+	function EnergyLevelConsole(ship, energySupply) {
+		SUPERCLASS.call(ship, this);
 		this._energySupply = energySupply;
 	}
 	EnergyLevelConsole.prototype = Object.create(SUPERCLASS.prototype);

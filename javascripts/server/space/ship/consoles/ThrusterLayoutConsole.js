@@ -4,8 +4,8 @@ define([
 ], function(
 	SUPERCLASS
 ) {
-	function ThrusterLayoutConsole(thrusters) {
-		SUPERCLASS.call(this);
+	function ThrusterLayoutConsole(ship, thrusters) {
+		SUPERCLASS.call(this, ship);
 		this._thrusters = thrusters;
 	}
 	ThrusterLayoutConsole.prototype = Object.create(SUPERCLASS.prototype);

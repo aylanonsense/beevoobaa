@@ -44,12 +44,12 @@ define([
 		this._consoles = [
 			new CompassConsole(this),
 			new CourseDriftConsole(this),
-			new EnergyLevelConsole(this._parts[0]),
+			new EnergyLevelConsole(this, this._parts[0]),
 			new MinimapConsole(this),
 			new ShipPositionConsole(this),
 			new SpeedometerConsole(this),
-			new ThrusterControlsConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ]),
-			new ThrusterLayoutConsole([ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ])
+			new ThrusterControlsConsole(this, [ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ]),
+			new ThrusterLayoutConsole(this, [ this._parts[2], this._parts[3], this._parts[4], this._parts[5] ])
 		];
 	}
 	Ship.prototype = Object.create(SUPERCLASS.prototype);
