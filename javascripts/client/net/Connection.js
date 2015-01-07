@@ -1,12 +1,13 @@
-if (typeof define !== 'function') { var define = require('amdefine')(module); }
-define([
-], function(
-) {
-	var onDisconnectedCallbacks = [];
+define(function() {
+	var onConnectedCallbacks = [];
 	var onReceiveCallbacks = [];
+	var onDisconnectedCallbacks = [];
 	var socket = io();
 
 	//public methods
+	function onConnected(callback) { //callback()
+		onConnectedCallbacks.push(callback);
+	}
 	function onReceive(callback) { //callback(msg);
 		onReceiveCallbacks.push(callback);
 	}
@@ -18,7 +19,12 @@ define([
 	}
 
 	//set up socket io
-	socket.on('message', function(msg){
+	socket.on('connect', function() {
+		for(var i = 0; i < onConnectedCallbacks.length; i++) {
+			onConnectedCallbacks[i]();
+		}
+	});
+	socket.on('message', function(msg) {
 		for(var i = 0; i < onReceiveCallbacks.length; i++) {
 			onReceiveCallbacks[i](msg);
 		}
@@ -30,6 +36,7 @@ define([
 	});
 
 	return {
+		onConnected: onConnected,
 		onReceive: onReceive,
 		onDisconnected: onDisconnected,
 		send: send

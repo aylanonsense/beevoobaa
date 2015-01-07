@@ -1,10 +1,9 @@
-if (typeof define !== 'function') { var define = require('amdefine')(module); }
 define([
-	'shared/Constants',
+	'server/Constants',
 	'server/net/Connection',
-	'server/SpaceGame'
+	'server/Game'
 ], function(
-	SharedConstants,
+	Constants,
 	Connection,
 	Game
 ) {
@@ -16,7 +15,7 @@ define([
 
 		//kick off the game loop
 		setInterval(function() {
-			Game.tick(1 / SharedConstants.SERVER_UPDATES_PER_SECOND);
-		}, 1000 / SharedConstants.SERVER_UPDATES_PER_SECOND);
+			Game.tick(1 / Constants.TARGET_FRAME_RATE);
+		}, 1000 / Constants.TARGET_FRAME_RATE);
 	};
 });
