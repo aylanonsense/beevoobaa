@@ -1,4 +1,4 @@
-space-team-galaxy-explorer
-==========================
+multiplayer-game
+================
 
-A tactical multiplayer spaceship navigation game.
+A game that is ostensibly multiplayer.
