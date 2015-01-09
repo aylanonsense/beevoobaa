@@ -2,7 +2,7 @@ define(function() {
 	var onConnectedCallbacks = [];
 	var onReceiveCallbacks = [];
 	var onDisconnectedCallbacks = [];
-	var socket = io();
+	var socket = null;
 
 	//public methods
 	function onConnected(callback) { //callback()
@@ -17,28 +17,31 @@ define(function() {
 	function send(msg) {
 		socket.emit('message', msg);
 	}
-
-	//set up socket io
-	socket.on('connect', function() {
-		for(var i = 0; i < onConnectedCallbacks.length; i++) {
-			onConnectedCallbacks[i]();
-		}
-	});
-	socket.on('message', function(msg) {
-		for(var i = 0; i < onReceiveCallbacks.length; i++) {
-			onReceiveCallbacks[i](msg);
-		}
-	});
-	socket.on('disconnect', function(){
-		for(var i = 0; i < onDisconnectedCallbacks.length; i++) {
-			onDisconnectedCallbacks[i]();
-		}
-	});
+	function connect() {
+		socket = io();
+		//set up socket io
+		socket.on('connect', function() {
+			for(var i = 0; i < onConnectedCallbacks.length; i++) {
+				onConnectedCallbacks[i]();
+			}
+		});
+		socket.on('message', function(msg) {
+			for(var i = 0; i < onReceiveCallbacks.length; i++) {
+				onReceiveCallbacks[i](msg);
+			}
+		});
+		socket.on('disconnect', function(){
+			for(var i = 0; i < onDisconnectedCallbacks.length; i++) {
+				onDisconnectedCallbacks[i]();
+			}
+		});
+	}
 
 	return {
 		onConnected: onConnected,
 		onReceive: onReceive,
 		onDisconnected: onDisconnected,
-		send: send
+		send: send,
+		connect: connect
 	};
 });

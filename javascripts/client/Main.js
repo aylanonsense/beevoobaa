@@ -19,6 +19,7 @@ requirejs([
 	Connection.onConnected(Game.onConnected);
 	Connection.onReceive(Game.onReceive);
 	Connection.onDisconnected(Game.onDisconnected);
+	Connection.connect();
 
 	//add input listeners
 	var keyboard = {};
@@ -35,8 +36,10 @@ requirejs([
 	$('#game-canvas').on('mousemove mouseup mousedown', Game.onMouseEvent);
 
 	//set up the game loop
-	function loop() {
-		Game.tick(1 / Constants.TARGET_FRAME_RATE);
+	var prevTimestamp = performance.now();
+	function loop(timestamp) {
+		Game.tick(Math.min(timestamp - prevTimestamp, 100) / 1000);
+		prevTimestamp = timestamp;
 		render();
 		requestAnimationFrame(loop);
 	}

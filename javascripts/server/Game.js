@@ -1,20 +1,44 @@
 define([
 	'server/Constants',
-	'server/net/Connection'
+	'server/net/Connection',
+	'server/Zombie'
 ], function(
 	Constants,
-	Connection
+	Connection,
+	Zombie
 ) {
+	var frame = 0;
+	var objects = [
+		new Zombie({ x: 400, y: 300 }),
+		new Zombie({ x: 450, y: 300 }),
+		new Zombie({ x: 350, y: 300 })
+	];
+
+	function getState() {
+		var state = { objects: [] };
+		for(var i = 0; i < objects.length; i++) {
+			state.objects.push(objects[i].getState());
+		}
+		return state;
+	}
+
 	function tick(t) {
-		//TODO
+		for(var i = 0; i < objects.length; i++) {
+			objects[i].tick(t);
+		}
+		if((frame++) % 30 === 0) {
+			Connection.sendToAll({ messageType: 'game-state', state: getState() });
+		}
 	}
 
 	function onConnected(player) {
-		//TODO
+		Connection.sendTo(player, { messageType: 'game-state', state: getState() });
 	}
 
 	function onReceive(player, msg) {
-		//TODO
+		if(msg.messageType === 'ping') {
+			Connection.sendTo(player, { messageType: 'ping-response', pingId: msg.pingId });
+		}
 	}
 
 	function onDisconnected(player) {
