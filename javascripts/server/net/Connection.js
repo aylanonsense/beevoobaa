@@ -1,12 +1,17 @@
 define([
-	'server/net/Player'
+	'server/net/Player',
+	'shared/Constants',
+	'shared/Utils'
 ], function(
-	Player
+	Player,
+	SharedConstants,
+	SharedUtils
 ) {
 	var socketServer = null;
 	var onConnectedCallbacks = [];
 	var onDisconnectedCallbacks = [];
 	var onReceiveCallbacks = [];
+	var delayedByFakeLag = null;
 
 	//public methods
 	function onConnected(callback) { //callback(player)
@@ -40,8 +45,27 @@ define([
 	function handleSocket(socket) {
 		var player = new Player(socket);
 		socket.on('message', function(msg) {
-			for(var i = 0; i < onReceiveCallbacks.length; i++) {
-				onReceiveCallbacks[i](player, msg);
+			if(SharedConstants.FAKE_LAG) {
+				if(delayedByFakeLag) {
+					delayedByFakeLag.push({ player: player, msg: msg });
+				}
+				else {
+					delayedByFakeLag = [ { player: player, msg: msg } ];
+					setTimeout(function() {
+						for(var i = 0; i < delayedByFakeLag.length; i++) {
+							for(var j = 0; j < onReceiveCallbacks.length; j++) {
+								onReceiveCallbacks[j](delayedByFakeLag[i].player,
+									delayedByFakeLag[i].msg);
+							}
+						}
+						delayedByFakeLag = null;
+					}, SharedUtils.generateFakeLag());
+				}
+			}
+			else {
+				for(var i = 0; i < onReceiveCallbacks.length; i++) {
+					onReceiveCallbacks[i](player, msg);
+				}
 			}
 		});
 		socket.on('disconnect', function() {

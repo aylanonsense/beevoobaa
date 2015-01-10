@@ -7,7 +7,7 @@ define([
 	Connection,
 	Zombie
 ) {
-	var timeToNextPing = 1.00; 
+	var timeToNextPing = 1.00;
 	var pings = [];
 	var objects = [];
 
@@ -53,9 +53,9 @@ define([
 		ctx.font = "10px Lucida Console";
 		var x = Constants.CANVAS_WIDTH - 10;
 		for(i = pings.length - 1; i >= 0 && x > 10; i--) {
+			x -= 20;
 			if(pings[i].received !== null) {
 				var t = pings[i].received - pings[i].sent;
-				x -= 20;
 				ctx.fillRect(x, Constants.CANVAS_HEIGHT - 20 - t, 16, t);
 				ctx.fillText(Math.floor(t), x, Constants.CANVAS_HEIGHT - 10);
 			}
@@ -72,6 +72,9 @@ define([
 		}
 		else if(msg.messageType === 'ping-response') {
 			pings[msg.pingId].received= performance.now();
+		}
+		else {
+			throw new Error("Unsure how to handle '" + msg.messageType + "' message");
 		}
 	}
 

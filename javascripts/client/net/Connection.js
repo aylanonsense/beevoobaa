@@ -1,8 +1,15 @@
-define(function() {
+define([
+	'shared/Constants',
+	'shared/Utils'
+], function(
+	SharedConstants,
+	SharedUtils
+) {
 	var onConnectedCallbacks = [];
 	var onReceiveCallbacks = [];
 	var onDisconnectedCallbacks = [];
 	var socket = null;
+	var delayedByFakeLag = null;
 
 	//public methods
 	function onConnected(callback) { //callback()
@@ -26,8 +33,26 @@ define(function() {
 			}
 		});
 		socket.on('message', function(msg) {
-			for(var i = 0; i < onReceiveCallbacks.length; i++) {
-				onReceiveCallbacks[i](msg);
+			if(SharedConstants.FAKE_LAG) {
+				if(delayedByFakeLag) {
+					delayedByFakeLag.push(msg);
+				}
+				else {
+					delayedByFakeLag = [ msg ];
+					setTimeout(function() {
+						for(var i = 0; i < delayedByFakeLag.length; i++) {
+							for(var j = 0; j < onReceiveCallbacks.length; j++) {
+								onReceiveCallbacks[j](delayedByFakeLag[i]);
+							}
+						}
+						delayedByFakeLag = null;
+					}, SharedUtils.generateFakeLag());
+				}
+			}
+			else {
+				for(var i = 0; i < onReceiveCallbacks.length; i++) {
+					onReceiveCallbacks[i](msg);
+				}
 			}
 		});
 		socket.on('disconnect', function(){
