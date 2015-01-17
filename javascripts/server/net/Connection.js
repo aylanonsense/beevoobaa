@@ -112,7 +112,14 @@ define([
 			}
 			else {
 				for(var i = 0; i < onReceiveCallbacks.length; i++) {
-					onReceiveCallbacks[i](player, msg);
+					if(msg instanceof Array) {
+						for(var j = 0; j < msg.length; j++) {
+							onReceiveCallbacks[i](player, msg[j]);
+						}
+					}
+					else {
+						onReceiveCallbacks[i](player, msg);
+					}
 				}
 			}
 		});
@@ -154,7 +161,14 @@ define([
 			var msg = receivesDelayedByFakeLag[0].msg;
 			receivesDelayedByFakeLag.shift();
 			for(var i = 0; i < onReceiveCallbacks.length; i++) {
-				onReceiveCallbacks[i](player, msg);
+				if(msg instanceof Array) {
+					for(var j = 0; j < msg.length; j++) {
+						onReceiveCallbacks[i](player, msg[j]);
+					}
+				}
+				else {
+					onReceiveCallbacks[i](player, msg);
+				}
 			}
 			if(receivesDelayedByFakeLag.length > 0) { scheduleReceiveTimer(); }
 		}, Math.max(0, Math.floor(receivesDelayedByFakeLag[0].receiveTime - now())));

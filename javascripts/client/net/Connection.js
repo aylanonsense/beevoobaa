@@ -56,7 +56,14 @@ define([
 			}
 			else {
 				for(var i = 0; i < onReceiveCallbacks.length; i++) {
-					onReceiveCallbacks[i](msg);
+					if(msg instanceof Array) {
+						for(var j = 0; j < msg.length; j++) {
+							onReceiveCallbacks[i](msg[j]);
+						}
+					}
+					else {
+						onReceiveCallbacks[i](msg);
+					}
 				}
 			}
 		});
@@ -76,7 +83,14 @@ define([
 		setTimeout(function() {
 			var msg = receivesDelayedByFakeLag.shift().msg;
 			for(var i = 0; i < onReceiveCallbacks.length; i++) {
-				onReceiveCallbacks[i](msg);
+				if(msg instanceof Array) {
+					for(var j = 0; j < msg.length; j++) {
+						onReceiveCallbacks[i](msg[j]);
+					}
+				}
+				else {
+					onReceiveCallbacks[i](msg);
+				}
 			}
 			if(receivesDelayedByFakeLag.length > 0) { scheduleReceiveTimer(); }
 		}, Math.max(0, Math.floor(receivesDelayedByFakeLag[0].receiveTime - performance.now())));

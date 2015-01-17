@@ -15,6 +15,7 @@ define([
 		new Zombie({ x: 450, y: 300 }),
 		new Zombie({ x: 350, y: 300 })
 	];
+	var bufferedUpdates = [];
 
 	function getState() {
 		var state = { objects: [] };
@@ -25,8 +26,16 @@ define([
 	}
 
 	function tick(t) {
+		var time = now();
 		for(var i = 0; i < objects.length; i++) {
-			objects[i].tick(t);
+			var update = objects[i].tick(t);
+			if(update) {
+				bufferedUpdates.push({
+					messageType: 'object-update',
+					update: update,
+					time: time
+				});
+			}
 		}
 		if((frame++) % 30 === 0) {
 			Connection.sendToAll({
@@ -34,6 +43,10 @@ define([
 				time: now(),
 				state: getState()
 			});
+		}
+		if(bufferedUpdates.length > 0) {
+			Connection.sendToAll(bufferedUpdates);
+			bufferedUpdates = [];
 		}
 	}
 

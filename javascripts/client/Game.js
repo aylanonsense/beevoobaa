@@ -9,9 +9,8 @@ define([
 	Pinger,
 	Zombie
 ) {
-	var storedMessages = [];
 	var objects = [];
-	var updatesToApply = [];
+	var bufferedMessages = [];
 
 	function setState(state) {
 		for(var i = 0; i < state.objects.length; i++) {
@@ -41,24 +40,33 @@ define([
 		}
 
 		//apply updates that have been buffered
-		var updatesToCheckOff = 0;
-		for(i = 0; i < updatesToApply.length; i++) {
-			var update = updatesToApply[i];
-			//if the update is relevant now, apply it
-			if(prevTime - 1000 / 60 < update.time && update.time <= time) {
-				setState(update.state);
-				updatesToCheckOff++;
+		var numMessagesToRemove = 0;
+		for(i = 0; i < bufferedMessages.length; i++) {
+			var msg = bufferedMessages[i];
+			//if the msg is relevant now, apply it
+			if(prevTime - 1000 / 60 < msg.time && msg.time <= time) {
+				if(msg.messageType === 'game-state') {
+					setState(msg.state);
+				}
+				else if(msg.messageType == 'object-update') {
+					for(var j = 0; j < objects.length; j++) {
+						if(objects[j].id === msg.update.id) {
+							objects[j].receiveUpdate(msg.update);
+						}
+					}
+				}
+				numMessagesToRemove++;
 			}
 			//if it occurs in the future, the rest must also occur in the future
-			else if(update.time > time) {
+			else if(msg.time > time) {
 				break;
 			}
 			//otherwise it's dated, so don't apply it and get rid of it
 			else {
-				updatesToCheckOff++;
+				numMessagesToRemove++;
 			}
 		}
-		updatesToApply = updatesToApply.slice(updatesToCheckOff, updatesToApply.length);
+		bufferedMessages = bufferedMessages.slice(numMessagesToRemove, bufferedMessages.length);
 	}
 
 	function render(ctx) {
@@ -72,8 +80,8 @@ define([
 	}
 
 	function onReceive(msg, time) {
-		if(msg.messageType === 'game-state') {
-			updatesToApply.push(msg);
+		if(msg.messageType === 'game-state' || msg.messageType === 'object-update') {
+			bufferedMessages.push(msg);
 			return true;
 		}
 		return false;

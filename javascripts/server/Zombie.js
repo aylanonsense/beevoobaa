@@ -17,6 +17,8 @@ define(function() {
 		};
 	};
 	Zombie.prototype.tick = function(t) {
+		var changedDirection = false;
+
 		//the zombie decides where it wants to go
 		if(this._moveFramesLeft <= 0) {
 			this._moveFramesLeft = 30 + Math.floor(120 * Math.random());
@@ -25,6 +27,7 @@ define(function() {
 			else if(r < 0.5) { this.moveDir = 'SOUTH'; }
 			else if(r < 0.75) { this.moveDir = 'EAST'; }
 			else { this.moveDir = 'WEST'; }
+			changedDirection = true;
 		}
 		else {
 			this._moveFramesLeft--;
@@ -39,6 +42,10 @@ define(function() {
 		else if(this.x > 700) { this.x = 700; }
 		if(this.y < 100) { this.y = 100; }
 		else if(this.y > 500) { this.y = 500; }
+
+		if(changedDirection) {
+			return this.getState();
+		}
 	};
 	return Zombie;
 });
