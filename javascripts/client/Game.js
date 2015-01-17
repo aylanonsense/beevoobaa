@@ -9,7 +9,9 @@ define([
 	Pinger,
 	Zombie
 ) {
+	var storedMessages = [];
 	var objects = [];
+	var updatesToApply = [];
 
 	function setState(state) {
 		for(var i = 0; i < state.objects.length; i++) {
@@ -33,10 +35,30 @@ define([
 		}
 	}
 
-	function tick(t, time) {
+	function tick(t, time, prevTime) {
 		for(var i = 0; i < objects.length; i++) {
-			objects[i].tick(t);
+			objects[i].tick(t, time);
 		}
+
+		//apply updates that have been buffered
+		var updatesToCheckOff = 0;
+		for(i = 0; i < updatesToApply.length; i++) {
+			var update = updatesToApply[i];
+			//if the update is relevant now, apply it
+			if(prevTime - 1000 / 60 < update.time && update.time <= time) {
+				setState(update.state);
+				updatesToCheckOff++;
+			}
+			//if it occurs in the future, the rest must also occur in the future
+			else if(update.time > time) {
+				break;
+			}
+			//otherwise it's dated, so don't apply it and get rid of it
+			else {
+				updatesToCheckOff++;
+			}
+		}
+		updatesToApply = updatesToApply.slice(updatesToCheckOff, updatesToApply.length);
 	}
 
 	function render(ctx) {
@@ -49,11 +71,9 @@ define([
 		console.log("Connected!");
 	}
 
-	function onReceive(msg) {
-		var time = Pinger.getClientTime();
+	function onReceive(msg, time) {
 		if(msg.messageType === 'game-state') {
-			setState(msg.state);
-			Pinger.logThing(msg);
+			updatesToApply.push(msg);
 			return true;
 		}
 		return false;

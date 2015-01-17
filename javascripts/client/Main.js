@@ -20,8 +20,11 @@ requirejs([
 	//add network listeners
 	Connection.onConnected(Game.onConnected);
 	Connection.onReceive(function(msg) {
-		if(!Pinger.onReceive(msg) && !Game.onReceive(msg)) {
-			throw new Error("Unsure how to handle '" + msg.messageType + "' message");
+		if(!Pinger.onReceive(msg)) {
+			var time = Pinger.getClientTime();
+			if(!Game.onReceive(msg, time)) {
+				throw new Error("Unsure how to handle '" + msg.messageType + "' message");
+			}
 		}
 	});
 	Connection.onDisconnected(Game.onDisconnected);
@@ -54,18 +57,19 @@ requirejs([
 		//use game time to advance simulation
 		if(gameTime === null || prevGameTime === null) {
 			//game is starting up, nothing is happening
+			prevGameTime = gameTime;
 		}
 		else if(gameTime <= prevGameTime) {
 			//game stuttered, don't update anything
 		}
 		else if(gameTime - prevGameTime > 50) {
 			//game is moving too fast (3 frames per frame), pace it over a couple of frames
-			Game.tick(50 / 1000, prevGameTime + 50);
+			Game.tick(50 / 1000, prevGameTime + 50, prevGameTime);
 			prevGameTime += 50;
 		}
 		else {
 			//game is moving normally
-			Game.tick((gameTime - prevGameTime) / 1000, gameTime);
+			Game.tick((gameTime - prevGameTime) / 1000, gameTime, prevGameTime);
 			prevGameTime = gameTime;
 		}
 		render();

@@ -21,21 +21,24 @@ define(function() {
 		if(this._moveFramesLeft <= 0) {
 			this._moveFramesLeft = 30 + Math.floor(120 * Math.random());
 			var r = Math.random();
-			if(r < 0.2) { this.moveDir = 'NORTH'; }
-			else if(r < 0.4) { this.moveDir = 'SOUTH'; }
-			else if(r < 0.6) { this.moveDir = 'EAST'; }
-			else if(r < 0.8) { this.moveDir = 'WEST'; }
-			else { this.moveDir = null; }
+			if(r < 0.25) { this.moveDir = 'NORTH'; }
+			else if(r < 0.5) { this.moveDir = 'SOUTH'; }
+			else if(r < 0.75) { this.moveDir = 'EAST'; }
+			else { this.moveDir = 'WEST'; }
 		}
 		else {
 			this._moveFramesLeft--;
 		}
 
 		//then it moves
-		if(this.moveDir === 'NORTH') { this.y -= 10 * t; }
-		else if(this.moveDir === 'SOUTH') { this.y += 10 * t; }
-		else if(this.moveDir === 'EAST') { this.x += 10 * t; }
-		else if(this.moveDir === 'WEST') { this.x -= 10 * t; }
+		if(this.moveDir === 'NORTH') { this.y -= 150 * t; }
+		else if(this.moveDir === 'SOUTH') { this.y += 150 * t; }
+		else if(this.moveDir === 'EAST') { this.x += 150 * t; }
+		else if(this.moveDir === 'WEST') { this.x -= 150 * t; }
+		if(this.x < 100) { this.x = 100; }
+		else if(this.x > 700) { this.x = 700; }
+		if(this.y < 100) { this.y = 100; }
+		else if(this.y > 500) { this.y = 500; }
 	};
 	return Zombie;
 });

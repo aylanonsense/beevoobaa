@@ -150,14 +150,6 @@ define([
 	}
 
 	return {
-		logThing: function(thing) {
-			console.log("GOT   msg-time=" + Math.floor(thing.time) +
-				"   client-time=" + Math.floor(getClientTime()) +
-				"   diff=" + Math.floor(thing.time - getClientTime()) +
-				"   delay=" + Math.floor(clientEnforcedDelay) +
-				"   time-offset=" + Math.floor(serverTimeOffset.min) + " to " +
-				Math.ceil(serverTimeOffset.max));
-		},
 		tick: tick,
 		onReceive: onReceive,
 		render: render,
