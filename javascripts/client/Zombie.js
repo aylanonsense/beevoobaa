@@ -11,10 +11,10 @@ define(function() {
 		this.moveDir = update.moveDir;
 	};
 	Zombie.prototype.tick = function(t) {
-		if(this.moveDir === 'NORTH') { this.y -= 150 * t; }
-		else if(this.moveDir === 'SOUTH') { this.y += 150 * t; }
-		else if(this.moveDir === 'EAST') { this.x += 150 * t; }
-		else if(this.moveDir === 'WEST') { this.x -= 150 * t; }
+		if(this.moveDir === 'NORTH') { this.y -= 75 * t; }
+		else if(this.moveDir === 'SOUTH') { this.y += 75 * t; }
+		else if(this.moveDir === 'EAST') { this.x += 75 * t; }
+		else if(this.moveDir === 'WEST') { this.x -= 75 * t; }
 		if(this.x < 100) { this.x = 100; }
 		else if(this.x > 700) { this.x = 700; }
 		if(this.y < 100) { this.y = 100; }

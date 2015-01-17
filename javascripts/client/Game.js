@@ -2,11 +2,13 @@ define([
 	'client/Constants',
 	'client/net/Connection',
 	'client/Pinger',
+	'client/Human',
 	'client/Zombie'
 ], function(
 	Constants,
 	Connection,
 	Pinger,
+	Human,
 	Zombie
 ) {
 	var objects = [];
@@ -25,6 +27,9 @@ define([
 			if(!objectAlreadyExists) {
 				if(state.objects[i].objectType === 'Zombie') {
 					objects.push(new Zombie(state.objects[i]));
+				}
+				else if(state.objects[i].objectType === 'Human') {
+					objects.push(new Human(state.objects[i]));
 				}
 				else {
 					throw new Error("Unsure how to create '" +
@@ -93,7 +98,18 @@ define([
 	}
 
 	function onKeyboardEvent(evt, keyboard) {
-		//TODO
+		var dir = { MOVE_UP: 'NORTH', MOVE_DOWN: 'SOUTH',
+					MOVE_LEFT: 'WEST', MOVE_RIGHT: 'EAST' }[evt.gameKey];
+		if(dir) {
+			if(!evt.isDown) {
+				if(keyboard.MOVE_UP) { dir = 'NORTH'; }
+				else if(keyboard.MOVE_DOWN) { dir = 'SOUTH'; }
+				else if(keyboard.MOVE_LEFT) { dir = 'WEST'; }
+				else if(keyboard.MOVE_RIGHT) { dir = 'EAST'; }
+				else { dir = null; }
+			}
+			Connection.send({ messageType: 'change-player-dir', dir: dir });
+		}
 	}
 
 	function onMouseEvent(evt) {

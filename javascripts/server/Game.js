@@ -1,15 +1,18 @@
 define([
 	'server/Constants',
 	'server/net/Connection',
+	'server/Human',
 	'server/Zombie',
 	'performance-now'
 ], function(
 	Constants,
 	Connection,
+	Human,
 	Zombie,
 	now
 ) {
 	var frame = 0;
+	var humans = {};
 	var objects = [
 		new Zombie({ x: 400, y: 300 }),
 		new Zombie({ x: 450, y: 300 }),
@@ -56,6 +59,9 @@ define([
 			time: now(),
 			state: getState()
 		});
+		var human = new Human({ x: 400, y: 300 });
+		humans[player.id] = human;
+		objects.push(human);
 	}
 
 	function onReceive(player, msg) {
@@ -63,6 +69,15 @@ define([
 			Connection.sendTo(player, {
 				messageType: 'ping-response',
 				pingId: msg.pingId,
+				time: now()
+			});
+		}
+		else if(msg.messageType === 'change-player-dir') {
+			var human = humans[player.id];
+			human.changeDir(msg.dir);
+			bufferedUpdates.push({
+				messageType: 'object-update',
+				update: human.getState(),
 				time: now()
 			});
 		}
