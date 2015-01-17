@@ -5,11 +5,13 @@ requirejs.config({ baseUrl: '/', paths: { jquery: '/client/lib/jquery' } });
 requirejs([
 	'jquery',
 	'client/Constants',
+	'client/Pinger',
 	'client/net/Connection',
 	'client/Game'
 ], function(
 	$,
 	Constants,
+	Pinger,
 	Connection,
 	Game
 ) {
@@ -17,7 +19,11 @@ requirejs([
 
 	//add network listeners
 	Connection.onConnected(Game.onConnected);
-	Connection.onReceive(Game.onReceive);
+	Connection.onReceive(function(msg) {
+		if(!Pinger.onReceive(msg) && !Game.onReceive(msg)) {
+			throw new Error("Unsure how to handle '" + msg.messageType + "' message");
+		}
+	});
 	Connection.onDisconnected(Game.onDisconnected);
 	Connection.connect();
 
@@ -36,10 +42,32 @@ requirejs([
 	$('#game-canvas').on('mousemove mouseup mousedown', Game.onMouseEvent);
 
 	//set up the game loop
+	var prevGameTime = null;
 	var prevTimestamp = performance.now();
 	function loop(timestamp) {
-		Game.tick(Math.min(timestamp - prevTimestamp, 100) / 1000);
+		//get game time
+		var t = Math.min(timestamp - prevTimestamp, 100) / 1000;
 		prevTimestamp = timestamp;
+		Pinger.tick(t);
+		var gameTime = Pinger.getClientTime();
+
+		//use game time to advance simulation
+		if(gameTime === null || prevGameTime === null) {
+			//game is starting up, nothing is happening
+		}
+		else if(gameTime <= prevGameTime) {
+			//game stuttered, don't update anything
+		}
+		else if(gameTime - prevGameTime > 50) {
+			//game is moving too fast (3 frames per frame), pace it over a couple of frames
+			Game.tick(50 / 1000, prevGameTime + 50);
+			prevGameTime += 50;
+		}
+		else {
+			//game is moving normally
+			Game.tick((gameTime - prevGameTime) / 1000, gameTime);
+			prevGameTime = gameTime;
+		}
 		render();
 		requestAnimationFrame(loop);
 	}
@@ -47,6 +75,7 @@ requirejs([
 		ctx.fillStyle = '#222';
 		ctx.fillRect(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
 		Game.render(ctx);
+		Pinger.render(ctx);
 	}
 
 	//kick off the game loop

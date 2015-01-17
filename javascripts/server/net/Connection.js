@@ -1,17 +1,20 @@
 define([
 	'server/net/Player',
 	'shared/Constants',
-	'shared/Utils'
+	'shared/Utils',
+	'performance-now'
 ], function(
 	Player,
 	SharedConstants,
-	SharedUtils
+	SharedUtils,
+	now
 ) {
 	var socketServer = null;
 	var onConnectedCallbacks = [];
 	var onDisconnectedCallbacks = [];
 	var onReceiveCallbacks = [];
-	var delayedByFakeLag = null;
+	var sendsDelayedByFakeLag = [];
+	var receivesDelayedByFakeLag = [];
 
 	//public methods
 	function onConnected(callback) { //callback(player)
@@ -24,18 +27,70 @@ define([
 		onDisconnectedCallbacks.push(callback);
 	}
 	function sendTo(player, msg) {
-		player.socket.emit('message', msg);
+		if(SharedConstants.FAKE_LAG) {
+			sendsDelayedByFakeLag.push({
+				func: 'sendTo',
+				to: player,
+				msg: msg,
+				sendTime: now() + SharedUtils.generateFakeLag() / 2
+			});
+			if(sendsDelayedByFakeLag.length === 1) {
+				scheduleSendTimer();
+			}
+		}
+		else {
+			player.socket.emit('message', msg);
+		}
 	}
 	function sendToEach(players, msg) {
-		for(var i = 0; i < players.length; i++) {
-			sendTo(players[i], msg);
+		if(SharedConstants.FAKE_LAG) {
+			sendsDelayedByFakeLag.push({
+				func: 'sendToEach',
+				to: players,
+				msg: msg,
+				sendTime: now() + SharedUtils.generateFakeLag() / 2
+			});
+			if(sendsDelayedByFakeLag.length === 1) {
+				scheduleSendTimer();
+			}
+		}
+		else {
+			for(var i = 0; i < players.length; i++) {
+				sendTo(players[i], msg);
+			}
 		}
 	}
 	function sendToAll(msg) {
-		socketServer.emit('message', msg);
+		if(SharedConstants.FAKE_LAG) {
+			sendsDelayedByFakeLag.push({
+				func: 'sendToAll',
+				to: null,
+				msg: msg,
+				sendTime: now() + SharedUtils.generateFakeLag() / 2
+			});
+			if(sendsDelayedByFakeLag.length === 1) {
+				scheduleSendTimer();
+			}
+		}
+		else {
+			socketServer.emit('message', msg);
+		}
 	}
 	function sendToAllExcept(player, msg) {
-		player.socket.broadcast('message', msg);
+		if(SharedConstants.FAKE_LAG) {
+			sendsDelayedByFakeLag.push({
+				func: 'sendToAllExcept',
+				to: player,
+				msg: msg,
+				sendTime: now() + SharedUtils.generateFakeLag() / 2
+			});
+			if(sendsDelayedByFakeLag.length === 1) {
+				scheduleSendTimer();
+			}
+		}
+		else {
+			player.socket.broadcast('message', msg);
+		}
 	}
 
 	//methods intended to only be used in app.js
@@ -46,20 +101,13 @@ define([
 		var player = new Player(socket);
 		socket.on('message', function(msg) {
 			if(SharedConstants.FAKE_LAG) {
-				if(delayedByFakeLag) {
-					delayedByFakeLag.push({ player: player, msg: msg });
-				}
-				else {
-					delayedByFakeLag = [ { player: player, msg: msg } ];
-					setTimeout(function() {
-						for(var i = 0; i < delayedByFakeLag.length; i++) {
-							for(var j = 0; j < onReceiveCallbacks.length; j++) {
-								onReceiveCallbacks[j](delayedByFakeLag[i].player,
-									delayedByFakeLag[i].msg);
-							}
-						}
-						delayedByFakeLag = null;
-					}, SharedUtils.generateFakeLag());
+				receivesDelayedByFakeLag.push({
+					msg: msg,
+					player: player,
+					receiveTime: now() + SharedUtils.generateFakeLag() / 2
+				});
+				if(receivesDelayedByFakeLag.length === 1) {
+					scheduleReceiveTimer();
 				}
 			}
 			else {
@@ -76,6 +124,40 @@ define([
 		for(var i = 0; i < onConnectedCallbacks.length; i++) {
 			onConnectedCallbacks[i](player);
 		}
+	}
+	function scheduleSendTimer() {
+		setTimeout(function() {
+			var func = sendsDelayedByFakeLag[0].func;
+			var msg = sendsDelayedByFakeLag[0].msg;
+			var to = sendsDelayedByFakeLag[0].to;
+			sendsDelayedByFakeLag.shift();
+			if(func === 'sendTo') {
+				to.socket.emit('message', msg);
+			}
+			else if(func === 'sendToAll') {
+				socketServer.emit('message', msg);
+			}
+			else if(func === 'sendToAllExcept') {
+				to.socket.broadcast('message', msg);
+			}
+			else if(func === 'sendToEach') {
+				for(var i = 0; i < to.length; i++) {
+					to[i].socket.emit('message', msg);
+				}
+			}
+			if(sendsDelayedByFakeLag.length > 0) { scheduleSendTimer(); }
+		}, Math.max(0, Math.floor(sendsDelayedByFakeLag[0].sendTime - now())));
+	}
+	function scheduleReceiveTimer() {
+		setTimeout(function() {
+			var player = receivesDelayedByFakeLag[0].player;
+			var msg = receivesDelayedByFakeLag[0].msg;
+			receivesDelayedByFakeLag.shift();
+			for(var i = 0; i < onReceiveCallbacks.length; i++) {
+				onReceiveCallbacks[i](player, msg);
+			}
+			if(receivesDelayedByFakeLag.length > 0) { scheduleReceiveTimer(); }
+		}, Math.max(0, Math.floor(receivesDelayedByFakeLag[0].receiveTime - now())));
 	}
 
 	return {

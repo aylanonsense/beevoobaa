@@ -10,8 +10,11 @@ define({
 		else if(r < 0.95) {
 			return Math.floor(40 + 50 * Math.random());
 		}
-		else {
+		else if(r < 0.98) {
 			return Math.floor(120 + 120 * Math.random());
+		}
+		else {
+			return Math.floor(150 + 250 * Math.random());
 		}
 	}
 });

@@ -5,11 +5,12 @@ define([
 	SharedConstants,
 	SharedUtils
 ) {
+	var socket = null;
 	var onConnectedCallbacks = [];
 	var onReceiveCallbacks = [];
 	var onDisconnectedCallbacks = [];
-	var socket = null;
-	var delayedByFakeLag = null;
+	var sendsDelayedByFakeLag = [];
+	var receivesDelayedByFakeLag = [];
 
 	//public methods
 	function onConnected(callback) { //callback()
@@ -22,7 +23,18 @@ define([
 		onDisconnectedCallbacks.push(callback);
 	}
 	function send(msg) {
-		socket.emit('message', msg);
+		if(SharedConstants.FAKE_LAG) {
+			sendsDelayedByFakeLag.push({
+				msg: msg,
+				sendTime: performance.now() + SharedUtils.generateFakeLag() / 2
+			});
+			if(sendsDelayedByFakeLag.length === 1) {
+				scheduleSendTimer();
+			}
+		}
+		else {
+			socket.emit('message', msg);
+		}
 	}
 	function connect() {
 		socket = io();
@@ -34,19 +46,12 @@ define([
 		});
 		socket.on('message', function(msg) {
 			if(SharedConstants.FAKE_LAG) {
-				if(delayedByFakeLag) {
-					delayedByFakeLag.push(msg);
-				}
-				else {
-					delayedByFakeLag = [ msg ];
-					setTimeout(function() {
-						for(var i = 0; i < delayedByFakeLag.length; i++) {
-							for(var j = 0; j < onReceiveCallbacks.length; j++) {
-								onReceiveCallbacks[j](delayedByFakeLag[i]);
-							}
-						}
-						delayedByFakeLag = null;
-					}, SharedUtils.generateFakeLag());
+				receivesDelayedByFakeLag.push({
+					msg: msg,
+					receiveTime: performance.now() + SharedUtils.generateFakeLag() / 2
+				});
+				if(receivesDelayedByFakeLag.length === 1) {
+					scheduleReceiveTimer();
 				}
 			}
 			else {
@@ -60,6 +65,21 @@ define([
 				onDisconnectedCallbacks[i]();
 			}
 		});
+	}
+	function scheduleSendTimer() {
+		setTimeout(function() {
+			socket.emit('message', sendsDelayedByFakeLag.shift().msg);
+			if(sendsDelayedByFakeLag.length > 0) { scheduleSendTimer(); }
+		}, Math.max(0, Math.floor(sendsDelayedByFakeLag[0].sendTime - performance.now())));
+	}
+	function scheduleReceiveTimer() {
+		setTimeout(function() {
+			var msg = receivesDelayedByFakeLag.shift().msg;
+			for(var i = 0; i < onReceiveCallbacks.length; i++) {
+				onReceiveCallbacks[i](msg);
+			}
+			if(receivesDelayedByFakeLag.length > 0) { scheduleReceiveTimer(); }
+		}, Math.max(0, Math.floor(receivesDelayedByFakeLag[0].receiveTime - performance.now())));
 	}
 
 	return {

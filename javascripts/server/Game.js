@@ -1,11 +1,13 @@
 define([
 	'server/Constants',
 	'server/net/Connection',
-	'server/Zombie'
+	'server/Zombie',
+	'performance-now'
 ], function(
 	Constants,
 	Connection,
-	Zombie
+	Zombie,
+	now
 ) {
 	var frame = 0;
 	var objects = [
@@ -27,17 +29,29 @@ define([
 			objects[i].tick(t);
 		}
 		if((frame++) % 30 === 0) {
-			Connection.sendToAll({ messageType: 'game-state', state: getState() });
+			Connection.sendToAll({
+				messageType: 'game-state',
+				time: now(),
+				state: getState()
+			});
 		}
 	}
 
 	function onConnected(player) {
-		Connection.sendTo(player, { messageType: 'game-state', state: getState() });
+		Connection.sendTo(player, {
+			messageType: 'game-state',
+			time: now(),
+			state: getState()
+		});
 	}
 
 	function onReceive(player, msg) {
 		if(msg.messageType === 'ping') {
-			Connection.sendTo(player, { messageType: 'ping-response', pingId: msg.pingId });
+			Connection.sendTo(player, {
+				messageType: 'ping-response',
+				pingId: msg.pingId,
+				time: now()
+			});
 		}
 	}
 

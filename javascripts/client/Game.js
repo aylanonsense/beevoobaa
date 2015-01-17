@@ -1,14 +1,14 @@
 define([
 	'client/Constants',
 	'client/net/Connection',
+	'client/Pinger',
 	'client/Zombie'
 ], function(
 	Constants,
 	Connection,
+	Pinger,
 	Zombie
 ) {
-	var timeToNextPing = 1.00;
-	var pings = [];
 	var objects = [];
 
 	function setState(state) {
@@ -33,13 +33,7 @@ define([
 		}
 	}
 
-	function tick(t) {
-		timeToNextPing -= t;
-		if(timeToNextPing <= 0) {
-			pings.push({ sent: performance.now(), received: null });
-			Connection.send({ messageType: 'ping', pingId: pings.length - 1 });
-			timeToNextPing += 1.00;
-		}
+	function tick(t, time) {
 		for(var i = 0; i < objects.length; i++) {
 			objects[i].tick(t);
 		}
@@ -49,17 +43,6 @@ define([
 		for(var i = 0; i < objects.length; i++) {
 			objects[i].render(ctx);
 		}
-		ctx.fillStyle = '#ff0';
-		ctx.font = "10px Lucida Console";
-		var x = Constants.CANVAS_WIDTH - 10;
-		for(i = pings.length - 1; i >= 0 && x > 10; i--) {
-			x -= 20;
-			if(pings[i].received !== null) {
-				var t = pings[i].received - pings[i].sent;
-				ctx.fillRect(x, Constants.CANVAS_HEIGHT - 20 - t, 16, t);
-				ctx.fillText(Math.floor(t), x, Constants.CANVAS_HEIGHT - 10);
-			}
-		}
 	}
 
 	function onConnected() {
@@ -67,15 +50,13 @@ define([
 	}
 
 	function onReceive(msg) {
+		var time = Pinger.getClientTime();
 		if(msg.messageType === 'game-state') {
 			setState(msg.state);
+			Pinger.logThing(msg);
+			return true;
 		}
-		else if(msg.messageType === 'ping-response') {
-			pings[msg.pingId].received= performance.now();
-		}
-		else {
-			throw new Error("Unsure how to handle '" + msg.messageType + "' message");
-		}
+		return false;
 	}
 
 	function onDisconnected() {

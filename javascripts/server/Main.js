@@ -1,11 +1,13 @@
 define([
 	'server/Constants',
 	'server/net/Connection',
-	'server/Game'
+	'server/Game',
+	'performance-now'
 ], function(
 	Constants,
 	Connection,
-	Game
+	Game,
+	now
 ) {
 	return function() {
 		//add network listeners
@@ -14,8 +16,11 @@ define([
 		Connection.onDisconnected(Game.onDisconnected);
 
 		//kick off the game loop
+		var prevTimestamp = now();
 		setInterval(function() {
-			Game.tick(1 / Constants.TARGET_FRAME_RATE);
+			var timestamp = now();
+			Game.tick((timestamp - prevTimestamp) / 1000);
+			prevTimestamp = timestamp;
 		}, 1000 / Constants.TARGET_FRAME_RATE);
 	};
 });
