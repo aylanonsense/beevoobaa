@@ -3,45 +3,46 @@ define([
 	'client/net/Connection',
 	'client/Pinger',
 	'client/Human',
+	'client/entity/Ball',
 	'client/Zombie'
 ], function(
 	Constants,
 	Connection,
 	Pinger,
 	Human,
+	Ball,
 	Zombie
 ) {
-	var objects = [];
+	var entities = [];
 	var bufferedMessages = [];
 
 	function setState(state) {
-		for(var i = 0; i < state.objects.length; i++) {
-			var objectAlreadyExists = false;
-			for(var j = 0; j < objects.length; j++) {
-				if(state.objects[i].id === objects[j].id) {
-					objects[j].receiveUpdate(state.objects[i]);
-					objectAlreadyExists = true;
+		for(var i = 0; i < state.entities.length; i++) {
+			//update existing entity
+			var entityAlreadyExists = false;
+			for(var j = 0; j < entities.length; j++) {
+				if(state.entities[i].id === entities[j].id) {
+					entities[j].setState(state.entities[i]);
+					entityAlreadyExists = true;
 					break;
 				}
 			}
-			if(!objectAlreadyExists) {
-				if(state.objects[i].objectType === 'Zombie') {
-					objects.push(new Zombie(state.objects[i]));
-				}
-				else if(state.objects[i].objectType === 'Human') {
-					objects.push(new Human(state.objects[i]));
+			//create new entity
+			if(!entityAlreadyExists) {
+				if(state.entities[i].entityType === 'Ball') {
+					entities.push(new Ball(state.entities[i]));
 				}
 				else {
 					throw new Error("Unsure how to create '" +
-						state.objects[i].objectType + "' object");
+						state.entities[i].entityType + "' entity");
 				}
 			}
 		}
 	}
 
 	function tick(t, time, prevTime) {
-		for(var i = 0; i < objects.length; i++) {
-			objects[i].tick(t, time);
+		for(var i = 0; i < entities.length; i++) {
+			entities[i].tick(t, time);
 		}
 
 		//apply updates that have been buffered
@@ -53,12 +54,15 @@ define([
 				if(msg.messageType === 'game-state') {
 					setState(msg.state);
 				}
-				else if(msg.messageType == 'object-update') {
-					for(var j = 0; j < objects.length; j++) {
-						if(objects[j].id === msg.update.id) {
-							objects[j].receiveUpdate(msg.update);
+				/*else if(msg.messageType == 'object-update') {
+					for(var j = 0; j < entities.length; j++) {
+						if(entities[j].id === msg.update.id) {
+							entities[j].receiveUpdate(msg.update);
 						}
 					}
+				}*/
+				else {
+					throw new Error("Unsure how to handle message '" + msg.messageType + "'");
 				}
 				numMessagesToRemove++;
 			}
@@ -75,8 +79,8 @@ define([
 	}
 
 	function render(ctx) {
-		for(var i = 0; i < objects.length; i++) {
-			objects[i].render(ctx);
+		for(var i = 0; i < entities.length; i++) {
+			entities[i].render(ctx);
 		}
 	}
 
@@ -94,7 +98,7 @@ define([
 
 	function onDisconnected() {
 		console.log("Disconnected!");
-		objects = [];
+		entities = [];
 	}
 
 	function onKeyboardEvent(evt, keyboard) {

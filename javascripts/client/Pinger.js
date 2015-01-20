@@ -1,9 +1,11 @@
 define([
 	'client/Constants',
-	'client/net/Connection'
+	'client/net/Connection',
+	'client/Clock'
 ], function(
 	Constants,
-	Connection
+	Connection,
+	Clock
 ) {
 	var SECONDS_BETWEEN_PINGS = 1.00;
 	var NEXT_PING_ID = 0;
@@ -32,7 +34,7 @@ define([
 			var now = performance.now();
 			for(var i = 0; i < pings.length; i++) {
 				if(pings[i].pingId === msg.pingId) {
-					//found the correct ping
+					//we got a response to one of our pings
 					pings[i].received = now;
 					var lag = pings[i].received - pings[i].sent;
 					var reportedServerTime = msg.time;
@@ -40,15 +42,25 @@ define([
 					var maxServerTime = reportedServerTime + lag;
 
 					//see if we can't gain a better estimate of server time
+					var offsetChanged = false;
 					var minServerTimeOffset = Math.min(now - minServerTime, now - maxServerTime);
 					var maxServerTimeOffset = Math.max(now - minServerTime, now - maxServerTime);
 					if(serverTimeOffset.min === null ||
 						serverTimeOffset.min < minServerTimeOffset) {
 						serverTimeOffset.min = minServerTimeOffset;
+						offsetChanged = true;
 					}
 					if(serverTimeOffset.max === null ||
 						serverTimeOffset.max > maxServerTimeOffset) {
 						serverTimeOffset.max = maxServerTimeOffset;
+						offsetChanged = true;
+					}
+
+					//if we have a better estimate of server time, update the game clock
+					if(offsetChanged) {
+						var offset = serverTimeOffset.min +
+							0.5 * (serverTimeOffset.max - serverTimeOffset.min);
+						Clock.setServerTimeOffset(-offset);
 					}
 
 					//may need to increase/decrease delay depending on lag
@@ -72,16 +84,19 @@ define([
 
 		//the worst latencies are ignored (15% of messages will come in late)
 		var idealDelay = latencies[Math.min(3, pings.length - 1)] + 3; //buffer ms added
+		var delayChanged = false;
 
 		//if we don't have an enforced delay yet, this is the best estimate to use
 		if(clientEnforcedDelay === null) {
 			clientEnforcedDelay = idealDelay;
 			pingsSinceDelayLowered = 0;
+			delayChanged = true;
 		}
 		//if the network slowed down we can safely adopt the new delay -- client will stutter
 		else if(clientEnforcedDelay <= idealDelay) {
 			clientEnforcedDelay = idealDelay;
 			pingsSinceDelayLowered = 0;
+			delayChanged = true;
 		}
 		//if the client's network got better, we might not trust that it will stay good
 		else {
@@ -89,7 +104,13 @@ define([
 			var gains = Math.sqrt(clientEnforcedDelay - idealDelay); //we undervalue huge gains
 			if(gains * pingsSinceDelayLowered > 50) {
 				clientEnforcedDelay = idealDelay;
+				delayChanged = true;
 			}
+		}
+
+		//if we changed the delay, the game clock needs to be updated
+		if(delayChanged) {
+			Clock.setClientTimeOffset(-clientEnforcedDelay);
 		}
 	}
 

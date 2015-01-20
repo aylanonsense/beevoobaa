@@ -2,44 +2,37 @@ define([
 	'server/Constants',
 	'server/net/Connection',
 	'server/Human',
-	'server/Zombie',
+	'server/entity/Ball',
 	'performance-now'
 ], function(
 	Constants,
 	Connection,
 	Human,
-	Zombie,
+	Ball,
 	now
 ) {
 	var frame = 0;
 	var humans = {};
-	var objects = [
-		new Zombie({ x: 400, y: 300 }),
-		new Zombie({ x: 450, y: 300 }),
-		new Zombie({ x: 350, y: 300 })
+	var entities = [
+		new Ball({ radius: 50, x: 300, y: 300, vel: { x: 100, y: 100 } })
 	];
 	var bufferedUpdates = [];
 
 	function getState() {
-		var state = { objects: [] };
-		for(var i = 0; i < objects.length; i++) {
-			state.objects.push(objects[i].getState());
+		var state = { entities: [] };
+		for(var i = 0; i < entities.length; i++) {
+			state.entities.push(entities[i].getState());
 		}
 		return state;
 	}
 
 	function tick(t) {
 		var time = now();
-		for(var i = 0; i < objects.length; i++) {
-			var update = objects[i].tick(t);
-			if(update) {
-				bufferedUpdates.push({
-					messageType: 'object-update',
-					update: update,
-					time: time
-				});
-			}
+		for(var i = 0; i < entities.length; i++) {
+			entities[i].tick(t);
 		}
+
+		//send out hte full game state every 0.5 seconds
 		if((frame++) % 30 === 0) {
 			Connection.sendToAll({
 				messageType: 'game-state',
@@ -47,6 +40,8 @@ define([
 				state: getState()
 			});
 		}
+
+		//send any buffered messages
 		if(bufferedUpdates.length > 0) {
 			Connection.sendToAll(bufferedUpdates);
 			bufferedUpdates = [];
@@ -59,9 +54,6 @@ define([
 			time: now(),
 			state: getState()
 		});
-		var human = new Human({ x: 400, y: 300 });
-		humans[player.id] = human;
-		objects.push(human);
 	}
 
 	function onReceive(player, msg) {
@@ -69,15 +61,6 @@ define([
 			Connection.sendTo(player, {
 				messageType: 'ping-response',
 				pingId: msg.pingId,
-				time: now()
-			});
-		}
-		else if(msg.messageType === 'change-player-dir') {
-			var human = humans[player.id];
-			human.changeDir(msg.dir);
-			bufferedUpdates.push({
-				messageType: 'object-update',
-				update: human.getState(),
 				time: now()
 			});
 		}
