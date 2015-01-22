@@ -1,13 +1,13 @@
 define([
 	'server/Constants',
 	'server/net/Connection',
-	'server/Human',
+	'server/entity/Player',
 	'server/entity/Ball',
 	'performance-now'
 ], function(
 	Constants,
 	Connection,
-	Human,
+	PlayerEntity,
 	Ball,
 	now
 ) {
@@ -32,12 +32,15 @@ define([
 			entities[i].tick(t);
 		}
 
-		//send out hte full game state every 0.5 seconds
+		//send out the full game state every 0.5 seconds
 		if((frame++) % 30 === 0) {
-			Connection.sendToAll({
-				messageType: 'game-state',
-				time: now(),
-				state: getState()
+			Connection.forEach(function(player) {
+				Connection.sendTo(player, {
+					messageType: 'game-state',
+					time: time,
+					state: getState(),
+					playerEntityId: player.gameData.entityId
+				});
 			});
 		}
 
@@ -49,10 +52,14 @@ define([
 	}
 
 	function onConnected(player) {
+		var entity = new PlayerEntity({ x: 200, y: 200, width: 50, height: 70 });
+		entities.push(entity);
+		player.gameData.entityId = entity.id;
 		Connection.sendTo(player, {
 			messageType: 'game-state',
 			time: now(),
-			state: getState()
+			state: getState(),
+			playerEntityId: player.gameData.entityId
 		});
 	}
 

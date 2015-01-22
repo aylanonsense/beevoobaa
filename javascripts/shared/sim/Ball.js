@@ -4,7 +4,6 @@ define([
 	SharedConstants
 ) {
 	function Ball(params) {
-		params = params || {};
 		this.x = params.x || 0;
 		this.y = params.y || 0;
 		this.radius = params.radius || 0;

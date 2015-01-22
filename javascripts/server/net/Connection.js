@@ -9,6 +9,7 @@ define([
 	SharedUtils,
 	now
 ) {
+	var players = [];
 	var socketServer = null;
 	var onConnectedCallbacks = [];
 	var onDisconnectedCallbacks = [];
@@ -25,6 +26,11 @@ define([
 	}
 	function onDisconnected(callback) { //callback(player)
 		onDisconnectedCallbacks.push(callback);
+	}
+	function forEach(callback) {
+		for(var i = 0; i < players.length; i++) {
+			callback(players[i]);
+		}
 	}
 	function sendTo(player, msg) {
 		if(SharedConstants.FAKE_LAG) {
@@ -128,6 +134,7 @@ define([
 				onDisconnectedCallbacks[i](player);
 			}
 		});
+		players.push(player);
 		for(var i = 0; i < onConnectedCallbacks.length; i++) {
 			onConnectedCallbacks[i](player);
 		}
@@ -178,6 +185,7 @@ define([
 		onConnected: onConnected,
 		onReceive: onReceive,
 		onDisconnected: onDisconnected,
+		forEach: forEach,
 		sendTo: sendTo,
 		sendToEach: sendToEach,
 		sendToAll: sendToAll,

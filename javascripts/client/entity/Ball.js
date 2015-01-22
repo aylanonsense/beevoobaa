@@ -1,43 +1,23 @@
 define([
-	'client/Clock',
-	'shared/sim/Ball'
+	'client/entity/PredictiveEntity',
+	'shared/sim/Ball',
+	'client/Clock'
 ], function(
-	Clock,
-	BallSim
+	SUPERCLASS,
+	BallSim,
+	Clock
 ) {
 	function Ball(params) {
-		this.id = params.id;
-		this._actual = new BallSim(params);
-		this._displayed = new BallSim(params);
-		this._predicted = new BallSim(params);
-		this._predictFutureState();
+		SUPERCLASS.call(this, BallSim, params);
 	}
-	Ball.prototype._predictFutureState = function() {
-		this._predicted.setState(this._actual.getState());
-		var serverReceiveTime = Clock.getServerReceiveTime();
-		var clientTime = Clock.getClientTime();
-		if(serverReceiveTime !== null && clientTime !== null) {
-			//fast forward the predicted state at an effective 60 FPS
-			var time = Math.abs(serverReceiveTime - clientTime) / 1000;
-			for(var t = time; t > 0; t -= 1 / 60) {
-				this._predicted.tick(Math.min(t, 1 / 60));
-			}
-		}
-	};
-	Ball.prototype.setState = function(state) {
-		this._actual.setState(state);
-		this._predictFutureState();
-	};
-	Ball.prototype.tick = function(t) {
-		this._displayed.tick(t);
-		this._actual.tick(t);
-		this._predictFutureState();
-	};
+	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype.render = function(ctx) {
+		SUPERCLASS.prototype.render.call(this, ctx);
+
 		//draw blue ball to represent the client's displayed ball
 		ctx.fillStyle = '#05f';
 		ctx.beginPath();
-		ctx.arc(this._displayed.x, this._displayed.y, this._displayed.radius, 0, 2 * Math.PI);
+		ctx.arc(this._client.x, this._client.y, this._client.radius, 0, 2 * Math.PI);
 		ctx.fill();
 
 		//draw red outline to represent server-side values
@@ -54,6 +34,5 @@ define([
 		ctx.arc(this._predicted.x, this._predicted.y, this._predicted.radius, 0, 2 * Math.PI);
 		ctx.stroke();
 	};
-
 	return Ball;
 });

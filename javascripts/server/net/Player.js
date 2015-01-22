@@ -3,6 +3,7 @@ define(function() {
 	function Player(socket) {
 		this.id = NEXT_PLAYER_ID++;
 		this.socket = socket;
+		this.gameData = {};
 	}
 	Player.prototype.sameAs = function(player) {
 		return player && player.id === this.id;
