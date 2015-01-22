@@ -17,6 +17,16 @@ define([
 	var minGameTimeDiff = null;
 	var maxGameTimeDiff = null;
 
+	function reset() {
+		serverTimeOffset = { min: null, max: null };
+		clientEnforcedDelay = null;
+		pingsSinceDelayLowered = 0;
+		timeToNextPing = SECONDS_BETWEEN_PINGS;
+		pings = [];
+		minGameTimeDiff = null;
+		maxGameTimeDiff = null;
+	}
+
 	function tick(t) {
 		timeToNextPing -= t;
 		if(timeToNextPing <= 0) {
@@ -171,6 +181,7 @@ define([
 	}
 
 	return {
+		reset: reset,
 		tick: tick,
 		onReceive: onReceive,
 		render: render,

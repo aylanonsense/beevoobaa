@@ -15,6 +15,12 @@ define([
 	var entities = [];
 	var bufferedMessages = [];
 
+	function reset() {
+		player = null;
+		entities = [];
+		bufferedMessages = [];
+	}
+
 	function setState(state) {
 		for(var i = 0; i < state.entities.length; i++) {
 			//update existing entity
@@ -111,7 +117,6 @@ define([
 
 	function onDisconnected() {
 		console.log("Disconnected!");
-		entities = [];
 	}
 
 	function onKeyboardEvent(evt, keyboard) {
@@ -132,6 +137,7 @@ define([
 	}
 
 	return {
+		reset: reset,
 		tick: tick,
 		render: render,
 		onReceive: onReceive,

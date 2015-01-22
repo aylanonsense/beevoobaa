@@ -52,6 +52,7 @@ define([
 	}
 
 	function onConnected(player) {
+		console.log("Player " + player.id + " connected!");
 		var entity = new PlayerEntity({ x: 200, y: 200, width: 50, height: 70 });
 		entities.push(entity);
 		player.gameData.entityId = entity.id;
@@ -74,7 +75,7 @@ define([
 	}
 
 	function onDisconnected(player) {
-		//TODO
+		console.log("Player " + player.id + " disconnected!");
 	}
 
 	return {

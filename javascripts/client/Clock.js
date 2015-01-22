@@ -2,21 +2,30 @@ define(function() {
 	var serverTimeOffset = null;
 	var clientAdditionalTimeOffset = null;
 
+	function reset() {
+		serverTimeOffset = null;
+		clientAdditionalTimeOffset = null;
+	}
+
 	function getServerTime() {
 		if(serverTimeOffset === null) { return null; }
 		return performance.now() + serverTimeOffset;
 	}
+
 	function setServerTimeOffset(offset) {
 		serverTimeOffset = offset;
 	}
+
 	function getClientTime() {
 		if(serverTimeOffset === null) { return null; }
 		if(clientAdditionalTimeOffset === null) { return null; }
 		return performance.now() + serverTimeOffset + clientAdditionalTimeOffset;
 	}
+
 	function setClientTimeOffset(offset) {
 		clientAdditionalTimeOffset = offset;
 	}
+
 	function getServerReceiveTime() {
 		var serverTime = getServerTime();
 		var clientTime = getClientTime();
@@ -27,6 +36,7 @@ define(function() {
 	}
 
 	return {
+		reset: reset,
 		getClientTime: getClientTime,
 		setClientTimeOffset: setClientTimeOffset,
 		getServerTime: getServerTime,

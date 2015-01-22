@@ -6,12 +6,14 @@ requirejs([
 	'jquery',
 	'client/Constants',
 	'client/Pinger',
+	'client/Clock',
 	'client/net/Connection',
 	'client/Game'
 ], function(
 	$,
 	Constants,
 	Pinger,
+	Clock,
 	Connection,
 	Game
 ) {
@@ -27,7 +29,12 @@ requirejs([
 			}
 		}
 	});
-	Connection.onDisconnected(Game.onDisconnected);
+	Connection.onDisconnected(function() {
+		Game.onDisconnected();
+		Game.reset();
+		Pinger.reset();
+		Clock.reset();
+	});
 	Connection.connect();
 
 	//add input listeners
