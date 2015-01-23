@@ -9,7 +9,7 @@ define(function() {
 
 	function getServerTime() {
 		if(serverTimeOffset === null) { return null; }
-		return performance.now() + serverTimeOffset;
+		return performance.now() - serverTimeOffset;
 	}
 
 	function setServerTimeOffset(offset) {
@@ -19,7 +19,7 @@ define(function() {
 	function getClientTime() {
 		if(serverTimeOffset === null) { return null; }
 		if(clientAdditionalTimeOffset === null) { return null; }
-		return performance.now() + serverTimeOffset + clientAdditionalTimeOffset;
+		return performance.now() - serverTimeOffset - clientAdditionalTimeOffset;
 	}
 
 	function setClientTimeOffset(offset) {

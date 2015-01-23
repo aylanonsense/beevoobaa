@@ -1,19 +1,19 @@
 define([
 	'server/Constants',
-	'server/net/Connection',
+	'server/net/Server',
 	'server/Game',
 	'performance-now'
 ], function(
 	Constants,
-	Connection,
+	Server,
 	Game,
 	now
 ) {
 	return function() {
 		//add network listeners
-		Connection.onConnected(Game.onConnected);
-		Connection.onReceive(Game.onReceive);
-		Connection.onDisconnected(Game.onDisconnected);
+		Server.onConnected(Game.onConnected);
+		Server.onReceive(Game.onReceive);
+		Server.onDisconnected(Game.onDisconnected);
 
 		//kick off the game loop
 		var prevTimestamp = now();
