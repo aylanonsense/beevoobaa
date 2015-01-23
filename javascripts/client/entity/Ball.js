@@ -22,7 +22,7 @@ define([
 
 		//draw red outline to represent server-side values
 		ctx.strokeStyle = '#f00';
-		ctx.lineWidth = 2;
+		ctx.lineWidth = 4;
 		ctx.beginPath();
 		ctx.arc(this._actual.x, this._actual.y, this._actual.radius, 0, 2 * Math.PI);
 		ctx.stroke();

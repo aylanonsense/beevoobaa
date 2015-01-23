@@ -57,16 +57,25 @@ define([
 		bufferedMessages.push({ conn: conn, msg: msg });
 	}
 
+	function bufferSendToAll(msg) {
+		forEach(function(conn) {
+			bufferedMessages.push({ conn: conn, msg: msg });
+		});
+	}
+
 	function flush() {
-		for(var i = 0; i < connections.length; i++) {
-			var messages = bufferedMessages.filter(function(obj) {
-				return obj.conn.id === connections[i].id;
-			});
-			if(messages.length > 0) {
-				send(connections[i], messages.map(function(obj) {
-					return obj.msg;
-				}));
+		if(bufferedMessages.length > 0) {
+			for(var i = 0; i < connections.length; i++) {
+				var messages = bufferedMessages.filter(function(obj) {
+					return obj.conn.id === connections[i].id;
+				});
+				if(messages.length > 0) {
+					send(connections[i], messages.map(function(obj) {
+						return obj.msg;
+					}));
+				}
 			}
+			bufferedMessages = [];
 		}
 	}
 
@@ -154,6 +163,7 @@ define([
 		send: send,
 		sendToAll: sendToAll,
 		bufferSend: bufferSend,
+		bufferSendToAll: bufferSendToAll,
 		flush: flush,
 		handleSocket: handleSocket
 	};

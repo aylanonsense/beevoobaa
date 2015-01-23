@@ -1,16 +1,27 @@
 define([
+	'client/net/Connection',
 	'client/entity/Player',
 	'client/entity/Ball'
 ], function(
+	Connection,
 	Player,
 	Ball
 ) {
-	var player = null;
+	var myPlayer = null;
 	var entities = [];
 
 	function reset() {
-		player = null;
+		myPlayer = null;
 		entities = [];
+	}
+
+	function getEntityById(id) {
+		for(var i = 0; i < entities.length; i++) {
+			if(entities[i].id === id) {
+				return entities[i];
+			}
+		}
+		return null;
 	}
 
 	function setState(state) {
@@ -45,6 +56,7 @@ define([
 		for(var i = 0; i < entities.length; i++) {
 			entities[i].tick(t, time);
 		}
+		Connection.flush();
 	}
 
 	function render(ctx) {
@@ -61,16 +73,23 @@ define([
 		if(msg.messageType === 'game-state') {
 			setState(msg.state);
 
-			/*//the server may have granted us ownership of an entity
+			//the server may have granted us ownership of an entity
 			if(typeof msg.playerEntityId === 'number') {
-				player = null;
+				myPlayer = null;
 				for(var j = 0; j < entities.length; j++) {
 					if(entities[j].id === msg.playerEntityId) {
-						player = entities[j];
+						myPlayer = entities[j];
 						break;
 					}
 				}
-			}*/
+			}
+			return true;
+		}
+		else if(msg.messageType === 'entity-update') {
+			var entity = getEntityById(msg.state.id);
+			if(entity) {
+				entity.setState(msg.state);
+			}
 			return true;
 		}
 		return false;
@@ -81,16 +100,16 @@ define([
 	}
 
 	function onKeyboardEvent(evt, keyboard) {
-		/*if(player) {
+		if(myPlayer) {
 			if(evt.gameKey === 'MOVE_LEFT') {
-				if(evt.isDown) { player.setMoveDir(-1); }
-				else { player.setMoveDir(keyboard.MOVE_RIGHT ? 1 : 0); }
+				if(evt.isDown) { myPlayer.setMoveDir(-1); }
+				else { myPlayer.setMoveDir(keyboard.MOVE_RIGHT ? 1 : 0); }
 			}
 			else if(evt.gameKey === 'MOVE_RIGHT') {
-				if(evt.isDown) { player.setMoveDir(1); }
-				else { player.setMoveDir(keyboard.MOVE_LEFT ? -1 : 0); }
+				if(evt.isDown) { myPlayer.setMoveDir(1); }
+				else { myPlayer.setMoveDir(keyboard.MOVE_LEFT ? -1 : 0); }
 			}
-		}*/
+		}
 	}
 
 	function onMouseEvent(evt) {

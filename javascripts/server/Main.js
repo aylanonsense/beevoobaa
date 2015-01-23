@@ -12,7 +12,15 @@ define([
 	return function() {
 		//add network listeners
 		Server.onConnected(Game.onConnected);
-		Server.onReceive(Game.onReceive);
+		Server.onReceive(function(conn, msg) {
+			msg = msg || {};
+			if(msg.messageType === 'ping') {
+				Server.send(conn, { messageType: 'ping-response', pingId: msg.pingId, time: now() });
+			}
+			else if(!Game.onReceive(conn, msg)) {
+				console.log("Unsure how to handle '" + msg.messageType + "' message from " + conn.id);
+			}
+		});
 		Server.onDisconnected(Game.onDisconnected);
 
 		//kick off the game loop

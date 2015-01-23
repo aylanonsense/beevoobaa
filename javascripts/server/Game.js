@@ -27,28 +27,30 @@ define([
 			});
 			timeToNextSendState += SECONDS_BETWEEN_SEND_STATES;
 		}
+
+		//flush all buffered messages
+		Server.flush();
 	}
 
 	function onConnected(conn) {
 		console.log("Player " + conn.id + " connected!");
 		var player = new Player({ x: 200, y: 200, width: 50, height: 70 });
 		entities.push(player);
-		conn.gameData.playerId = player.id;
+		conn.gameData.playerEntity = player;
 		sendState(conn);
 	}
 
 	function onReceive(conn, msg) {
-		msg = msg || {};
-		if(msg.messageType === 'ping') {
-			Server.send(conn, {
-				messageType: 'ping-response',
-				pingId: msg.pingId,
-				time: now()
-			});
+		if(msg.messageType === 'player-action') {
+			console.log("Received player action with " + Math.floor(msg.time - now()) + "ms to spare");
+			if(msg.action === 'change-dir') {
+				if(conn.gameData.playerEntity) {
+					conn.gameData.playerEntity.setMoveDir(msg.dir);
+				}
+			}
+			return true;
 		}
-		else {
-			console.log("Unsure how to handle '" + msg.messageType + "' message");
-		}
+		return false;
 	}
 
 	function onDisconnected(conn) {
@@ -69,7 +71,7 @@ define([
 			messageType: 'game-state',
 			time: now(),
 			state: getState(),
-			playerId: conn.gameData.playerId
+			playerEntityId: conn.gameData.playerEntity.id
 		});
 	}
 

@@ -35,11 +35,11 @@ requirejs([
 		if(!Pinger.onReceive(msg)) {
 			var time = Clock.getClientTime();
 			if(time === null) {
-				console.log("Message arrived from server pre-sync (so it was ignored)", msg);
+				//console.log("Message arrived from server pre-sync (so it was ignored)", msg);
 			}
 			else if(time > msg.time) {
-				console.log("Message arrived from server " + Math.ceil(time - msg.time) +
-					"ms too late (so it was ignored)", msg);
+				//console.log("Message arrived from server " + Math.ceil(time - msg.time) +
+				//	"ms too late (so it was ignored)", msg);
 			}
 			else {
 				bufferedMessages.push(msg);
@@ -81,7 +81,8 @@ requirejs([
 			}
 			//otherwise it's dated, but how could that have happened?
 			else {
-				throw new Error("How did an old message make it into the bufferedMessages array?");
+				console.error("How did an old message make it into the bufferedMessages array?", msg);
+				numMessagesToRemove++;
 			}
 		}
 		if(numMessagesToRemove > 0) {
