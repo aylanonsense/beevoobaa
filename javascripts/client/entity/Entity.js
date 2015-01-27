@@ -3,14 +3,14 @@ define([
 ], function(
 	Clock
 ) {
-	function PredictiveEntity(SimClass, params) {
+	function Entity(SimClass, params) {
 		this.id = params.id;
 		this._actual = new SimClass(params);
 		this._client = new SimClass(params);
 		this._predicted = new SimClass(params);
 		this._predictFutureState();
 	}
-	PredictiveEntity.prototype._predictFutureState = function() {
+	Entity.prototype._predictFutureState = function() {
 		this._predicted.setState(this._actual.getState());
 		var serverReceiveTime = Clock.getServerReceiveTime();
 		var clientTime = Clock.getClientTime();
@@ -22,15 +22,15 @@ define([
 			}
 		}
 	};
-	PredictiveEntity.prototype.setState = function(state) {
+	Entity.prototype.setState = function(state) {
 		this._actual.setState(state);
 		this._predictFutureState();
 	};
-	PredictiveEntity.prototype.tick = function(t) {
+	Entity.prototype.tick = function(t) {
 		this._client.tick(t);
 		this._actual.tick(t);
 		this._predictFutureState();
 	};
-	PredictiveEntity.prototype.render = function(ctx) {};
-	return PredictiveEntity;
+	Entity.prototype.render = function(ctx) {};
+	return Entity;
 });

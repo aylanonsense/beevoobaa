@@ -43,10 +43,8 @@ define([
 	function onReceive(conn, msg) {
 		if(msg.messageType === 'player-action') {
 			console.log("Received player action with " + Math.floor(msg.time - now()) + "ms to spare");
-			if(msg.action === 'change-dir') {
-				if(conn.gameData.playerEntity) {
-					conn.gameData.playerEntity.setMoveDir(msg.dir);
-				}
+			if(conn.gameData.playerEntity) {
+				conn.gameData.playerEntity.handleAction(msg);
 			}
 			return true;
 		}

@@ -75,10 +75,14 @@ define([
 
 			//the server may have granted us ownership of an entity
 			if(typeof msg.playerEntityId === 'number') {
+				if(myPlayer !== null) {
+					myPlayer.setPlayerControl(false);
+				}
 				myPlayer = null;
 				for(var j = 0; j < entities.length; j++) {
 					if(entities[j].id === msg.playerEntityId) {
 						myPlayer = entities[j];
+						myPlayer.setPlayerControl(true);
 						break;
 					}
 				}

@@ -1,4 +1,10 @@
-define(function() {
+define([
+	'server/net/Server',
+	'performance-now'
+], function(
+	Server,
+	now
+) {
 	var NEXT_ENTITY_ID = 0;
 	function Entity(entityType, SimClass, params) {
 		this.id = NEXT_ENTITY_ID++;
@@ -13,6 +19,13 @@ define(function() {
 	};
 	Entity.prototype.tick = function(t) {
 		this._sim.tick(t);
+	};
+	Entity.prototype.sendUpdate = function() {
+		Server.bufferSendToAll({
+			messageType: 'entity-update',
+			time: now(),
+			state: this.getState()
+		});
 	};
 	return Entity;
 });

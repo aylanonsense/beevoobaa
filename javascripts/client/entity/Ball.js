@@ -1,10 +1,12 @@
 define([
-	'client/entity/PredictiveEntity',
+	'client/entity/Entity',
 	'shared/sim/Ball',
+	'client/Constants',
 	'client/Clock'
 ], function(
 	SUPERCLASS,
 	BallSim,
+	Constants,
 	Clock
 ) {
 	function Ball(params) {
@@ -21,18 +23,22 @@ define([
 		ctx.fill();
 
 		//draw red outline to represent server-side values
-		ctx.strokeStyle = '#f00';
-		ctx.lineWidth = 4;
-		ctx.beginPath();
-		ctx.arc(this._actual.x, this._actual.y, this._actual.radius, 0, 2 * Math.PI);
-		ctx.stroke();
+		if(Constants.DEBUG_RENDER_SERVER_OUTLINES) {
+			ctx.strokeStyle = '#f00';
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.arc(this._actual.x, this._actual.y, this._actual.radius, 0, 2 * Math.PI);
+			ctx.stroke();
+		}
 
 		//draw yellow outline to represent predicted state by the time the server receives input
-		ctx.strokeStyle = '#fb0';
-		ctx.lineWidth = 2;
-		ctx.beginPath();
-		ctx.arc(this._predicted.x, this._predicted.y, this._predicted.radius, 0, 2 * Math.PI);
-		ctx.stroke();
+		if(Constants.DEBUG_RENDER_PREDICTION_OUTLINES) {
+			ctx.strokeStyle = '#fb0';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.arc(this._predicted.x, this._predicted.y, this._predicted.radius, 0, 2 * Math.PI);
+			ctx.stroke();
+		}
 	};
 	return Ball;
 });
