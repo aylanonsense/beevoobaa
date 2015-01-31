@@ -59,17 +59,17 @@ define([
 		if(action.actionType === 'change-dir') {
 			//if we are asked to move right, move right
 			if(action.dir > 0) {
+				this._stopAtX = null;
 				if(this._sim.moveDir <= 0) {
 					this._sim.moveDir = 1;
-					this._stopAtX = null;
 					this.sendUpdate();
 				}
 			}
 			//if we are asked to move left, move left
 			else if(action.dir < 0) {
+				this._stopAtX = null;
 				if(this._sim.moveDir >= 0) {
 					this._sim.moveDir = -1;
-					this._stopAtX = null;
 					this.sendUpdate();
 				}
 			}

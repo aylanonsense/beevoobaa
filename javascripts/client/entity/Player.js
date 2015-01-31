@@ -83,6 +83,13 @@ define([
 		if(!this._isPlayerControlled) {
 			this._client.moveDir = this._actual.moveDir;
 		}
+		if(this._isPlayerControlled) {
+			//player may need to be snapped back
+			if(Math.abs(this._client.x - this._predicted.x) > 75) {
+				this._client.x = this._predicted.x;
+				this._client.moveDir = this._predicted.moveDir;
+			}
+		}
 	};
 	Player.prototype.setMoveDir = function(dir) {
 		if(this._client.moveDir !== dir) {
