@@ -9,6 +9,7 @@ define([
 		this.width = params.width || 0;
 		this.height = params.height || 0;
 		this.moveDir = params.moveDir || 0;
+		this.moveSpeed = 50;
 		this.vel = {
 			x: params.vel && params.vel.x || 0,
 			y: params.vel && params.vel.y || 0
@@ -38,8 +39,8 @@ define([
 		this.vel.y += 50 * t;
 
 		//movement
-		if(this.moveDir > 0) { this.vel.x = 50; }
-		else if(this.moveDir < 0) { this.vel.x = -50; }
+		if(this.moveDir > 0) { this.vel.x = this.moveSpeed; }
+		else if(this.moveDir < 0) { this.vel.x = -this.moveSpeed; }
 		else { this.vel.x = 0; }
 
 		//apply velocity

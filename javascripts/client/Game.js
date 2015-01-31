@@ -25,6 +25,9 @@ define([
 	}
 
 	function setState(state) {
+		entities = entities.filter(function(entity) {
+			return state.living.indexOf(entity.id) >= 0;
+		});
 		for(var i = 0; i < state.entities.length; i++) {
 			//update existing entity
 			var entityAlreadyExists = false;
