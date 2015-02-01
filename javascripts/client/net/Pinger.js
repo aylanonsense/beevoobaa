@@ -14,6 +14,7 @@ define([
 	var pingsSinceDelayLowered = 0;
 	var serverTimeOffset = { min: null, max: null };
 	var clientEnforcedDelay = null;
+	var recentPackets = [];
 
 	function reset() {
 		timeToNextPing = SECONDS_BETWEEN_PINGS;
@@ -123,7 +124,7 @@ define([
 			return ping.received - ping.sent;
 		}));
 		var barX = x + width;
-		var barWidth = width / NUM_CACHED_PINGS;
+		var barWidth = (width - 40) / NUM_CACHED_PINGS;
 		for(var i = pings.length - 1; i >= 0; i--) {
 			barX -= barWidth;
 			if(pings[i].received !== null) {
@@ -139,16 +140,52 @@ define([
 			ctx.strokeStyle = '#ff0';
 			ctx.lineWidth = 2;
 			ctx.beginPath();
-			ctx.moveTo(x, y + (height - 10) * (1 - clientEnforcedDelay / maxLag));
+			ctx.moveTo(x + 40, y + (height - 10) * (1 - clientEnforcedDelay / maxLag));
 			ctx.lineTo(x + width, y + (height - 10) * (1 - clientEnforcedDelay / maxLag));
 			ctx.stroke();
 		}
+
+		//draw ping text
+		ctx.font = "11px Lucida Console";
+		var totalLag = 0;
+		var numPings = 0;
+		for(var i = 0; i < pings.length; i++) {
+			if(pings[i].received !== null) {
+				numPings++;
+				totalLag += pings[i].received - pings[i].sent;
+			}
+		}
+		if(numPings > 0) {
+			ctx.fillStyle = '#fff';
+			ctx.fillText(Math.round(totalLag / numPings) + "ms", x, y + 7);
+		}
+		if(clientEnforcedDelay !== null) {
+			ctx.fillStyle = '#ff0';
+			ctx.fillText(Math.round(clientEnforcedDelay) + "ms", x, y + 21);
+		}
+		if(recentPackets.length > 0) {
+			var numLatePackets = recentPackets.filter(function(packet) {
+				return packet.success;
+			}).length;
+			ctx.fillStyle = '#f06';
+			ctx.fillText((Math.round(1000 * numLatePackets / recentPackets.length) / 10) +
+				"%", x, y + 35);
+		}
+	}
+
+	function recordPacketReceive(success) {
+		var time = performance.now();
+		recentPackets.push({ success: success, time: time });
+		recentPackets = recentPackets.filter(function(packet) {
+			return packet.time + 8000 > time;
+		});
 	}
 
 	return {
 		reset: reset,
 		tick: tick,
 		onReceive: onReceive,
+		recordPacketReceive: recordPacketReceive,
 		render: render
 	};
 });

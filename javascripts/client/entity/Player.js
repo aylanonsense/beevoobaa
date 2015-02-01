@@ -46,13 +46,13 @@ define([
 				this._client.moveDir = 1;
 				//might need to be sped up to reach the actual position
 				this._client.moveSpeed = this._actual.moveSpeed *
-					(this._client.x < this._actual.x - 5 ? NETWORK_SPEED_BOOST_PERCENT : 1.00);
+					(this._client.x < this._actual.x - 3 ? NETWORK_SPEED_BOOST_PERCENT : 1.00);
 			}
 			else if(this._client.x > this._actual.x) {
 				this._client.moveDir = -1;
 				//might need to be sped up to reach the actual position
 				this._client.moveSpeed = this._actual.moveSpeed *
-					(this._client.x > this._actual.x + 5 ? NETWORK_SPEED_BOOST_PERCENT : 1.00);
+					(this._client.x > this._actual.x + 3 ? NETWORK_SPEED_BOOST_PERCENT : 1.00);
 			}
 			else {
 				this._client.moveDir = this._actual.moveDir;
@@ -88,6 +88,13 @@ define([
 			if(Math.abs(this._client.x - this._predicted.x) > 75) {
 				this._client.x = this._predicted.x;
 				this._client.moveDir = this._predicted.moveDir;
+			}
+		}
+		else {
+			//other players may need to be snapped back too
+			if(Math.abs(this._client.x - this._actual.x) > 50) {
+				this._client.x = this._actual.x;
+				this._client.moveDir = this._actual.moveDir;
 			}
 		}
 	};

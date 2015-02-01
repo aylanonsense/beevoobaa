@@ -38,10 +38,12 @@ requirejs([
 				//console.log("Message arrived from server pre-sync (so it was ignored)", msg);
 			}
 			else if(time > msg.time) {
+				Pinger.recordPacketReceive(false);
 				//console.log("Message arrived from server " + Math.ceil(time - msg.time) +
 				//	"ms too late (so it was ignored)", msg);
 			}
 			else {
+				Pinger.recordPacketReceive(true);
 				bufferedMessages.push(msg);
 			}
 		}
@@ -128,8 +130,8 @@ requirejs([
 		ctx.fillStyle = '#222';
 		ctx.fillRect(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
 		Game.render(ctx);
-		Pinger.render(ctx, Constants.CANVAS_WIDTH - 300 - 10,
-			Constants.CANVAS_HEIGHT - 50 - 10, 300, 50);
+		Pinger.render(ctx, Constants.CANVAS_WIDTH - 350 - 10,
+			Constants.CANVAS_HEIGHT - 75 - 10, 350, 75);
 	}
 
 	function reset() {
