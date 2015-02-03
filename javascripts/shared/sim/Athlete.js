@@ -11,6 +11,12 @@ define([
 			y: params.vel && params.vel.y || 0
 		};
 
+		//task vars
+		this.currentTask = null;
+		this.currentTaskDetails = null;
+		this.queuedTask = null;
+		this.queuedTaskDetails = null;
+
 		//movement vars
 		this.waypointX = null;
 		this.waypointMoveDir = null;
@@ -40,6 +46,22 @@ define([
 		this.waypointMoveDir = state.waypointMoveDir;
 	};
 	Athlete.prototype.tick = function(t) {
+		//possibly move onto the next task
+		if(this.currentTask === null && this.queuedTask !== null) {
+			this.currentTask = queuedTask;
+			this.currentTaskDetails = queuedTaskDetails;
+			this.queuedTask = null;
+			this.queuedTaskDetails = null;
+		}
+
+		//handle task
+		if(this.currentTask === 'jump') {
+			if(this.bottom === SharedConstants.BOUNDS.FLOOR && this.vel.y >= 0) {
+				this.vel.y = -200;
+				this.currentTask = null;
+			}
+		}
+
 		//gravity
 		this.vel.y += 200 * t;
 
@@ -91,12 +113,35 @@ define([
 		if(action.actionType === 'change-dir') {
 			return { resultType: 'move-to-waypoint', dir: action.dir, x: action.x };
 		}
+		else if(action.actionType === 'jump') {
+			return { resultType: 'queue-task', task: 'jump', details: {} };
+		}
 		return null;
 	};
 	Athlete.prototype.applyResult = function(result) {
 		if(result.resultType === 'move-to-waypoint') {
 			this.waypointX = result.x;
 			this.waypointMoveDir = result.dir;
+		}
+		else if(result.resultType === 'queue-task') {
+			this.queueTask(result.task, result.details);
+		}
+	};
+	Athlete.prototype.isReadyForTask = function(task, details) {
+		if(task === 'charge-jump') {
+			return this.bottom === SharedConstants.BOUNDS.FLOOR &&
+				this.vel.y >= 0 && this.currentTask === null;
+		}
+		return false;
+	};
+	Athlete.prototype.queueTask = function(task, details) {
+		if(this.currentTask === null) {
+			this.currentTask = task;
+			this.currentTaskDetails = details;
+		}
+		else {
+			this.queuedTask = task;
+			this.queuedTaskDetails = details;
 		}
 	};
 

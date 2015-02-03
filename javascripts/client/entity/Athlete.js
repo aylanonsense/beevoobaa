@@ -16,18 +16,23 @@ define([
 	}
 	Athlete.prototype = Object.create(SUPERCLASS.prototype);
 	Athlete.prototype.onKeyboardEvent = function(evt, keyboard) {
-		//may be trying to change direction
-		var dir = null;
-		if(evt.gameKey === 'MOVE_LEFT') {
-			if(evt.isDown) { dir = -1; }
-			else { dir = (keyboard.MOVE_RIGHT ? 1 : 0); }
+		if(evt.gameKey === 'JUMP' && evt.isDown) {
+			this.processAction({ actionType: 'jump' });
 		}
-		else if(evt.gameKey === 'MOVE_RIGHT') {
-			if(evt.isDown) { dir = 1; }
-			else { dir = (keyboard.MOVE_LEFT ? -1 : 0); }
-		}
-		if(dir !== null) {
-			this.processAction({ actionType: 'change-dir', dir: dir, x: this._clientSim.x });
+		else {
+			//may be trying to change direction
+			var dir = null;
+			if(evt.gameKey === 'MOVE_LEFT') {
+				if(evt.isDown) { dir = -1; }
+				else { dir = (keyboard.MOVE_RIGHT ? 1 : 0); }
+			}
+			else if(evt.gameKey === 'MOVE_RIGHT') {
+				if(evt.isDown) { dir = 1; }
+				else { dir = (keyboard.MOVE_LEFT ? -1 : 0); }
+			}
+			if(dir !== null) {
+				this.processAction({ actionType: 'change-dir', dir: dir, x: this._clientSim.x });
+			}
 		}
 	};
 	Athlete.prototype.render = function(ctx) {
