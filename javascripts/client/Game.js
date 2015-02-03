@@ -25,7 +25,7 @@ define([
 	}
 
 	function onConnected() {
-		console.log("Connected!");
+		// console.log("Connected!");
 	}
 
 	function onReceive(msg, msLate) {
@@ -80,7 +80,7 @@ define([
 	}
 
 	function onDisconnected() {
-		console.log("Disconnected!");
+		// console.log("Disconnected!");
 	}
 
 	function onKeyboardEvent(evt, keyboard) {

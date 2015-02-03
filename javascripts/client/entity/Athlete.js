@@ -11,13 +11,24 @@ define([
 	Connection,
 	Clock
 ) {
+	var INPUT_BUFFER_TIME = 5.5 / 60;
 	function Athlete(params) {
 		SUPERCLASS.call(this, AthleteSim, params);
+		this._bufferedTask = null;
+		this._bufferedTaskDetails = null;
+		this._bufferedTaskTimeRemaining = null;
 	}
 	Athlete.prototype = Object.create(SUPERCLASS.prototype);
 	Athlete.prototype.onKeyboardEvent = function(evt, keyboard) {
-		if(evt.gameKey === 'JUMP' && evt.isDown) {
-			this.processAction({ actionType: 'jump' });
+		if(evt.gameKey === 'JUMP') {
+			if(evt.isDown) {
+				this._bufferedTask = 'prepare-jump';
+				this._bufferedTaskTimeRemaining = null;
+			}
+			else {
+				this._bufferedTask = 'jump';
+				this._bufferedTaskTimeRemaining = INPUT_BUFFER_TIME;
+			}
 		}
 		else {
 			//may be trying to change direction
@@ -34,6 +45,28 @@ define([
 				this.processAction({ actionType: 'change-dir', dir: dir, x: this._clientSim.x });
 			}
 		}
+	};
+	Athlete.prototype.tick = function(t) {
+		//when the buffered input can be performed, queue it up and send out the action
+		if(this._bufferedTask !== null &&
+			this._clientSim.isReadyForTask(this._bufferedTask, this._bufferedTaskDetails)) {
+			this.processAction({
+				actionType: this._bufferedTask,
+				details: this._bufferedTaskDetails
+			});
+		}
+
+		//if it takes too long to apply, it becomes unbuffered
+		if(this._bufferedTaskTimeRemaining !== null) {
+			this._bufferedTaskTimeRemaining -= t;
+			if(this._bufferedTaskTimeRemaining <= 0) {
+				this._bufferedTask = null;
+				this._bufferedTaskDetails = null;
+				this._bufferedTaskTimeRemaining = null;
+			}
+		}
+
+		SUPERCLASS.prototype.tick.call(this, t);
 	};
 	Athlete.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);
