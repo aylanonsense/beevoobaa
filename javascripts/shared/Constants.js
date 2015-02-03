@@ -1,5 +1,5 @@
 define({
-	FAKE_LAG: 400,
+	FAKE_LAG: 300,
 	BOUNDS: {
 		FLOOR: 350,
 		CEILING: 50,

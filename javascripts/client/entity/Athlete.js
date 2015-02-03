@@ -61,5 +61,8 @@ define([
 				this._futureSim.width, this._futureSim.height);
 		}
 	};
+	Athlete.prototype.checkForInconsistentResults = function(result, predictedResult) {
+		//TODO
+	};
 	return Athlete;
 });

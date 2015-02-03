@@ -77,7 +77,7 @@ define([
 	Entity.prototype.setState = function(state) {
 		this._serverSim.setState(state);
 		this._predictFutureState();
-		if(this._outOfSync) {
+		if(this._outOfSync && !this._isPlayerControlled) {
 			this._outOfSync = false;
 			if(this._isPlayerControlled) {
 				this._clientSim.setState(this._futureSim.getState());
