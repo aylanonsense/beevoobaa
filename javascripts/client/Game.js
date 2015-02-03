@@ -1,20 +1,99 @@
 define([
-	'client/net/Connection',
-	'client/entity/Player',
-	'client/entity/Ball'
+	'client/entity/Athlete'
 ], function(
-	Connection,
-	Player,
-	Ball
+	Athlete
 ) {
-	var myPlayer = null;
+	var MILLISECONDS_LATE_ALLOWED = 65;
+	var myAthlete = null;
 	var entities = [];
 
 	function reset() {
-		myPlayer = null;
+		myAthlete = null;
 		entities = [];
 	}
 
+	function tick(t, time, prevTime) {
+		for(var i = 0; i < entities.length; i++) {
+			entities[i].tick(t, time);
+		}
+	}
+
+	function render(ctx) {
+		for(var i = 0; i < entities.length; i++) {
+			entities[i].render(ctx);
+		}
+	}
+
+	function onConnected() {
+		console.log("Connected!");
+	}
+
+	function onReceive(msg, msLate) {
+		var isLate = (msLate > MILLISECONDS_LATE_ALLOWED);
+		var entity;
+		if(msg.messageType === 'game-state') {
+			if(!isLate) {
+				setState(msg);
+
+				//the server may have granted us ownership of an entity
+				if(typeof msg.athleteId === 'number') {
+					if(myAthlete !== null) {
+						myAthlete.setPlayerControl(false);
+					}
+					myAthlete = null;
+					for(var j = 0; j < entities.length; j++) {
+						if(entities[j].id === msg.athleteId) {
+							myAthlete = entities[j];
+							myAthlete.setPlayerControl(true);
+							break;
+						}
+					}
+				}
+			}
+			return true;
+		}
+		else if(msg.messageType === 'entity-update') {
+			entity = getEntityById(msg.entityId);
+			if(entity) {
+				if(isLate) {
+					entity.markAsOutOfSync();
+				}
+				else {
+					entity.setState(msg);
+				}
+			}
+			return true;
+		}
+		else if(msg.messageType === 'entity-action') {
+			entity = getEntityById(msg.entityId);
+			if(entity) {
+				if(isLate) {
+					entity.markAsOutOfSync();
+				}
+				else {
+					entity.applyAction(msg, false);
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	function onDisconnected() {
+		console.log("Disconnected!");
+	}
+
+	function onKeyboardEvent(evt, keyboard) {
+		if(myAthlete) {
+			myAthlete.onKeyboardEvent(evt, keyboard);
+		}
+	}
+
+	function onMouseEvent(evt) {
+		//TODO
+	}
+
+	//helper methods
 	function getEntityById(id) {
 		for(var i = 0; i < entities.length; i++) {
 			if(entities[i].id === id) {
@@ -25,9 +104,12 @@ define([
 	}
 
 	function setState(state) {
+		//remove all except the living entities
 		entities = entities.filter(function(entity) {
 			return state.living.indexOf(entity.id) >= 0;
 		});
+
+		//for each entity, either update it or create it
 		for(var i = 0; i < state.entities.length; i++) {
 			//update existing entity
 			var entityAlreadyExists = false;
@@ -41,11 +123,8 @@ define([
 
 			//create new entity
 			if(!entityAlreadyExists) {
-				if(state.entities[i].entityType === 'Ball') {
-					entities.push(new Ball(state.entities[i]));
-				}
-				else if(state.entities[i].entityType === 'Player') {
-					entities.push(new Player(state.entities[i]));
+				if(state.entities[i].entityType === 'Athlete') {
+					entities.push(new Athlete(state.entities[i]));
 				}
 				else {
 					throw new Error("Unsure how to create '" +
@@ -53,74 +132,6 @@ define([
 				}
 			}
 		}
-	}
-
-	function tick(t, time, prevTime) {
-		for(var i = 0; i < entities.length; i++) {
-			entities[i].tick(t, time);
-		}
-		Connection.flush();
-	}
-
-	function render(ctx) {
-		for(var i = 0; i < entities.length; i++) {
-			entities[i].render(ctx);
-		}
-	}
-
-	function onConnected() {
-		console.log("Connected!");
-	}
-
-	function onReceive(msg, time) {
-		if(msg.messageType === 'game-state') {
-			setState(msg.state);
-
-			//the server may have granted us ownership of an entity
-			if(typeof msg.playerEntityId === 'number') {
-				if(myPlayer !== null) {
-					myPlayer.setPlayerControl(false);
-				}
-				myPlayer = null;
-				for(var j = 0; j < entities.length; j++) {
-					if(entities[j].id === msg.playerEntityId) {
-						myPlayer = entities[j];
-						myPlayer.setPlayerControl(true);
-						break;
-					}
-				}
-			}
-			return true;
-		}
-		else if(msg.messageType === 'entity-update') {
-			var entity = getEntityById(msg.state.id);
-			if(entity) {
-				entity.setState(msg.state);
-			}
-			return true;
-		}
-		return false;
-	}
-
-	function onDisconnected() {
-		console.log("Disconnected!");
-	}
-
-	function onKeyboardEvent(evt, keyboard) {
-		if(myPlayer) {
-			if(evt.gameKey === 'MOVE_LEFT') {
-				if(evt.isDown) { myPlayer.setMoveDir(-1); }
-				else { myPlayer.setMoveDir(keyboard.MOVE_RIGHT ? 1 : 0); }
-			}
-			else if(evt.gameKey === 'MOVE_RIGHT') {
-				if(evt.isDown) { myPlayer.setMoveDir(1); }
-				else { myPlayer.setMoveDir(keyboard.MOVE_LEFT ? -1 : 0); }
-			}
-		}
-	}
-
-	function onMouseEvent(evt) {
-		//TODO
 	}
 
 	return {

@@ -78,6 +78,14 @@ define([
 				this._stopAtX = action.x;
 			}
 		}
+		else if(action.actionType === 'charge-jump') {
+			this._sim.chargeJump();
+			this.sendUpdate();
+		}
+		else if(action.actionType === 'release-jump') {
+			this._sim.releaseJump(action.jumpX, action.jumpY);
+			this.sendUpdate();
+		}
 		else {
 			console.log("Player unsure how to handle '" + action.actionType + "' action");
 		}

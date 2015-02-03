@@ -1,19 +1,17 @@
 define([
 	'shared/Constants',
 	'server/net/Server',
-	'server/entity/Player',
-	'server/entity/Ball',
+	'server/entity/Athlete',
 	'performance-now'
 ], function(
 	SharedConstants,
 	Server,
-	Player,
-	Ball,
+	Athlete,
 	now
 ) {
-	var SECONDS_BETWEEN_SEND_STATES = 0.50;
+	var SECONDS_BETWEEN_SEND_STATES = 2.50;
 	var timeToNextSendState = SECONDS_BETWEEN_SEND_STATES;
-	var entities = [ new Ball({ radius: 50, x: 300, y: 300, vel: { x: 100, y: 100 } }) ];
+	var entities = [];
 
 	function tick(t) {
 		//update each entity
@@ -24,9 +22,7 @@ define([
 		//send out the full game state every so often
 		timeToNextSendState -= t;
 		if(timeToNextSendState <= 0) {
-			Server.forEach(function(conn) {
-				sendState(conn);
-			});
+			Server.forEach(function(conn) { sendStateTo(conn); });
 			timeToNextSendState += SECONDS_BETWEEN_SEND_STATES;
 		}
 
@@ -36,19 +32,28 @@ define([
 
 	function onConnected(conn) {
 		console.log("Player " + conn.id + " connected!");
-		var player = new Player({ x: SharedConstants.BOUNDS.LEFT_WALL + Math.floor(Math.random() *
-			(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL - 50)),
-			y: SharedConstants.BOUNDS.FLOOR - 70, width: 50, height: 70 });
-		entities.push(player);
-		conn.gameData.playerEntity = player;
-		sendState(conn);
+
+		//create a new athlete for this player
+		var athlete = new Athlete({
+			x: SharedConstants.BOUNDS.LEFT_WALL + Math.floor(Math.random() *
+				(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL - 50)),
+			y: SharedConstants.BOUNDS.FLOOR - 70
+		});
+		entities.push(athlete);
+		conn.gameData.athlete = athlete;
+		sendStateTo(conn);
 	}
 
 	function onReceive(conn, msg) {
-		if(msg.messageType === 'player-action') {
-			//console.log("Received player action with " + Math.floor(msg.time - now()) + "ms to spare");
-			if(conn.gameData.playerEntity) {
-				conn.gameData.playerEntity.handleAction(msg);
+		if(msg.messageType === 'entity-action') {
+			if(conn.gameData.athlete) {
+				if(conn.gameData.athlete.id === msg.entityId) {
+					conn.gameData.athlete.applyAction(msg);
+				}
+				else {
+					console.log("Player " + conn.id + " sent in an action for entity " + conn.entityId +
+						" but only owns entity " + conn.gameData.athlete.id);
+				}
 			}
 			return true;
 		}
@@ -57,28 +62,23 @@ define([
 
 	function onDisconnected(conn) {
 		console.log("Player " + conn.id + " disconnected!");
+
 		//remove the player entity
-		if(conn.gameData.playerEntity) {
+		if(conn.gameData.athlete) {
 			entities = entities.filter(function(entity) {
-				return entity.id !== conn.gameData.playerEntity.id;
+				return entity.id !== conn.gameData.athlete.id;
 			});
 		}
 	}
 
 	//helper methods
-	function getState() {
-		return {
-			entities: entities.map(function(entity) { return entity.getState(); }),
-			living: entities.map(function(entity) { return entity.id; })
-		};
-	}
-
-	function sendState(conn) {
-		Server.send(conn, {
+	function sendStateTo(conn) {
+		Server.bufferSend(conn, {
 			messageType: 'game-state',
-			time: now(),
-			state: getState(),
-			playerEntityId: conn.gameData.playerEntity.id
+			entities: entities.map(function(entity) { return entity.getState(); }),
+			living: entities.map(function(entity) { return entity.id; }),
+			athleteId: conn.gameData.athlete.id,
+			time: now()
 		});
 	}
 

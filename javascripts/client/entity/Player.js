@@ -62,8 +62,32 @@ define([
 
 		//move!
 		var beforeX = this._client.x;
+		var wasChargingJump = this._client.isChargingJump;
+		var wasJumping = this._client.isJumping();
 		SUPERCLASS.prototype.tick.call(this, t);
 		var afterX = this._client.x;
+		var isChargingJump = this._client.isChargingJump;
+		var isJumping = this._client.isJumping();
+
+		//the player may have started charging a jump
+		if(this._isPlayerControlled && !wasChargingJump && isChargingJump) {
+			Connection.bufferSend({
+				messageType: 'player-action',
+				actionType: 'charge-jump',
+				time: Clock.getServerReceiveTime()
+			});
+		}
+
+		//the player may have jumped
+		if(this._isPlayerControlled && !wasJumping && isJumping) {
+			Connection.bufferSend({
+				messageType: 'player-action',
+				actionType: 'release-jump',
+				jumpX: this._client.jumpX,
+				jumpY: this._client.jumpY,
+				time: Clock.getServerReceiveTime()
+			});
+		}
 
 		//the client position may have reached the server position
 		if(!this._isPlayerControlled && this._actual.moveDir === 0) {
@@ -80,9 +104,6 @@ define([
 	Player.prototype.setState = function(state) {
 		this._timeSinceLastUpdate = 0;
 		SUPERCLASS.prototype.setState.call(this, state);
-		if(!this._isPlayerControlled) {
-			this._client.moveDir = this._actual.moveDir;
-		}
 		if(this._isPlayerControlled) {
 			//player may need to be snapped back
 			if(Math.abs(this._client.x - this._predicted.x) > 75) {
@@ -91,6 +112,17 @@ define([
 			}
 		}
 		else {
+			this._client.moveDir = this._actual.moveDir;
+			this._client.chargeJumpWhenAble = state.chargeJumpWhenAble;
+			this._client.isChargingJump = state.isChargingJump;
+			this._client.timeSpentChargingJump = state.timeSpentChargingJump;
+			this._client.releaseJumpWhenAble = state.releaseJumpWhenAble;
+			this._client.jumpX = state.jumpX;
+			this._client.jumpY = state.jumpY;
+			this._client.vel.x = state.vel.x;
+			this._client.vel.y = state.vel.y;
+			this._client.y = state.y;
+
 			//other players may need to be snapped back too
 			if(Math.abs(this._client.x - this._actual.x) > 50) {
 				this._client.x = this._actual.x;
@@ -111,6 +143,12 @@ define([
 				time: Clock.getServerReceiveTime()
 			});
 		}
+	};
+	Player.prototype.chargeJump = function() {
+		this._client.chargeJump();
+	};
+	Player.prototype.releaseJump = function() {
+		this._client.releaseJump(0.0, 1.0);
 	};
 	Player.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);

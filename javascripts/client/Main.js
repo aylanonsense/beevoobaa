@@ -37,13 +37,7 @@ requirejs([
 			if(time === null) {
 				//console.log("Message arrived from server pre-sync (so it was ignored)", msg);
 			}
-			else if(time > msg.time) {
-				Pinger.recordPacketReceive(false);
-				//console.log("Message arrived from server " + Math.ceil(time - msg.time) +
-				//	"ms too late (so it was ignored)", msg);
-			}
 			else {
-				Pinger.recordPacketReceive(true);
 				bufferedMessages.push(msg);
 			}
 		}
@@ -66,13 +60,14 @@ requirejs([
 	});
 	$canvas.on('mousemove mouseup mousedown', Game.onMouseEvent);
 
-	function processBufferedMessages(startTime, endTime) {
+	function processBufferedMessages(endTime) {
 		var numMessagesToRemove = 0;
+		var time = Clock.getClientTime();
 		for(var i = 0; i < bufferedMessages.length; i++) {
 			var msg = bufferedMessages[i];
 			//if the msg is relevant now, apply it
-			if(startTime <= msg.time && msg.time <= endTime) {
-				if(!Game.onReceive(msg)) {
+			if(msg.time <= endTime) {
+				if(!Game.onReceive(msg, time - msg.time)) {
 					throw new Error("Unsure how to handle '" + msg.messageType + "' message", msg);
 				}
 				numMessagesToRemove++;
@@ -80,11 +75,6 @@ requirejs([
 			//if it occurs in the future, the rest must also occur in the future
 			else if(msg.time > endTime) {
 				break;
-			}
-			//otherwise it's dated, but how could that have happened?
-			else {
-				console.error("How did an old message make it into the bufferedMessages array?", msg);
-				numMessagesToRemove++;
 			}
 		}
 		if(numMessagesToRemove > 0) {
@@ -111,18 +101,19 @@ requirejs([
 		else {
 			if(gameTime - prevGameTime > 50) {
 				//game is moving too fast (3 frames per frame), pace it over a couple of frames
-				processBufferedMessages(prevGameTime, prevGameTime + 50);
+				processBufferedMessages(prevGameTime + 50);
 				Game.tick(50 / 1000, prevGameTime + 50);
 				prevGameTime += 50;
 			}
 			else {
 				//game is moving normally
-				processBufferedMessages(prevGameTime, gameTime);
+				processBufferedMessages(gameTime);
 				Game.tick((gameTime - prevGameTime) / 1000, gameTime);
 				prevGameTime = gameTime;
 			}
 		}
 		render();
+		Connection.flush();
 		requestAnimationFrame(loop);
 	}
 
