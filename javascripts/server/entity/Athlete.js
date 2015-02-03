@@ -1,18 +1,13 @@
 define([
-	'server/entity/Entity2',
-	'shared/sim/Athlete',
-	'performance-now'
+	'server/entity/Entity',
+	'shared/sim/Athlete'
 ], function(
 	SUPERCLASS,
-	AthleteSim,
-	now
+	AthleteSim
 ) {
 	function Athlete(params) {
 		SUPERCLASS.call(this, 'Athlete', AthleteSim, params);
 	}
 	Athlete.prototype = Object.create(SUPERCLASS.prototype);
-	Athlete.prototype.tick = function(t) {
-		SUPERCLASS.prototype.tick.call(this, t);
-	};
 	return Athlete;
 });

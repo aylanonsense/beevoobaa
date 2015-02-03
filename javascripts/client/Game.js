@@ -52,7 +52,7 @@ define([
 			}
 			return true;
 		}
-		else if(msg.messageType === 'entity-update') {
+		else if(msg.messageType === 'entity-state') {
 			entity = getEntityById(msg.entityId);
 			if(entity) {
 				if(isLate) {
@@ -64,14 +64,14 @@ define([
 			}
 			return true;
 		}
-		else if(msg.messageType === 'entity-action') {
+		else if(msg.messageType === 'entity-result') {
 			entity = getEntityById(msg.entityId);
 			if(entity) {
 				if(isLate) {
 					entity.markAsOutOfSync();
 				}
 				else {
-					entity.applyAction(msg, false);
+					entity.applyResult(msg);
 				}
 			}
 			return true;

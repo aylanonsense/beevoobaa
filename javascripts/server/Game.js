@@ -9,7 +9,7 @@ define([
 	Athlete,
 	now
 ) {
-	var SECONDS_BETWEEN_SEND_STATES = 2.50;
+	var SECONDS_BETWEEN_SEND_STATES = 0.40;
 	var timeToNextSendState = SECONDS_BETWEEN_SEND_STATES;
 	var entities = [];
 
@@ -48,7 +48,7 @@ define([
 		if(msg.messageType === 'entity-action') {
 			if(conn.gameData.athlete) {
 				if(conn.gameData.athlete.id === msg.entityId) {
-					conn.gameData.athlete.applyAction(msg);
+					conn.gameData.athlete.processAction(msg);
 				}
 				else {
 					console.log("Player " + conn.id + " sent in an action for entity " + conn.entityId +
