@@ -4,6 +4,12 @@ define([
 	SharedConstants
 ) {
 	function Athlete(params) {
+		//constants (not synced)
+		this.width = 50;
+		this.height = 70;
+		this.moveSpeed = 50;
+
+		//positional vars
 		this.x = params.x || 0;
 		this.y = params.y || 0;
 		this.vel = {
@@ -20,14 +26,10 @@ define([
 		//movement vars
 		this.waypointX = null;
 		this.waypointMoveDir = null;
-
-		//not stateful
-		this.width = 50;
-		this.height = 70;
-		this.moveSpeed = 50;
 	}
 	Athlete.prototype.getState = function() {
 		return {
+			//positional vars
 			x: this.x,
 			y: this.y,
 			vel: { x: this.vel.x, y: this.vel.y },
@@ -44,6 +46,7 @@ define([
 		};
 	};
 	Athlete.prototype.setState = function(state) {
+		//positional vars
 		this.x = state.x;
 		this.y = state.y;
 		this.vel.x = state.vel.x;
@@ -66,11 +69,11 @@ define([
 		}
 
 		//move slower while jumping or preparing to jump
-		var moveSpeed = (this.currentTask === 'prepare-jump' || this.currentTask === 'jump' ||
+		var moveSpeed = (this.currentTask === 'prepare-to-jump' || this.currentTask === 'jump' ||
 			this.bottom < SharedConstants.BOUNDS.FLOOR ? 0.25 : 1.00) * this.moveSpeed;
 
 		//handle task
-		if(this.currentTask === 'prepare-jump' && this.queuedTask === 'jump') {
+		if(this.currentTask === 'prepare-to-jump' && this.queuedTask === 'jump') {
 			this._nextTask();
 		}
 		if(this.currentTask === 'jump') {
@@ -128,39 +131,32 @@ define([
 			if(this.vel.x > 0) { this.vel.x = 0; }
 		}
 	};
-	Athlete.prototype.processAction = function(action) {
-		if(action.actionType === 'change-dir') {
-			return { resultType: 'move-to-waypoint', dir: action.dir, x: action.x };
+	Athlete.prototype.takeAction = function(action) {
+		if(action.actionType === 'follow-waypoint') {
+			this.waypointX = action.x;
+			this.waypointMoveDir = action.dir;
 		}
-		else if(action.actionType === 'prepare-jump') {
-			return { resultType: 'queue-task', task: 'prepare-jump', details: {} };
+		else if(action.actionType === 'prepare-to-jump') {
+			this._queueTask('prepare-to-jump', {});
 		}
 		else if(action.actionType === 'jump') {
-			return { resultType: 'queue-task', task: 'jump', details: {} };
-		}
-		return null;
-	};
-	Athlete.prototype.applyResult = function(result) {
-		if(result.resultType === 'move-to-waypoint') {
-			this.waypointX = result.x;
-			this.waypointMoveDir = result.dir;
-		}
-		else if(result.resultType === 'queue-task') {
-			this.queueTask(result.task, result.details);
+			this._queueTask('jump', {});
 		}
 	};
-	Athlete.prototype.isReadyForTask = function(task, details) {
-		if(task === 'prepare-jump') {
+	Athlete.prototype.isReadyForTask = function(task) {
+		if(task === 'prepare-to-jump') {
 			return this.bottom === SharedConstants.BOUNDS.FLOOR &&
 				this.vel.y >= 0 && this.currentTask === null;
 		}
-		if(task === 'jump') {
+		else if(task === 'jump') {
 			return this.bottom === SharedConstants.BOUNDS.FLOOR &&
-				this.vel.y >= 0 && (this.currentTask === null || this.currentTask === 'prepare-jump');
+				this.vel.y >= 0 && (this.currentTask === null || this.currentTask === 'prepare-to-jump');
 		}
 		return false;
 	};
-	Athlete.prototype.queueTask = function(task, details) {
+
+	//helper methods
+	Athlete.prototype._queueTask = function(task, details) {
 		if(this.currentTask === null) {
 			this.currentTask = task;
 			this.currentTaskDetails = details;

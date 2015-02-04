@@ -45,13 +45,13 @@ define([
 	}
 
 	function onReceive(conn, msg) {
-		if(msg.messageType === 'entity-action') {
+		if(msg.messageType === 'entity-command') {
 			if(conn.gameData.athlete) {
 				if(conn.gameData.athlete.id === msg.entityId) {
-					conn.gameData.athlete.processAction(msg);
+					conn.gameData.athlete.processCommand(msg);
 				}
 				else {
-					console.log("Player " + conn.id + " sent in an action for entity " + conn.entityId +
+					console.log("Player " + conn.id + " sent in a command for entity " + conn.entityId +
 						" but only owns entity " + conn.gameData.athlete.id);
 				}
 			}

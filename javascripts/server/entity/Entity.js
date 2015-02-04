@@ -20,39 +20,27 @@ define([
 	Entity.prototype.tick = function(t) {
 		this._sim.tick(t);
 	};
-	Entity.prototype.processAction = function(action) {
-		//apply the action
-		var result = this._sim.processAction(action);
+	Entity.prototype._translateCommandToAction = function(command) {
+		//to be filled out in subclasses
+	};
+	Entity.prototype.processCommand = function(command) {
+		var action = this._translateCommandToAction(command);
+		if(action) {
+			//have the simulation apply the action
+			this._sim.takeAction(action);
 
-		//not every action warrants sending
-		if(result) {
-			result.action = action;
-			this._sim.applyResult(result);
-			this.sendResult(result);
-		}
-	};
-	Entity.prototype.applyResult = function(result) {
-		this._sim.applyResult(result);
-	};
-	Entity.prototype.sendResult = function(result) {
-		//add extra data to the action
-		result.messageType = 'entity-result';
-		result.entityId = this.id;
-		if(!result.action.actionId) {
-			result.action.actionId = '' + Math.random();
-		}
-		result.time = now();
+			//add extra data to the action
+			action.messageType = 'entity-action';
+			action.entityId = this.id;
+			action.command = command;
+			if(!action.command.commandId) {
+				action.command.commandId = '' + Math.random();
+			}
+			action.time = now();
 
-		//send the action
-		Server.bufferSendToAll(result);
-	};
-	Entity.prototype.sendState = function() {
-		Server.bufferSendToAll({
-			messageType: 'entity-state',
-			entityId: this.id,
-			state: this.getState(),
-			time: now()
-		});
+			//send the action
+			Server.bufferSendToAll(action);
+		}
 	};
 	return Entity;
 });

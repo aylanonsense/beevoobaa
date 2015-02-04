@@ -64,14 +64,14 @@ define([
 			}
 			return true;
 		}
-		else if(msg.messageType === 'entity-result') {
+		else if(msg.messageType === 'entity-action') {
 			entity = getEntityById(msg.entityId);
 			if(entity) {
 				if(isLate) {
 					entity.markAsOutOfSync();
 				}
 				else {
-					entity.applyResult(msg);
+					entity.takeAction(msg);
 				}
 			}
 			return true;

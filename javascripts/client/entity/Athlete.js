@@ -1,15 +1,11 @@
 define([
 	'client/entity/Entity',
 	'shared/sim/Athlete',
-	'client/Constants',
-	'client/net/Connection',
-	'client/Clock'
+	'client/Constants'
 ], function(
 	SUPERCLASS,
 	AthleteSim,
-	Constants,
-	Connection,
-	Clock
+	Constants
 ) {
 	var INPUT_BUFFER_TIME = 5.5 / 60;
 	function Athlete(params) {
@@ -19,10 +15,25 @@ define([
 		this._bufferedTaskTimeRemaining = null;
 	}
 	Athlete.prototype = Object.create(SUPERCLASS.prototype);
+	Athlete.prototype._translateCommandToAction = function(command) {
+		if(command.commandType === 'move') {
+			return {
+				actionType: 'follow-waypoint',
+				x: command.x,
+				dir: command.dir
+			};
+		}
+		else if(command.commandType === 'prepare-to-jump') {
+			return { actionType: 'prepare-to-jump' };
+		}
+		else if(command.commandType === 'jump') {
+			return { actionType: 'jump' };
+		}
+	};
 	Athlete.prototype.onKeyboardEvent = function(evt, keyboard) {
 		if(evt.gameKey === 'JUMP') {
 			if(evt.isDown) {
-				this._bufferedTask = 'prepare-jump';
+				this._bufferedTask = 'prepare-to-jump';
 				this._bufferedTaskTimeRemaining = null;
 			}
 			else {
@@ -42,18 +53,19 @@ define([
 				else { dir = (keyboard.MOVE_LEFT ? -1 : 0); }
 			}
 			if(dir !== null) {
-				this.processAction({ actionType: 'change-dir', dir: dir, x: this._clientSim.x });
+				this.processCommand({ commandType: 'move', dir: dir, x: this._clientSim.x });
 			}
 		}
 	};
 	Athlete.prototype.tick = function(t) {
-		//when the buffered input can be performed, queue it up and send out the action
-		if(this._bufferedTask !== null &&
-			this._clientSim.isReadyForTask(this._bufferedTask, this._bufferedTaskDetails)) {
-			this.processAction({
-				actionType: this._bufferedTask,
-				details: this._bufferedTaskDetails
-			});
+		//when the buffered task can be performed, queue it up and send out the command
+		if(this._bufferedTask !== null && this._clientSim.isReadyForTask(this._bufferedTask)) {
+			var command = this._bufferedTaskDetails || {};
+			command.commandType = this._bufferedTask;
+			this._bufferedTask = null;
+			this._bufferedTaskDetails = null;
+			this._bufferedTaskTimeRemaining = null;
+			this.processCommand(command);
 		}
 
 		//if it takes too long to apply, it becomes unbuffered
@@ -98,9 +110,6 @@ define([
 			ctx.strokeRect(this._futureSim.x, this._futureSim.y,
 				this._futureSim.width, this._futureSim.height);
 		}
-	};
-	Athlete.prototype.checkForInconsistentResults = function(result, predictedResult) {
-		//TODO
 	};
 	return Athlete;
 });
