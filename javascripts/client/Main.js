@@ -1,5 +1,11 @@
 //configure requirejs
-requirejs.config({ baseUrl: '/', paths: { jquery: '/client/lib/jquery' } });
+requirejs.config({
+	baseUrl: '/',
+	paths: {
+		jquery: '/client/lib/jquery',
+		create: '/client/lib/instanqi8'
+	}
+});
 
 //start client
 requirejs([
@@ -98,19 +104,21 @@ requirejs([
 		else if(gameTime <= prevGameTime) {
 			//game stuttered, don't update anything
 		}
+		//if we have a lot of time to make up, just reset and let's start again
+		else if(gameTime - prevGameTime > 1000) {
+			reset();
+		}
+		else if(gameTime - prevGameTime > 50) {
+			//game is moving too fast (3 frames per frame), pace it over a couple of frames
+			processBufferedMessages(prevGameTime + 50);
+			Game.tick(50 / 1000, prevGameTime + 50);
+			prevGameTime += 50;
+		}
 		else {
-			if(gameTime - prevGameTime > 50) {
-				//game is moving too fast (3 frames per frame), pace it over a couple of frames
-				processBufferedMessages(prevGameTime + 50);
-				Game.tick(50 / 1000, prevGameTime + 50);
-				prevGameTime += 50;
-			}
-			else {
-				//game is moving normally
-				processBufferedMessages(gameTime);
-				Game.tick((gameTime - prevGameTime) / 1000, gameTime);
-				prevGameTime = gameTime;
-			}
+			//game is moving normally
+			processBufferedMessages(gameTime);
+			Game.tick((gameTime - prevGameTime) / 1000, gameTime);
+			prevGameTime = gameTime;
 		}
 		render();
 		Connection.flush();
@@ -129,6 +137,7 @@ requirejs([
 		Game.reset();
 		Pinger.reset();
 		Clock.reset();
+		Connection.reset();
 		bufferedMessages = [];
 		prevGameTime = null;
 		prevTimestamp = performance.now();

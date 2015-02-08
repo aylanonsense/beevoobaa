@@ -21,7 +21,7 @@ define([
 			return { actionType: 'prepare-to-jump' };
 		}
 		else if(command.commandType === 'jump') {
-			return { actionType: 'jump' };
+			return { actionType: 'jump', x: command.x, y: command.y }; //TODO don't trust command so much
 		}
 	};
 	return Athlete;

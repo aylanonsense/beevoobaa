@@ -9,6 +9,8 @@ define({
 		40: 'MOVE_DOWN', 83: 'MOVE_DOWN', //down arrow key / s key
 		39: 'MOVE_RIGHT', 68: 'MOVE_RIGHT' //right arrow key / d key
 	},
+	DEBUG_HIDE_SPRITES: false,
+	DEBUG_TRACE_SPRITES: false,
 	DEBUG_RENDER_SERVER_STATE: true,
-	DEBUG_RENDER_FUTURE_STATE: true
+	DEBUG_RENDER_FUTURE_STATE: false
 });

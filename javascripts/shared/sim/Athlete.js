@@ -5,9 +5,9 @@ define([
 ) {
 	function Athlete(params) {
 		//constants (not synced)
-		this.width = 50;
-		this.height = 70;
-		this.moveSpeed = 50;
+		this.width = 35;
+		this.height = 80;
+		this.moveSpeed = 75;
 
 		//positional vars
 		this.x = params.x || 0;
@@ -20,6 +20,7 @@ define([
 		//task vars
 		this.currentTask = null;
 		this.currentTaskDetails = null;
+		this.currentTaskDuration = 0.0;
 		this.queuedTask = null;
 		this.queuedTaskDetails = null;
 
@@ -37,6 +38,7 @@ define([
 			//task vars
 			currentTask: this.currentTask,
 			currentTaskDetails: this.currentTaskDetails,
+			currentTaskDuration: this.currentTaskDuration,
 			queuedTask: this.queuedTask,
 			queuedTaskDetails: this.queuedTaskDetails,
 
@@ -55,6 +57,7 @@ define([
 		//task vars
 		this.currentTask = state.currentTask;
 		this.currentTaskDetails = state.currentTaskDetails;
+		this.currentTaskDuration = state.currentTaskDuration;
 		this.queuedTask = state.queuedTask;
 		this.queuedTaskDetails = state.queuedTaskDetails;
 
@@ -63,6 +66,14 @@ define([
 		this.waypointMoveDir = state.waypointMoveDir;
 	};
 	Athlete.prototype.tick = function(t) {
+		//incremet timers
+		if(this.currentTask !== null) {
+			this.currentTaskDuration += t;
+		}
+		if(this.currentTask === 'land-from-jump' && this.currentTaskDuration >= 0.30) {
+			this._clearCurrentTask();
+		}
+
 		//possibly move onto the next task
 		if(this.currentTask === null && this.queuedTask !== null) {
 			this._nextTask();
@@ -70,7 +81,7 @@ define([
 
 		//move slower while jumping or preparing to jump
 		var moveSpeed = (this.currentTask === 'prepare-to-jump' || this.currentTask === 'jump' ||
-			this.bottom < SharedConstants.BOUNDS.FLOOR ? 0.25 : 1.00) * this.moveSpeed;
+			this.currentTask === 'land-from-jump' || !this.isGrounded() ? 0.00 : 1.00) * this.moveSpeed;
 
 		//handle task
 		if(this.currentTask === 'prepare-to-jump' && this.queuedTask === 'jump') {
@@ -78,9 +89,9 @@ define([
 		}
 		if(this.currentTask === 'jump') {
 			if(this.bottom === SharedConstants.BOUNDS.FLOOR && this.vel.y >= 0) {
-				this.vel.y = -200;
-				this.currentTask = null;
-				this.currentTaskDetails = null;
+				this.vel.x = Math.round(100 * this.currentTaskDetails.x);
+				this.vel.y = -50 - 150 * this.currentTaskDetails.y;
+				this._clearCurrentTask();
 			}
 		}
 
@@ -93,25 +104,20 @@ define([
 		}
 
 		//movement
-		if(this.waypointX === null) { this.vel.x = 0; }
-		else if(this.waypointX > this.x) { this.vel.x = moveSpeed; }
-		else if(this.waypointX < this.x) { this.vel.x = -moveSpeed; }
-		else { this.vel.x = 0; }
+		if(this.isGrounded()) {
+			if(this.waypointX === null) { this.vel.x = 0; }
+			else if(this.waypointX > this.x) { this.vel.x = moveSpeed; }
+			else if(this.waypointX < this.x) { this.vel.x = -moveSpeed; }
+			else { this.vel.x = 0; }
+		}
 
 		//apply velocity
+		var wasGrounded = this.isGrounded();
 		var wasPassed = (this.waypointX !== null && this.x < this.waypointX);
 		this.x += this.vel.x * t;
 		this.y += this.vel.y * t;
+		var isGrounded = this.isGrounded();
 		var isPassed = (this.waypointX !== null && this.x <= this.waypointX);
-
-		//we may have passed the waypoint, meaning we should stop at it
-		if(this.waypointX !== null && wasPassed !== isPassed) {
-			this.x = this.waypointX;
-			if(this.waypointMoveDir === 0) {
-				this.waypointX = null;
-				this.waypointMoveDir = null;
-			}
-		}
 
 		//keep player within bounds
 		if(this.top < SharedConstants.BOUNDS.CEILING) {
@@ -122,6 +128,23 @@ define([
 			this.bottom = SharedConstants.BOUNDS.FLOOR;
 			if(this.vel.y > 0) { this.vel.y = 0; }
 		}
+
+		//we might fall into a landing state
+		if(!wasGrounded && isGrounded) {
+			this._clearCurrentTask();
+			this.currentTask = 'land-from-jump';
+		}
+
+		//we may have passed the waypoint, meaning we should stop at it
+		if(this.isGrounded() && this.waypointX !== null && wasPassed !== isPassed) {
+			this.x = this.waypointX;
+			if(this.waypointMoveDir === 0) {
+				this.waypointX = null;
+				this.waypointMoveDir = null;
+			}
+		}
+
+		//keep player within bounds
 		if(this.left < SharedConstants.BOUNDS.LEFT_WALL) {
 			this.left = SharedConstants.BOUNDS.LEFT_WALL;
 			if(this.vel.x < 0) { this.vel.x = 0; }
@@ -140,19 +163,21 @@ define([
 			this._queueTask('prepare-to-jump', {});
 		}
 		else if(action.actionType === 'jump') {
-			this._queueTask('jump', {});
+			this._queueTask('jump', { x: action.x, y: action.y });
 		}
 	};
 	Athlete.prototype.isReadyForTask = function(task) {
 		if(task === 'prepare-to-jump') {
-			return this.bottom === SharedConstants.BOUNDS.FLOOR &&
-				this.vel.y >= 0 && this.currentTask === null;
+			return this.currentTask === null && this.isGrounded();
 		}
 		else if(task === 'jump') {
-			return this.bottom === SharedConstants.BOUNDS.FLOOR &&
-				this.vel.y >= 0 && (this.currentTask === null || this.currentTask === 'prepare-to-jump');
+			return (this.currentTask === null || this.currentTask === 'prepare-to-jump') &&
+				this.isGrounded();
 		}
 		return false;
+	};
+	Athlete.prototype.isGrounded = function() {
+		return this.bottom >= SharedConstants.BOUNDS.FLOOR && this.vel.y >= 0;
 	};
 
 	//helper methods
@@ -160,6 +185,7 @@ define([
 		if(this.currentTask === null) {
 			this.currentTask = task;
 			this.currentTaskDetails = details;
+			this.currentTaskDuration = 0.0;
 		}
 		else {
 			this.queuedTask = task;
@@ -169,8 +195,14 @@ define([
 	Athlete.prototype._nextTask = function() {
 		this.currentTask = this.queuedTask;
 		this.currentTaskDetails = this.queuedTaskDetails;
+		this.currentTaskDuration = 0.0;
 		this.queuedTask = null;
 		this.queuedTaskDetails = null;
+	};
+	Athlete.prototype._clearCurrentTask = function() {
+		this.currentTask = null;
+		this.currentTaskDetails = null;
+		this.currentTaskDuration = 0.0;
 	};
 
 	//define useful properties
@@ -189,6 +221,13 @@ define([
 	Object.defineProperty(Athlete.prototype, 'bottom', {
 		get: function() { return this.y + this.height; },
 		set: function(y) { this.y = y - this.height; }
+	});
+	Object.defineProperty(Athlete.prototype, 'center', {
+		get: function() { return { x: this.x + this.width / 2, y: this.y + this.height / 2 }; },
+		set: function(center) {
+			this.x = center.x - this.width / 2;
+			this.y = center.y - this.height / 2;
+		}
 	});
 
 	return Athlete;

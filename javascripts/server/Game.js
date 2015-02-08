@@ -1,7 +1,7 @@
 define([
 	'shared/Constants',
 	'server/net/Server',
-	'server/entity/Athlete',
+	'server/entity/AthleteX',
 	'performance-now'
 ], function(
 	SharedConstants,
@@ -16,7 +16,13 @@ define([
 	function tick(t) {
 		//update each entity
 		for(var i = 0; i < entities.length; i++) {
+			entities[i].startOfFrame(t);
+		}
+		for(i = 0; i < entities.length; i++) {
 			entities[i].tick(t);
+		}
+		for(i = 0; i < entities.length; i++) {
+			entities[i].endOfFrame(t);
 		}
 
 		//send out the full game state every so often
@@ -48,11 +54,11 @@ define([
 		if(msg.messageType === 'entity-command') {
 			if(conn.gameData.athlete) {
 				if(conn.gameData.athlete.id === msg.entityId) {
-					conn.gameData.athlete.processCommand(msg);
+					conn.gameData.athlete.onReceiveCommand(msg.command, msg.action);
 				}
 				else {
-					console.log("Player " + conn.id + " sent in a command for entity " + conn.entityId +
-						" but only owns entity " + conn.gameData.athlete.id);
+					console.log("Player " + conn.id + " sent in a command for entity " + msg.entityId +
+						" but only owns entity " + conn.gameData.athlete.id, msg);
 				}
 			}
 			return true;

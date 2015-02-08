@@ -12,6 +12,8 @@ define([
 	var sendsDelayedByFakeLag = [];
 	var receivesDelayedByFakeLag = [];
 	var bufferedMessages = [];
+	var receiveTimer = null;
+	var sendTimer = null;
 
 	//public methods
 	function onConnected(callback) { //callback()
@@ -88,14 +90,16 @@ define([
 
 	//private methods
 	function scheduleSendTimer() {
-		setTimeout(function() {
+		sendTimer = setTimeout(function() {
+			sendTimer = null;
 			socket.emit('message', sendsDelayedByFakeLag.shift().msg);
 			if(sendsDelayedByFakeLag.length > 0) { scheduleSendTimer(); }
 		}, Math.max(0, Math.floor(sendsDelayedByFakeLag[0].sendTime - performance.now())));
 	}
 
 	function scheduleReceiveTimer() {
-		setTimeout(function() {
+		receiveTimer = setTimeout(function() {
+			receiveTimer = null;
 			var msg = receivesDelayedByFakeLag.shift().msg;
 			for(var i = 0; i < onReceiveCallbacks.length; i++) {
 				if(msg instanceof Array) {
@@ -111,6 +115,20 @@ define([
 		}, Math.max(0, Math.floor(receivesDelayedByFakeLag[0].receiveTime - performance.now())));
 	}
 
+	function reset() {
+		sendsDelayedByFakeLag = [];
+		receivesDelayedByFakeLag = [];
+		bufferedMessages = [];
+		if(receiveTimer) {
+			clearTimeout(receiveTimer);
+		}
+		receiveTimer = null;
+		if(sendTimer) {
+			clearTimeout(sendTimer);
+		}
+		sendTimer = null;
+	}
+
 	return {
 		onConnected: onConnected,
 		onReceive: onReceive,
@@ -118,6 +136,7 @@ define([
 		send: send,
 		bufferSend: bufferSend,
 		flush: flush,
-		connect: connect
+		connect: connect,
+		reset: reset
 	};
 });

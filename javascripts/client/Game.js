@@ -1,5 +1,5 @@
 define([
-	'client/entity/Athlete'
+	'client/entity/AthleteX'
 ], function(
 	Athlete
 ) {
@@ -12,9 +12,15 @@ define([
 		entities = [];
 	}
 
-	function tick(t, time, prevTime) {
+	function tick(t) {
 		for(var i = 0; i < entities.length; i++) {
-			entities[i].tick(t, time);
+			entities[i].startOfFrame(t);
+		}
+		for(i = 0; i < entities.length; i++) {
+			entities[i].tick(t);
+		}
+		for(i = 0; i < entities.length; i++) {
+			entities[i].endOfFrame(t);
 		}
 	}
 
@@ -71,7 +77,7 @@ define([
 					entity.markAsOutOfSync();
 				}
 				else {
-					entity.takeAction(msg);
+					entity.onReceiveAction(msg.action);
 				}
 			}
 			return true;
