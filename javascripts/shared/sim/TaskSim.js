@@ -61,7 +61,7 @@ define(function() {
 			if(callback) {
 				callback(action);
 			}
-			return function() {};
+			return null;
 		}
 		else {
 			this._queuedActionGenerateFunc = generateFunc;

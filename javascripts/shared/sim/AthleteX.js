@@ -43,6 +43,13 @@ define([
 			else { this.vel.x = 0; }
 		}
 
+		//if the player is repositioning, it's sort of like following a waypoint
+		if(this.currentTask === 'reposition') {
+			if(this.currentTaskDetails.x > this.x) { this.vel.x = this.moveSpeed; }
+			else if(this.currentTaskDetails.x < this.x) { this.vel.x = -this.moveSpeed; }
+			else { this.vel.x = 0; }
+		}
+
 		//if the player jumps, that's just a matter of modifying velocity
 		if(this.currentTask === 'jump') {
 			this.vel.x = 200 * this.currentTaskDetails.dir;
@@ -69,6 +76,19 @@ define([
 			this.vel.x = 0;
 			this._clearTask();
 		}
+
+		if(this.currentTask === 'reposition') {
+		}
+		//we do the same check but for repositioning
+		if(this.currentTask === 'reposition' &&
+			((xBefore <= this.currentTaskDetails.x && this.currentTaskDetails.x <= this.x) ||
+			(xBefore >= this.currentTaskDetails.x && this.currentTaskDetails.x >= this.x))) {
+			this.x = this.currentTaskDetails.x;
+			this.vel.x = 0;
+			var nextTask = this.currentTaskDetails.nextTask;
+			this._clearTask();
+			this._setTask(nextTask.task, nextTask.details, nextTask.priority);
+		}
 	};
 	Athlete.prototype.endOfFrame = function(t) {
 		//increment timers (any task I'm ending with counts as being active for the whole frame)
@@ -92,7 +112,8 @@ define([
 
 		//getting reading to jump
 		else if(action.actionType === 'charge-jump' && this.isGrounded()) {
-			return this._setTask('charge-jump', {}, 5);
+			this.vel.x = 0;
+			return this._repositionAndSetTask(action.x, 'charge-jump', {}, 5);
 		}
 
 		//jumping
@@ -100,13 +121,24 @@ define([
 			if(this.currentTask === 'charge-jump') {
 				this._clearTask();
 			}
-			return this._setTask('jump', {
+			return this._repositionAndSetTask(action.x, 'jump', {
 				charge: action.charge || 0,
 				dir: action.dir || 0
 			}, 5);
 		}
 
 		return false;
+	};
+	Athlete.prototype._repositionAndSetTask = function(x, task, details, priority) {
+		if(this.x !== x) {
+			return this._setTask('reposition', {
+				x: x,
+				nextTask: { task: task, details: details, priority: priority }
+			}, priority);
+		}
+		else {
+			return this._setTask(task, details, priority);
+		}
 	};
 	return Athlete;
 });

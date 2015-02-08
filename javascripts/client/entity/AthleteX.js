@@ -46,9 +46,21 @@ define([
 			return { actionType: 'charge-jump', x: this._sim.x };
 		}
 		else if(command === 'jump') {
-			return { actionType: 'jump', x: this._sim.x, charge: 1.0, dir: 0.0 }; //TODO
+			var charge = 0.0;
+			if(this._sim.currentTask === 'charge-jump') {
+				charge = Math.min(1.0, this._sim.currentTaskDuration);
+			}
+			return { actionType: 'jump', x: this._sim.x, charge: charge, dir: 0.0 };
 		}
 		return null;
+	};
+	Athlete.prototype.tick = function(t) {
+		if(this._isPlayerControlled) {
+			if(this._sim.currentTask === 'charge-jump' && this._sim.currentTaskDuration >= 1.0) {
+				this._bufferCommand('jump', { charge: 1.0, dir : 0.0 });
+			}
+		}
+		SUPERCLASS.prototype.tick.call(this, t);
 	};
 	Athlete.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);
@@ -62,9 +74,38 @@ define([
 		this._renderSim(ctx, this._sim, SPRITE);
 	};
 	Athlete.prototype._renderSim = function(ctx, sim, sprite) {
+		var frame;
+		if(sim.isAirborne()) {
+			if(sim.vel.y < 100) {
+				frame = 1 + 3 * 6;
+			}
+			else {
+				frame = 2 + 3 * 6;
+			}
+		}
+		else if(sim.currentTask === 'land-from-jump') {
+			frame = 3 + 3 * 6;
+		}
+		else if(sim.currentTask === 'follow-waypoint' || sim.currentTask === 'reposition') {
+			if(sim.vel.x > 0) {
+				frame = 0 + 1 * 6;
+			}
+			else if(sim.vel.x < 0) {
+				frame = 0 + 2 * 6;
+			}
+			else {
+				frame = 0 + 0 * 6;
+			}
+		}
+		else if(sim.currentTask === 'charge-jump') {
+			frame = 0 + 3 * 6;
+		}
+		else {
+			frame = 0 + 0 * 6;
+		}
 		sprite.render(ctx, null,
 			sim.right - Math.floor(SPRITE.width / 2 + sim.width / 2),
-			sim.bottom - SPRITE.height, 0, false);
+			sim.bottom - SPRITE.height, frame, false);
 	};
 	return Athlete;
 });
