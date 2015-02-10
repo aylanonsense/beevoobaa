@@ -1,5 +1,5 @@
 define([
-	'client/entity/AthleteX'
+	'client/entity/Athlete'
 ], function(
 	Athlete
 ) {

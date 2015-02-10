@@ -1,6 +1,6 @@
 define([
-	'server/entity/EntityX',
-	'shared/sim/AthleteX'
+	'server/entity/Entity',
+	'shared/sim/Athlete'
 ], function(
 	SUPERCLASS,
 	AthleteSim

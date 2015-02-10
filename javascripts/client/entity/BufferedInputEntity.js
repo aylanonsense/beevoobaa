@@ -1,5 +1,5 @@
 define([
-	'client/entity/EntityX'
+	'client/entity/Entity'
 ], function(
 	SUPERCLASS
 ) {

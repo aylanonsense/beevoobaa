@@ -1,9 +1,9 @@
 define([
-	'client/entity/BufferedInputEntityX',
+	'client/entity/BufferedInputEntity',
 	'create!client/display/Sprite > Athlete',
 	'create!client/display/Sprite > AthleteOutline',
 	'create!client/display/Sprite > Cursor',
-	'shared/sim/AthleteX',
+	'shared/sim/Athlete',
 	'client/Constants'
 ], function(
 	SUPERCLASS,

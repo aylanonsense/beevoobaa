@@ -1,7 +1,7 @@
 define([
 	'shared/Constants',
 	'server/net/Server',
-	'server/entity/AthleteX',
+	'server/entity/Athlete',
 	'performance-now'
 ], function(
 	SharedConstants,
