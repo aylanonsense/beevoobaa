@@ -66,6 +66,7 @@ define([
 		if(wasAirborne && this.isGrounded()) {
 			this._clearTask();
 			this._setTask('land-from-jump', {}, 2);
+			this.vel.x = 0;
 		}
 
 		//we may have reached the waypoint, in which case (if it's stationary) we stop on it

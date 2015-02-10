@@ -41,16 +41,22 @@ define([
 		}
 		else if(command === 'jump') {
 			var charge = 0.0;
+			var dir = 0.0;
 			if(this._sim.currentTask === 'charge-jump') {
 				charge = Math.min(1.0, this._sim.currentTaskDuration);
 			}
 			if(typeof action.charge === 'number') {
 				charge = Math.max(charge - 0.15, Math.min(action.charge, charge + 0.15));
 			}
+			if(typeof action.dir === 'number') {
+				dir = action.dir;
+				if(dir > 2 * charge || dir > 1.0) { dir = Math.min(1.0, 2 * charge); }
+				else if(dir < -2 * charge || dir < -1.0) { dir = Math.max(-1.0, -2 * charge); }
+			}
 			return {
 				actionType: 'jump',
 				charge: Math.min(1.0, charge),
-				dir: 0.0, //TODO
+				dir: dir,
 				x: (typeof action.x === 'number' ? action.x : this._sim.x)
 			};
 		}
