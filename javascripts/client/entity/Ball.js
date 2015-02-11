@@ -18,8 +18,8 @@ define([
 	Ball.prototype._generateActionFromCommand = function(command) {
 		return null;
 	};
-	Ball.prototype.tick = function(t) {
-		SUPERCLASS.prototype.tick.call(this, t);
+	Ball.prototype.tick = function(t, tServer) {
+		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
 	Ball.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);

@@ -94,7 +94,7 @@ define([
 		}
 		return null;
 	};
-	Athlete.prototype.tick = function(t) {
+	Athlete.prototype.tick = function(t, tServer) {
 		this._walkDuration += t;
 		if(this._sim.currentTask === 'follow-waypoint' || this._sim.currentTask === 'reposition') {
 			if(this._sim.vel.x > 0) {
@@ -130,7 +130,7 @@ define([
 				this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
 			}
 		}
-		SUPERCLASS.prototype.tick.call(this, t);
+		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
 	Athlete.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);

@@ -14,15 +14,15 @@ define([
 		entities = [];
 	}
 
-	function tick(t) {
+	function tick(t, tServer) {
 		for(var i = 0; i < entities.length; i++) {
-			entities[i].startOfFrame(t);
+			entities[i].startOfFrame(t, tServer);
 		}
 		for(i = 0; i < entities.length; i++) {
-			entities[i].tick(t);
+			entities[i].tick(t, tServer);
 		}
 		for(i = 0; i < entities.length; i++) {
-			entities[i].endOfFrame(t);
+			entities[i].endOfFrame(t, tServer);
 		}
 	}
 

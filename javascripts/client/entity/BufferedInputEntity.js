@@ -23,7 +23,7 @@ define([
 	BufferedInputEntity.prototype._generateActionFromCommand = function(command) {
 		//to be implemented in subclasses
 	};
-	BufferedInputEntity.prototype.tick = function(t) {
+	BufferedInputEntity.prototype.tick = function(t, tServer) {
 		//if it takes too long to apply buffered command, it becomes unbuffered
 		if(this._bufferTimeRemaining !== null) {
 			this._bufferTimeRemaining -= t;
@@ -34,7 +34,7 @@ define([
 			}
 		}
 
-		SUPERCLASS.prototype.tick.call(this, t);
+		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
 	return BufferedInputEntity;
 });

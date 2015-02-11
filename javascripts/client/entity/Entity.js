@@ -43,17 +43,17 @@ define([
 	Entity.prototype.onKeyboardEvent = function(evt, keyboard) {
 		//to be implemented in subclasses
 	};
-	Entity.prototype.startOfFrame = function(t) {
+	Entity.prototype.startOfFrame = function(t, tServer) {
 		this._sim.startOfFrame(t);
-		this._serverSim.startOfFrame(t);
+		this._serverSim.startOfFrame(tServer);
 	};
-	Entity.prototype.tick = function(t) {
+	Entity.prototype.tick = function(t, tServer) {
 		this._sim.tick(t);
-		this._serverSim.tick(t);
+		this._serverSim.tick(tServer);
 	};
-	Entity.prototype.endOfFrame = function(t) {
+	Entity.prototype.endOfFrame = function(t, tServer) {
 		this._sim.endOfFrame(t);
-		this._serverSim.endOfFrame(t);
+		this._serverSim.endOfFrame(tServer);
 	};
 	Entity.prototype.render = function(ctx) {
 		//to be implemented in subclasses

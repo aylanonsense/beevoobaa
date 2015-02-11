@@ -34,7 +34,7 @@ requirejs([
 	var SECONDS_BETWEEN_FLUSH_MESSAGES = 2.5 / 60;
 	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
 	var timeDebt = 0;
-	var tryingToChangeTimeDebt = 0;
+	var directionToChangeTimeDebt = 0;
 
 	//add network listeners
 	Connection.onConnected(function() {
@@ -111,42 +111,46 @@ requirejs([
 			reset();
 		}
 		else {
-			//figure out if we have time debt to make up (by speeding up or slowing down the game)
-			if(timeDebt > 75 / 1000) { tryingToChangeTimeDebt = -1; }
-			else if(timeDebt < -75 / 1000) { tryingToChangeTimeDebt = 1; }
-			else if((tryingToChangeTimeDebt === -1 && timeDebt < 10 / 1000) ||
-				(tryingToChangeTimeDebt === 1 && timeDebt > -10 / 1000)) {
-				tryingToChangeTimeDebt = 0;
-			}
+			var tServer;
 
-			//if we are trying to make up time debt, we need speed up or slow down the simulation
-			var tAdjusted = t;
-			if(tryingToChangeTimeDebt > 0) { tAdjusted /= 10.0; }
-			else if(tryingToChangeTimeDebt < 0) { tAdjusted *= 2.0; }
-
-			//we need to record our time debt (as in, are we ahead of or behind the server)
 			if(gameTime <= prevGameTime) {
 				//game stuttered, our simulation is now "ahead" of the server
-				timeDebt += tAdjusted;
+				tServer = 0;
 			}
 			else if(gameTime - prevGameTime > 50) {
 				//we have to make up a lot of time, so we chunk it
-				timeDebt += 50 / 1000 - tAdjusted; //game is "behind" the server now
+				tServer = 50 / 1000;
 				prevGameTime += 50;
 			}
 			else {
 				//game is moving normally
-				timeDebt += ((gameTime - prevGameTime) / 1000) - tAdjusted;
+				tServer = (gameTime - prevGameTime) / 1000;
 				prevGameTime = gameTime;
 			}
 
+			//the client may need to speed up or slow down to match the server
+			if(timeDebt > 75 / 1000) { //client is ahead of server
+				directionToChangeTimeDebt = -1; //slow down client, please
+			}
+			else if(timeDebt < -75 / 1000) { //client is behind server
+				directionToChangeTimeDebt = 1; //speed up client, please
+			}
+			else if(directionToChangeTimeDebt > 0 && timeDebt < 0 / 1000) {
+				directionToChangeTimeDebt = 0; //stop speeding up the client, you've done enough
+			}
+			else if(directionToChangeTimeDebt < 0 && timeDebt > -5 / 1000) {
+				directionToChangeTimeDebt = 0; //stop slowing down the client, you've done enough
+			}
+
+			var tClient = t;
+			if(directionToChangeTimeDebt > 0) { tClient *= 1.1; } //speed up the client
+			else if(directionToChangeTimeDebt < 0) { tClient *= 0.9; } //slow down the client
+
 			processBufferedMessages(gameTime);
-			Game.tick(tAdjusted);
+			Game.tick(tClient, tServer);
+			timeDebt += tClient - tServer; //positive means client is ahead of server, negative means behind
 		}
 
-		if(tryingToChangeTimeDebt !== 0) {
-			console.log(tryingToChangeTimeDebt, timeDebt);
-		}
 		render();
 		timeToNextFlushMessages -= t;
 		if(timeToNextFlushMessages <= 0) {
@@ -173,7 +177,7 @@ requirejs([
 		prevGameTime = null;
 		prevTimestamp = performance.now();
 		timeDebt = 0;
-		tryingToChangeTimeDebt = 0;
+		directionToChangeTimeDebt = 0;
 	}
 
 	//kick off the game loop
