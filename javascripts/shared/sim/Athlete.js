@@ -4,8 +4,8 @@ define([
 	SUPERCLASS
 ) {
 	function Athlete(params, simType) {
-		params.width = 35;
-		params.height = 80;
+		params.width = 28;
+		params.height = 64;
 		SUPERCLASS.call(this, params, simType);
 
 		//constants (not synced)
@@ -34,21 +34,6 @@ define([
 		SUPERCLASS.prototype.startOfFrame.call(this, t);
 	};
 	Athlete.prototype.tick = function(t) {
-		if(this.currentTask === 'charge-spike') {
-			this.velMult = Math.max(1.0 - 2 * this.currentTaskDuration, 0.15);
-		}
-		else if(this.currentTask === 'spike') {
-			if(this.currentTaskDuration < 0.40) {
-				this.velMult = 0.15;
-			}
-			else {
-				this.velMult = Math.min(0.15 + 3 * (this.currentTaskDuration - 0.40), 1.0);
-			}
-		}
-		else {
-			this.velMult = 1.0;
-		}
-
 		//gravity
 		this.vel.y += this.velMult * this.gravity * t;
 

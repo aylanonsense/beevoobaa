@@ -1,9 +1,9 @@
 define({
-	FAKE_LAG: 250,
+	FAKE_LAG: 175,
 	BOUNDS: {
-		FLOOR: 500,
+		FLOOR: 550,
 		CEILING: null,
-		LEFT_WALL: 50,
-		RIGHT_WALL: 750
+		LEFT_WALL: 25,
+		RIGHT_WALL: 775
 	}
 });

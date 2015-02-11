@@ -164,8 +164,8 @@ requirejs([
 		ctx.fillStyle = '#222';
 		ctx.fillRect(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
 		Game.render(ctx);
-		Pinger.render(ctx, Constants.CANVAS_WIDTH - 350 - 10,
-			Constants.CANVAS_HEIGHT - 75 - 10, 350, 75);
+		Pinger.render(ctx, Constants.CANVAS_WIDTH - 100 - 10,
+			Constants.CANVAS_HEIGHT - 25 - 10, 100, 25);
 	}
 
 	function reset() {

@@ -116,7 +116,7 @@ define([
 	}
 
 	function render(ctx, x, y, width, height) {
-		ctx.fillStyle = '#0f0';
+		ctx.fillStyle = '#060';
 		ctx.font = "7px Lucida Console";
 
 		//draw latency bars
@@ -129,15 +129,18 @@ define([
 			barX -= barWidth;
 			if(pings[i].received !== null) {
 				var lag = pings[i].received - pings[i].sent;
-				var barHeight = (height - 10) * lag / maxLag;
-				ctx.fillRect(barX, y + height - 10 - barHeight, barWidth - 3, barHeight);
-				ctx.fillText("" + Math.floor(lag), barX, y + height);
+				var textHeight = (width >= 325 ? 10 : 0);
+				var barHeight = (height - textHeight) * lag / maxLag;
+				ctx.fillRect(barX, y + height - textHeight - barHeight, barWidth - 1, barHeight);
+				if(textHeight > 0) {
+					ctx.fillText("" + Math.floor(lag), barX, y + height);
+				}
 			}
 		}
 
 		//draw delay line (or simulated latency)
 		if(clientEnforcedDelay !== null) {
-			ctx.strokeStyle = '#ff0';
+			ctx.strokeStyle = '#660';
 			ctx.lineWidth = 2;
 			ctx.beginPath();
 			ctx.moveTo(x + 40, y + (height - 10) * (1 - clientEnforcedDelay / maxLag));
@@ -149,25 +152,25 @@ define([
 		ctx.font = "11px Lucida Console";
 		var totalLag = 0;
 		var numPings = 0;
-		for(var i = 0; i < pings.length; i++) {
+		for(i = 0; i < pings.length; i++) {
 			if(pings[i].received !== null) {
 				numPings++;
 				totalLag += pings[i].received - pings[i].sent;
 			}
 		}
 		if(numPings > 0) {
-			ctx.fillStyle = '#fff';
+			ctx.fillStyle = '#666';
 			ctx.fillText(Math.round(totalLag / numPings) + "ms", x, y + 7);
 		}
 		if(clientEnforcedDelay !== null) {
-			ctx.fillStyle = '#ff0';
+			ctx.fillStyle = '#660';
 			ctx.fillText(Math.round(clientEnforcedDelay) + "ms", x, y + 21);
 		}
 		if(recentPackets.length > 0) {
 			var numLatePackets = recentPackets.filter(function(packet) {
 				return packet.success;
 			}).length;
-			ctx.fillStyle = '#f06';
+			ctx.fillStyle = '#602';
 			ctx.fillText((Math.round(1000 * numLatePackets / recentPackets.length) / 10) +
 				"%", x, y + 35);
 		}

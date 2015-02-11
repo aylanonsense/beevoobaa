@@ -114,19 +114,19 @@ define([
 				this._walkDuration = 0.0;
 			}
 		}
-		if(this._sim.currentTask === 'charge-jump') {
-			this._chargedDir += 2.0 * t * this._moveDir;
-			if(this._chargedDir > 1.0) { this._chargedDir = 1.0; }
-			else if(this._chargedDir < -1.0) { this._chargedDir = -1.0; }
-		}
-		else {
-			this._chargedDir = 0.0;
-		}
 		if(this._isPlayerControlled) {
-			if(this._sim.currentTask === 'charge-jump' && this._sim.currentTaskDuration >= 1.0) {
+			if(this._sim.currentTask === 'charge-jump') {
+				this._chargedDir += 2.0 * t * this._moveDir;
+				if(this._chargedDir > 1.0) { this._chargedDir = 1.0; }
+				else if(this._chargedDir < -1.0) { this._chargedDir = -1.0; }
+			}
+			else {
+				this._chargedDir = 0.0;
+			}
+			if(this._sim.currentTask === 'charge-jump' && this._sim.currentTaskDuration >= 2.0) {
 				this._bufferCommand('jump', { charge: 1.0, dir: this._chargedDir });
 			}
-			else if(this._sim.currentTask === 'charge-spike' && this._sim.currentTaskDuration >= 1.0) {
+			else if(this._sim.currentTask === 'charge-spike' && this._sim.currentTaskDuration >= 2.0) {
 				this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
 			}
 		}

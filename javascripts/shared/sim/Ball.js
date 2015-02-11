@@ -7,8 +7,8 @@ define([
 ) {
 	var gravity = 200;
 	function Ball(params, simType) {
-		params.width = 55;
-		params.height = 55;
+		params.width = 44;
+		params.height = 44;
 		SUPERCLASS.call(this, params, simType);
 		this._verticalEnergy = (SharedConstants.BOUNDS.FLOOR - this.bottom) * gravity + this.vel.y * this.vel.y / 2;
 	}
