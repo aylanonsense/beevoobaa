@@ -29,6 +29,12 @@ define([
 			if(evt.isDown) { this._bufferCommand('charge-jump', null); }
 			else { this._bufferCommand('jump', INPUT_BUFFER_TIME); }
 		}
+		else if(evt.gameKey === 'STRONG_HIT') {
+			if(evt.isDown) { this._bufferCommand('charge-strong-hit', INPUT_BUFFER_TIME); }
+			else if(this._sim.currentTask === 'charge-spike') {
+				this._bufferCommand('strong-hit', INPUT_BUFFER_TIME);
+			}
+		}
 		else if(evt.gameKey === 'MOVE_LEFT') {
 			if(evt.isDown) {
 				this._moveDir = -1;
@@ -71,6 +77,12 @@ define([
 		else if(command === 'charge-jump') {
 			return { actionType: 'charge-jump', x: this._sim.x };
 		}
+		else if(command === 'charge-strong-hit') {
+			return { actionType: 'charge-strong-hit' };
+		}
+		else if(command === 'strong-hit') {
+			return { actionType: 'strong-hit', charge: 1.0, dir: 0.0 }; //TODO correct charge / dir
+		}
 		else if(command === 'jump') {
 			var dir = 0.0;
 			var charge = 0.0;
@@ -112,7 +124,10 @@ define([
 		}
 		if(this._isPlayerControlled) {
 			if(this._sim.currentTask === 'charge-jump' && this._sim.currentTaskDuration >= 1.0) {
-				this._bufferCommand('jump', { charge: 1.0, dir : this._chargedDir });
+				this._bufferCommand('jump', { charge: 1.0, dir: this._chargedDir });
+			}
+			else if(this._sim.currentTask === 'charge-spike' && this._sim.currentTaskDuration >= 1.0) {
+				this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
 			}
 		}
 		SUPERCLASS.prototype.tick.call(this, t);
@@ -120,16 +135,17 @@ define([
 	Athlete.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);
 
-		//draw red shadow to represent server-side values
+		//draw a server shadow
 		if(Constants.DEBUG_RENDER_SERVER_STATE) {
 			this._renderSim(ctx, this._serverSim, SERVER_SPRITE_OUTLINE);
 		}
 
-		//draw blue/green rectangle to represent the client's displayed position
+		//draw the sprite
 		this._renderSim(ctx, this._sim, SPRITE);
 
 		//draw little trajectory dots
-		if(this._isPlayerControlled && this._sim.currentTask === 'charge-jump') {
+		if(this._isPlayerControlled && this._sim.currentTask === 'charge-jump' &&
+			this._sim.currentTaskDuration > 0.15) {
 			var charge = Math.min(this._sim.currentTaskDuration, 1.00);
 			CURSOR_SPRITE.render(ctx, null,
 				this._sim.center.x - CURSOR_SPRITE.width / 2 + this._chargedDir * 20,
@@ -148,7 +164,13 @@ define([
 	Athlete.prototype._renderSim = function(ctx, sim, sprite) {
 		var frame;
 		if(sim.isAirborne()) {
-			if(sim.vel.y < 100) {
+			if(sim.currentTask === 'charge-spike') {
+				frame = 0 + 6 * 6;
+			}
+			else if(sim.currentTask === 'spike') {
+				frame = Math.min(1 + Math.floor(sim.currentTaskDuration / 0.15), 3) + 6 * 6;
+			}
+			else if(sim.vel.y < 100) {
 				frame = 1 + 3 * 6;
 			}
 			else {
@@ -176,8 +198,8 @@ define([
 			frame = 0 + 0 * 6;
 		}
 		sprite.render(ctx, null,
-			sim.right - Math.floor(SPRITE.width / 2 + sim.width / 2),
-			sim.bottom - SPRITE.height, frame, false);
+			sim.center.x - sprite.width / 2,
+			sim.bottom - sprite.height, frame, false);
 	};
 	return Athlete;
 });

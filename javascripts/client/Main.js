@@ -31,6 +31,10 @@ requirejs([
 	var prevTimestamp = performance.now();
 	var keyboard = {};
 	for(var key in Constants.KEY_BINDINGS) { keyboard[Constants.KEY_BINDINGS[key]] = false; }
+	var SECONDS_BETWEEN_FLUSH_MESSAGES = 2.5 / 60;
+	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
+	var timeDebt = 0;
+	var tryingToChangeTimeDebt = 0;
 
 	//add network listeners
 	Connection.onConnected(function() {
@@ -100,28 +104,55 @@ requirejs([
 		if(gameTime === null || prevGameTime === null) {
 			//game is starting up, nothing is happening
 			prevGameTime = gameTime;
-		}
-		else if(gameTime <= prevGameTime) {
-			//game stuttered, don't update anything
+			timeDebt = 0;
 		}
 		//if we have a lot of time to make up, just reset and let's start again
 		else if(gameTime - prevGameTime > 1000) {
 			reset();
 		}
-		else if(gameTime - prevGameTime > 50) {
-			//game is moving too fast (3 frames per frame), pace it over a couple of frames
-			processBufferedMessages(prevGameTime + 50);
-			Game.tick(50 / 1000, prevGameTime + 50);
-			prevGameTime += 50;
-		}
 		else {
-			//game is moving normally
+			//figure out if we have time debt to make up (by speeding up or slowing down the game)
+			if(timeDebt > 75 / 1000) { tryingToChangeTimeDebt = -1; }
+			else if(timeDebt < -75 / 1000) { tryingToChangeTimeDebt = 1; }
+			else if((tryingToChangeTimeDebt === -1 && timeDebt < 10 / 1000) ||
+				(tryingToChangeTimeDebt === 1 && timeDebt > -10 / 1000)) {
+				tryingToChangeTimeDebt = 0;
+			}
+
+			//if we are trying to make up time debt, we need speed up or slow down the simulation
+			var tAdjusted = t;
+			if(tryingToChangeTimeDebt > 0) { tAdjusted /= 10.0; }
+			else if(tryingToChangeTimeDebt < 0) { tAdjusted *= 2.0; }
+
+			//we need to record our time debt (as in, are we ahead of or behind the server)
+			if(gameTime <= prevGameTime) {
+				//game stuttered, our simulation is now "ahead" of the server
+				timeDebt += tAdjusted;
+			}
+			else if(gameTime - prevGameTime > 50) {
+				//we have to make up a lot of time, so we chunk it
+				timeDebt += 50 / 1000 - tAdjusted; //game is "behind" the server now
+				prevGameTime += 50;
+			}
+			else {
+				//game is moving normally
+				timeDebt += ((gameTime - prevGameTime) / 1000) - tAdjusted;
+				prevGameTime = gameTime;
+			}
+
 			processBufferedMessages(gameTime);
-			Game.tick((gameTime - prevGameTime) / 1000, gameTime);
-			prevGameTime = gameTime;
+			Game.tick(tAdjusted);
+		}
+
+		if(tryingToChangeTimeDebt !== 0) {
+			console.log(tryingToChangeTimeDebt, timeDebt);
 		}
 		render();
-		Connection.flush();
+		timeToNextFlushMessages -= t;
+		if(timeToNextFlushMessages <= 0) {
+			timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
+			Connection.flush();
+		}
 		requestAnimationFrame(loop);
 	}
 
@@ -141,6 +172,8 @@ requirejs([
 		bufferedMessages = [];
 		prevGameTime = null;
 		prevTimestamp = performance.now();
+		timeDebt = 0;
+		tryingToChangeTimeDebt = 0;
 	}
 
 	//kick off the game loop

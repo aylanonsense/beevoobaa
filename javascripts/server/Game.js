@@ -2,16 +2,20 @@ define([
 	'shared/Constants',
 	'server/net/Server',
 	'server/entity/Athlete',
+	'server/entity/Ball',
 	'performance-now'
 ], function(
 	SharedConstants,
 	Server,
 	Athlete,
+	Ball,
 	now
 ) {
 	var SECONDS_BETWEEN_SEND_STATES = 0.40;
+	var SECONDS_BETWEEN_FLUSH_MESSAGES = 2.5 / 60;
 	var timeToNextSendState = SECONDS_BETWEEN_SEND_STATES;
-	var entities = [];
+	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
+	var entities = [ new Ball({ x: 300, y: 200, vel: { x: -50, y: -50 } }) ];
 
 	function tick(t) {
 		//update each entity
@@ -33,7 +37,11 @@ define([
 		}
 
 		//flush all buffered messages
-		Server.flush();
+		timeToNextFlushMessages -= t;
+		if(timeToNextFlushMessages <= 0) {
+			Server.flush();
+			timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES; //set rather than added, intentional
+		}
 	}
 
 	function onConnected(conn) {

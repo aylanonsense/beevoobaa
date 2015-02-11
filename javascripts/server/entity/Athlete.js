@@ -60,6 +60,18 @@ define([
 				x: (typeof action.x === 'number' ? action.x : this._sim.x)
 			};
 		}
+		else if(command === 'charge-strong-hit') {
+			return {
+				actionType: 'charge-strong-hit'
+			};
+		}
+		else if(command === 'strong-hit') {
+			return {
+				actionType: 'strong-hit',
+				charge: 1.0, //TODO correct charge
+				dir: 0.0 //TODO correct dir
+			};
+		}
 		return null;
 	};
 	return Athlete;

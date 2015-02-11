@@ -1,9 +1,7 @@
 define([
-	'shared/sim/LocatableTaskSim',
-	'shared/Constants'
+	'shared/sim/LocatableTaskSim'
 ], function(
-	SUPERCLASS,
-	SharedConstants
+	SUPERCLASS
 ) {
 	function Athlete(params, simType) {
 		params.width = 35;
@@ -12,6 +10,9 @@ define([
 
 		//constants (not synced)
 		this.moveSpeed = 75;
+		this.gravity = 95;
+		this.minJumpSpeed = 50;
+		this.maxJumpSpeed = 240;
 	}
 	Athlete.prototype = Object.create(SUPERCLASS.prototype);
 	Athlete.prototype.getState = function() {
@@ -23,17 +24,33 @@ define([
 	};
 	Athlete.prototype.startOfFrame = function(t) {
 		//stop animations that last a fixed amount of time
-		if(this.currentTask === 'land-from-jump') {
-			if(this.currentTaskDuration >= 0.50) {
-				this._clearTask();
-			}
+		if(this.currentTask === 'land-from-jump' && this.currentTaskDuration >= 0.50) {
+			this._clearTask();
+		}
+		if(this.currentTask === 'spike' && this.currentTaskDuration > 1.00) {
+			this._clearTask();
 		}
 
 		SUPERCLASS.prototype.startOfFrame.call(this, t);
 	};
 	Athlete.prototype.tick = function(t) {
+		if(this.currentTask === 'charge-spike') {
+			this.velMult = Math.max(1.0 - 2 * this.currentTaskDuration, 0.15);
+		}
+		else if(this.currentTask === 'spike') {
+			if(this.currentTaskDuration < 0.40) {
+				this.velMult = 0.15;
+			}
+			else {
+				this.velMult = Math.min(0.15 + 3 * (this.currentTaskDuration - 0.40), 1.0);
+			}
+		}
+		else {
+			this.velMult = 1.0;
+		}
+
 		//gravity
-		this.vel.y += 200 * t;
+		this.vel.y += this.velMult * this.gravity * t;
 
 		//if the player is following a waypoint (moving or stationary) we need to change velocity
 		if(this.currentTask === 'follow-waypoint') {
@@ -52,8 +69,9 @@ define([
 
 		//if the player jumps, that's just a matter of modifying velocity
 		if(this.currentTask === 'jump') {
-			this.vel.x = 200 * this.currentTaskDetails.dir;
-			this.vel.y = -50 - 150 * this.currentTaskDetails.charge;
+			this.vel.x = 100 * this.currentTaskDetails.dir;
+			this.vel.y = -this.minJumpSpeed - (this.maxJumpSpeed - this.minJumpSpeed) *
+				this.currentTaskDetails.charge;
 			this._clearTask();
 		}
 
@@ -102,16 +120,14 @@ define([
 	Athlete.prototype.performAction = function(action) {
 		//moving
 		if(action.actionType === 'follow-waypoint' && this.isGrounded()) {
-			if(this.currentTask === 'follow-waypoint') {
-				this._clearTask();
-			}
+			if(this.currentTask === 'follow-waypoint') { this._clearTask(); }
 			return this._setTask('follow-waypoint', {
 				x: action.x || 0,
 				dir: action.dir || 0
 			}, 6);
 		}
 
-		//getting reading to jump
+		//getting ready to jump
 		else if(action.actionType === 'charge-jump' && this.isGrounded()) {
 			this.vel.x = 0;
 			return this._repositionAndSetTask(action.x, 'charge-jump', {}, 5);
@@ -119,13 +135,33 @@ define([
 
 		//jumping
 		else if(action.actionType === 'jump' && this.isGrounded()) {
-			if(this.currentTask === 'charge-jump') {
-				this._clearTask();
-			}
+			if(this.currentTask === 'charge-jump') { this._clearTask(); }
 			return this._repositionAndSetTask(action.x, 'jump', {
 				charge: action.charge || 0,
 				dir: action.dir || 0
 			}, 5);
+		}
+
+		//hit the ball
+		else if(action.actionType === 'charge-strong-hit') {
+			if(this.isAirborne()) {
+				return this._setTask('charge-spike', {}, 5);
+			}
+			else {
+				//TODO
+			}
+		}
+		else if(action.actionType === 'strong-hit') {
+			if(this.isAirborne()) {
+				if(this.currentTask === 'charge-spike') { this._clearTask(); }
+				return this._setTask('spike', {
+					charge: action.charge || 0,
+					dir: action.dir || 0
+				}, 5);
+			}
+			else {
+				//TODO
+			}
 		}
 
 		return false;

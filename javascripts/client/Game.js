@@ -1,7 +1,9 @@
 define([
-	'client/entity/Athlete'
+	'client/entity/Athlete',
+	'client/entity/Ball'
 ], function(
-	Athlete
+	Athlete,
+	Ball
 ) {
 	var MILLISECONDS_LATE_ALLOWED = 65;
 	var myAthlete = null;
@@ -131,6 +133,9 @@ define([
 			if(!entityAlreadyExists) {
 				if(state.entities[i].entityType === 'Athlete') {
 					entities.push(new Athlete(state.entities[i]));
+				}
+				else if(state.entities[i].entityType === 'Ball') {
+					entities.push(new Ball(state.entities[i]));
 				}
 				else {
 					throw new Error("Unsure how to create '" +

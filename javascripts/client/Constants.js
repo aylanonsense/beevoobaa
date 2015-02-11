@@ -1,9 +1,10 @@
 define({
 	TARGET_FRAME_RATE: 60,
-	CANVAS_WIDTH: 600,
-	CANVAS_HEIGHT: 500,
+	CANVAS_WIDTH: 800,
+	CANVAS_HEIGHT: 600,
 	KEY_BINDINGS: {
 		32: 'JUMP', //space bar
+		90: 'STRONG_HIT', //z key
 		38: 'MOVE_UP', 87: 'MOVE_UP', //up arrow key / w key
 		37: 'MOVE_LEFT', 65: 'MOVE_LEFT', //left arrow key / a key
 		40: 'MOVE_DOWN', 83: 'MOVE_DOWN', //down arrow key / s key

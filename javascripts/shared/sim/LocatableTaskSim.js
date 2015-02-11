@@ -1,117 +1,114 @@
 define([
-	'shared/sim/TaskSim',
-	'shared/Constants'
+	'shared/sim/LocatableSim'
 ], function(
-	SUPERCLASS,
-	SharedConstants
+	SUPERCLASS
 ) {
 	function LocatableTaskSim(params, simType) {
 		SUPERCLASS.call(this, params, simType);
 
-		//constants (not synced)
-		this.width = params.width || 0;
-		this.height = params.height || 0;
+		//private vars (not synced)
+		this._queuedActionGenerateFunc = null;
+		this._queuedActionCallback = null;
+		this._queuedActionNum = null;
+		this._nextQueuedActionNum = 0;
 
-		//positional vars
-		this.vel = {
-			x: params.vel && params.vel.x || 0,
-			y: params.vel && params.vel.y || 0
-		};
-		this.x = params.x || 0;
-		this.y = params.y || 0;
+		//task vars
+		this.currentTask = null;
+		this.currentTaskDetails = null;
+		this.currentTaskPriority = null;
+		this.currentTaskDuration = 0.0;
 	}
 	LocatableTaskSim.prototype = Object.create(SUPERCLASS.prototype);
 	LocatableTaskSim.prototype.getState = function() {
 		var state = SUPERCLASS.prototype.getState.call(this);
 
-		//positional vars
-		state.x = this.x;
-		state.y = this.y;
-		state.vel = { x: this.vel.x, y: this.vel.y };
+		//task vars
+		state.currentTask = this.currentTask;
+		state.currentTaskDetails = this.currentTaskDetails;
+		state.currentTaskPriority = this.currentTaskPriority;
+		state.currentTaskDuration = this.currentTaskDuration;
 
 		return state;
 	};
 	LocatableTaskSim.prototype.setState = function(state) {
 		SUPERCLASS.prototype.setState.call(this, state);
 
-		//positional vars
-		this.x = state.x;
-		this.y = state.y;
-		this.vel.x = state.vel.x;
-		this.vel.y = state.vel.y;
+		//task vars
+		this.currentTask = state.currentTask;
+		this.currentTaskDetails = state.currentTaskDetails;
+		this.currentTaskPriority = state.currentTaskPriority;
+		this.currentTaskDuration = state.currentTaskDuration;
 	};
-	LocatableTaskSim.prototype.tick = function(t) {
-		this.x += this.vel.x * t;
-		this.y += this.vel.y * t;
-		SUPERCLASS.prototype.tick.call(this, t);
+	LocatableTaskSim.prototype.startOfFrame = function(t) {
+		//mayhaps an action is queued that we are able to perform
+		if(this._queuedActionGenerateFunc !== null) {
+			var action = this._queuedActionGenerateFunc();
+			if(!action) {
+				this._queuedActionGenerateFunc = null;
+				this._queuedActionCallback = null;
+				this._queuedActionNum = null;
+			}
+			if(action && this.performAction(action)) {
+				var callback = this._queuedActionCallback;
+				this._queuedActionGenerateFunc = null;
+				this._queuedActionCallback = null;
+				this._queuedActionNum = null;
+				if(callback) {
+					callback(action);
+				}
+			}
+		}
+		SUPERCLASS.prototype.startOfFrame.call(this, t);
 	};
-	LocatableTaskSim.prototype.isGrounded = function() {
-		return this.vel.y >= 0 && this.bottom === SharedConstants.BOUNDS.FLOOR;
+	LocatableTaskSim.prototype.queueAction = function(generateFunc, callback) {
+		var action = generateFunc();
+		if(action && this.performAction(action)) {
+			//we get rid of what WAS queued because this essentially overwrote it
+			this._queuedActionGenerateFunc = null;
+			this._queuedActionCallback = null;
+			this._queuedActionNum = null;
+			if(callback) {
+				callback(action);
+			}
+			return null;
+		}
+		else {
+			this._queuedActionGenerateFunc = generateFunc;
+			this._queuedActionCallback = callback;
+			this._queuedActionNum = this._nextQueuedActionNum++;
+			var queuedActionNum = this._queuedActionNum;
+			var self = this;
+			return function() {
+				if(queuedActionNum === self._queuedActionNum) {
+					self._queuedActionGenerateFunc = null;
+					self._queuedActionCallback = null;
+					self._queuedActionNum = null;
+				}
+			};
+		}
 	};
-	LocatableTaskSim.prototype.isAirborne = function() {
-		return !this.isGrounded();
+	LocatableTaskSim.prototype.performAction = function(action) {
+		//to be filled out in subclasses
 	};
 
-	//define useful properties
-	Object.defineProperty(LocatableTaskSim.prototype, 'x', {
-		get: function() { return this._x; },
-		set: function(x) {
-			this._x = x;
-			if(this._x < SharedConstants.BOUNDS.LEFT_WALL) {
-				this._x = SharedConstants.BOUNDS.LEFT_WALL;
-				if(this.vel.x < 0) {
-					this.vel.x = 0;
-				}
-			}
-			if(this._x > SharedConstants.BOUNDS.RIGHT_WALL - this.width) {
-				this._x = SharedConstants.BOUNDS.RIGHT_WALL - this.width;
-				if(this.vel.x > 0) {
-					this.vel.x = 0;
-				}
-			}
+	//helper methods
+	LocatableTaskSim.prototype._setTask = function(task, details, priority) {
+		if(this.currentTask === null || this.currentTaskPriority === null ||
+			(priority !== null && priority < this.currentTaskPriority)) {
+			this.currentTask = task;
+			this.currentTaskDetails = details;
+			this.currentTaskPriority = priority || null;
+			this.currentTaskDuration = 0.0;
+			return true;
 		}
-	});
-	Object.defineProperty(LocatableTaskSim.prototype, 'y', {
-		get: function() { return this._y; },
-		set: function(y) {
-			this._y = y;
-			if(this._y < SharedConstants.BOUNDS.CEILING) {
-				this._y = SharedConstants.BOUNDS.CEILING;
-				if(this.vel.y < 0) {
-					this.vel.y = 0;
-				}
-			}
-			if(this._y > SharedConstants.BOUNDS.FLOOR - this.height) {
-				this._y = SharedConstants.BOUNDS.FLOOR - this.height;
-				if(this.vel.y > 0) {
-					this.vel.y = 0;
-				}
-			}
-		}
-	});
-	Object.defineProperty(LocatableTaskSim.prototype, 'left', {
-		get: function() { return this.x; },
-		set: function(x) { this.x = x; }
-	});
-	Object.defineProperty(LocatableTaskSim.prototype, 'right', {
-		get: function() { return this.x + this.width; },
-		set: function(x) { this.x = x - this.width; }
-	});
-	Object.defineProperty(LocatableTaskSim.prototype, 'top', {
-		get: function() { return this.y; },
-		set: function(y) { this.y = y; }
-	});
-	Object.defineProperty(LocatableTaskSim.prototype, 'bottom', {
-		get: function() { return this.y + this.height; },
-		set: function(y) { this.y = y - this.height; }
-	});
-	Object.defineProperty(LocatableTaskSim.prototype, 'center', {
-		get: function() { return { x: this.x + this.width / 2, y: this.y + this.height / 2 }; },
-		set: function(center) {
-			this.x = center.x - this.width / 2;
-			this.y = center.y - this.height / 2;
-		}
-	});
+		return false;
+	};
+	LocatableTaskSim.prototype._clearTask = function() {
+		this.currentTask = null;
+		this.currentTaskDetails = null;
+		this.currentTaskPriority = null;
+		this.currentTaskDuration = 0.0;
+	};
 
 	return LocatableTaskSim;
 });
