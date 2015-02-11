@@ -125,12 +125,13 @@ define([
 		get: function() { return this.y + this.height; },
 		set: function(y) { this.y = y - this.height; }
 	});
-	Object.defineProperty(LocatableSim.prototype, 'center', {
-		get: function() { return { x: this.x + this.width / 2, y: this.y + this.height / 2 }; },
-		set: function(center) {
-			this.x = center.x - this.width / 2;
-			this.y = center.y - this.height / 2;
-		}
+	Object.defineProperty(LocatableSim.prototype, 'centerX', {
+		get: function() { return this.x + this.width / 2; },
+		set: function(x) { this.x = x - this.width / 2; }
+	});
+	Object.defineProperty(LocatableSim.prototype, 'centerY', {
+		get: function() { return this.y + this.height / 2; },
+		set: function(y) { this.y = y - this.height / 2; }
 	});
 
 	return LocatableSim;

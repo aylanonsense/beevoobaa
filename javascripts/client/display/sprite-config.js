@@ -1,50 +1,56 @@
 define({
 	Athlete: {
-		imagePath: '/image/image.gif',
+		imagePath: '/image/sprites.gif',
 		width: 24,
 		height: 24,
 		scale: 4,
 		flip: true,
-		crop: { x: 5, y: 7, width: 144, height: 432 },
+		crop: { x: 1, y: 1, width: 144, height: 432 },
 		trim: { x: 7, y: 6, width: 7, height: 16 }
 	},
-	AthleteOutline: {
-		imagePath: '/image/image.gif',
+	AthleteShadow: {
+		imagePath: '/image/sprites.gif',
 		width: 24,
 		height: 24,
 		scale: 4,
 		flip: true,
-		crop: { x: 5, y: 7, width: 144, height: 432 },
-		trim: { x: 7, y: 6, width: 7, height: 16 },
-		replacements: { '#c81f1f': '#0a5359', '#b2a119': '#0a5359', '#1dbaaf': '#0a5359',
-						'#280fc4': '#0a5359', '#28a91c': '#0a5359', '#911bba': '#0a5359' }
+		crop: { x: 181, y: 1, width: 144, height: 432 },
+		trim: { x: 7, y: 6, width: 7, height: 16 }
 	},
 	Ball: {
-		imagePath: '/image/image.gif',
-		width: 24,
-		height: 24,
-		scale: 4,
-		flip: true,
-		crop: { x: 101, y: 7, width: 24, height: 24 },
-		trim: { x: 5, y: 5, width: 11, height: 11 }
-	},
-	BallShadow: {
-		imagePath: '/image/image.gif',
-		width: 24,
-		height: 24,
-		scale: 4,
-		flip: true,
-		crop: { x: 101, y: 7, width: 24, height: 24 },
-		trim: { x: 5, y: 5, width: 11, height: 11 },
-		replacements: { '#90ff00': '#0a5359', '#fffd00': '#0a5359', '#0096ff': '#0a5359',
-						'#ff4200': '#0a5359', '#f9f9f9': '#0a5359', '#ff7200': '#0a5359' }
-	},
-	Cursor: {
-		imagePath: '/image/image.gif',
-		width: 3,
-		height: 3,
+		imagePath: '/image/sprites.gif',
+		width: 17,
+		height: 17,
 		scale: 4,
 		flip: false,
-		crop: { x: 5, y: 442, width: 6, height: 6 }
+		crop: { x: 146, y: 1, width: 34, height: 68 },
+		trim: { x: 3, y: 3, width: 11, height: 11 }
+	},
+	BallShadow: {
+		imagePath: '/image/sprites.gif',
+		width: 17,
+		height: 17,
+		scale: 4,
+		flip: false,
+		crop: { x: 326, y: 1, width: 34, height: 68 },
+		trim: { x: 3, y: 3, width: 11, height: 11 }
+	},
+	Cursor: {
+		imagePath: '/image/sprites.gif',
+		width: 5,
+		height: 5,
+		scale: 4,
+		flip: false,
+		crop: { x: 146, y: 70, width: 10, height: 10 },
+		trim: { x: 1, y: 1, width: 3, height: 3 }
+	},
+	Net: {
+		imagePath: '/image/sprites.gif',
+		width: 9,
+		height: 47,
+		scale: 4,
+		flip: false,
+		crop: { x: 146, y: 81, width: 9, height: 53 },
+		trim: { x: 2, y: 2, width: 5, height: 33 }
 	}
 });

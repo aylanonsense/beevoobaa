@@ -34,8 +34,8 @@ define([
 	};
 	Ball.prototype._renderSim = function(ctx, sim, sprite) {
 		sprite.render(ctx, null,
-			sim.center.x - sprite.width / 2,
-			sim.center.y - sprite.height / 2, 0, false);
+			sim.centerX - sprite.width / 2,
+			sim.centerY - sprite.height / 2, 0, false);
 	};
 	return Ball;
 });

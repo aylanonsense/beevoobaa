@@ -3,19 +3,21 @@ define([
 	'server/net/Server',
 	'server/entity/Athlete',
 	'server/entity/Ball',
+	'server/entity/Net',
 	'performance-now'
 ], function(
 	SharedConstants,
 	Server,
 	Athlete,
 	Ball,
+	Net,
 	now
 ) {
 	var SECONDS_BETWEEN_SEND_STATES = 0.40;
 	var SECONDS_BETWEEN_FLUSH_MESSAGES = 2.5 / 60;
 	var timeToNextSendState = SECONDS_BETWEEN_SEND_STATES;
 	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
-	var entities = [ new Ball({ x: 300, y: 200, vel: { x: -50, y: -50 } }) ];
+	var entities = [ new Net({}), new Ball({ x: 300, y: 200, vel: { x: -50, y: -50 } }) ];
 
 	function tick(t) {
 		//update each entity

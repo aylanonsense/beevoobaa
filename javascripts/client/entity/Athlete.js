@@ -1,7 +1,7 @@
 define([
 	'client/entity/BufferedInputEntity',
 	'create!client/display/Sprite > Athlete',
-	'create!client/display/Sprite > AthleteOutline',
+	'create!client/display/Sprite > AthleteShadow',
 	'create!client/display/Sprite > Cursor',
 	'shared/sim/Athlete',
 	'client/Constants'
@@ -148,16 +148,16 @@ define([
 			this._sim.currentTaskDuration > 0.15) {
 			var charge = Math.min(this._sim.currentTaskDuration, 1.00);
 			CURSOR_SPRITE.render(ctx, null,
-				this._sim.center.x - CURSOR_SPRITE.width / 2 + this._chargedDir * 20,
+				this._sim.centerX - CURSOR_SPRITE.width / 2 + this._chargedDir * 20,
 				this._sim.top - 15 * (1 + charge), 0, false);
 			CURSOR_SPRITE.render(ctx, null,
-				this._sim.center.x - CURSOR_SPRITE.width / 2 + this._chargedDir * 35,
+				this._sim.centerX - CURSOR_SPRITE.width / 2 + this._chargedDir * 35,
 				this._sim.top - 30 * (1 + charge), 0, false);
 			CURSOR_SPRITE.render(ctx, null,
-				this._sim.center.x - CURSOR_SPRITE.width / 2 + this._chargedDir * 50,
+				this._sim.centerX - CURSOR_SPRITE.width / 2 + this._chargedDir * 50,
 				this._sim.top - 42 * (1 + charge), 0, false);
 			CURSOR_SPRITE.render(ctx, null,
-				this._sim.center.x - CURSOR_SPRITE.width / 2 + this._chargedDir * 65,
+				this._sim.centerX - CURSOR_SPRITE.width / 2 + this._chargedDir * 65,
 				this._sim.top - 51 * (1 + charge), 0, false);
 		}
 	};
@@ -198,7 +198,7 @@ define([
 			frame = 0 + 0 * 6;
 		}
 		sprite.render(ctx, null,
-			sim.center.x - sprite.width / 2,
+			sim.centerX - sprite.width / 2,
 			sim.bottom - sprite.height, frame, false);
 	};
 	return Athlete;

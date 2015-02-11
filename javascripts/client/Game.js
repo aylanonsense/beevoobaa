@@ -1,9 +1,15 @@
 define([
 	'client/entity/Athlete',
-	'client/entity/Ball'
+	'client/entity/Ball',
+	'client/entity/Net',
+	'client/Constants',
+	'shared/Constants'
 ], function(
 	Athlete,
-	Ball
+	Ball,
+	Net,
+	Constants,
+	SharedConstants
 ) {
 	var MILLISECONDS_LATE_ALLOWED = 65;
 	var myAthlete = null;
@@ -27,6 +33,22 @@ define([
 	}
 
 	function render(ctx) {
+		//draw sand layer 1
+		ctx.fillStyle = '#ccb11c';
+		ctx.fillRect(0, SharedConstants.BOUNDS.FLOOR - 20 * 4, Constants.CANVAS_WIDTH,
+			Constants.CANVAS_HEIGHT - (SharedConstants.BOUNDS.FLOOR - 20 * 4));
+
+		//draw sand layer 2
+		ctx.fillStyle = '#ddbf1b';
+		ctx.fillRect(0, SharedConstants.BOUNDS.FLOOR - 17 * 4, Constants.CANVAS_WIDTH,
+			Constants.CANVAS_HEIGHT - (SharedConstants.BOUNDS.FLOOR - 17 * 4));
+
+		//draw sand layer 3
+		ctx.fillStyle = '#e8c817';
+		ctx.fillRect(0, SharedConstants.BOUNDS.FLOOR - 4 * 4, Constants.CANVAS_WIDTH,
+			Constants.CANVAS_HEIGHT - (SharedConstants.BOUNDS.FLOOR - 4 * 4));
+
+		//draw entities
 		for(var i = 0; i < entities.length; i++) {
 			entities[i].render(ctx);
 		}
@@ -136,6 +158,9 @@ define([
 				}
 				else if(state.entities[i].entityType === 'Ball') {
 					entities.push(new Ball(state.entities[i]));
+				}
+				else if(state.entities[i].entityType === 'Net') {
+					entities.push(new Net(state.entities[i]));
 				}
 				else {
 					throw new Error("Unsure how to create '" +
