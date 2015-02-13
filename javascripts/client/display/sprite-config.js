@@ -17,6 +17,16 @@ define({
 		crop: { x: 181, y: 1, width: 144, height: 432 },
 		trim: { x: 7, y: 6, width: 7, height: 16 }
 	},
+	AthleteShadow2: {
+		imagePath: '/image/sprites.gif',
+		width: 24,
+		height: 24,
+		scale: 4,
+		flip: true,
+		crop: { x: 181, y: 1, width: 144, height: 432 },
+		trim: { x: 7, y: 6, width: 7, height: 16 },
+		replacements: { '#f2de6c': '#6c7ff2' }
+	},
 	Ball: {
 		imagePath: '/image/sprites.gif',
 		width: 17,
@@ -34,6 +44,16 @@ define({
 		flip: false,
 		crop: { x: 326, y: 1, width: 34, height: 68 },
 		trim: { x: 3, y: 3, width: 11, height: 11 }
+	},
+	BallShadow2: {
+		imagePath: '/image/sprites.gif',
+		width: 17,
+		height: 17,
+		scale: 4,
+		flip: false,
+		crop: { x: 326, y: 1, width: 34, height: 68 },
+		trim: { x: 3, y: 3, width: 11, height: 11 },
+		replacements: { '#f2de6c': '#6c7ff2' }
 	},
 	Cursor: {
 		imagePath: '/image/sprites.gif',

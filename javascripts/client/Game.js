@@ -27,6 +27,15 @@ define([
 		for(i = 0; i < entities.length; i++) {
 			entities[i].tick(t, tServer);
 		}
+
+		//the player may hit the ball, bonk! (all other collisions are sent to us from the server)
+		if(myAthlete) {
+			for(i = 0; i < entities.length; i++) {
+				if(entities[i].entityType === 'Ball') {
+					myAthlete.checkForBallHit(entities[i]);
+				}
+			}
+		}
 		for(i = 0; i < entities.length; i++) {
 			entities[i].endOfFrame(t, tServer);
 		}

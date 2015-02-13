@@ -27,6 +27,18 @@ define([
 		for(i = 0; i < entities.length; i++) {
 			entities[i].tick(t);
 		}
+
+		//check for entity interactions
+		for(i = 0; i < entities.length; i++) {
+			if(entities[i].entityType === 'Athlete') {
+				for(var j = 0; j < entities.length; j++) {
+					if(entities[j].entityType === 'Ball') {
+						entities[i].checkForBallHit(entities[j]);
+					}
+				}
+			}
+		}
+
 		for(i = 0; i < entities.length; i++) {
 			entities[i].endOfFrame(t);
 		}

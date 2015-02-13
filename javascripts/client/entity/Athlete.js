@@ -2,6 +2,7 @@ define([
 	'client/entity/BufferedInputEntity',
 	'create!client/display/Sprite > Athlete',
 	'create!client/display/Sprite > AthleteShadow',
+	'create!client/display/Sprite > AthleteShadow2',
 	'create!client/display/Sprite > Cursor',
 	'shared/sim/Athlete',
 	'client/Constants'
@@ -9,13 +10,14 @@ define([
 	SUPERCLASS,
 	SPRITE,
 	SERVER_SPRITE_OUTLINE,
+	FUTURE_SPRITE_OUTLINE,
 	CURSOR_SPRITE,
 	AthleteSim,
 	Constants
 ) {
 	var INPUT_BUFFER_TIME = 5.5 / 60;
 	function Athlete(params) {
-		SUPERCLASS.call(this, AthleteSim, params);
+		SUPERCLASS.call(this, 'Athlete', AthleteSim, params);
 		this._cancelBufferedAction = null;
 		this._bufferTimeRemaining = null;
 		this._moveDir = null;
@@ -137,11 +139,16 @@ define([
 
 		//draw a server shadow
 		if(Constants.DEBUG_RENDER_SERVER_STATE) {
-			this._renderSim(ctx, this._serverSim, SERVER_SPRITE_OUTLINE);
+			this._renderSim(ctx, this._serverSim, SERVER_SPRITE_OUTLINE, 'rgba(255, 175, 100, 0.2');
+		}
+
+		//draw future shadow
+		if(Constants.DEBUG_RENDER_FUTURE_STATE) {
+			this._renderSim(ctx, this._futureSim, FUTURE_SPRITE_OUTLINE, null);
 		}
 
 		//draw the sprite
-		this._renderSim(ctx, this._sim, SPRITE);
+		this._renderSim(ctx, this._sim, SPRITE, 'rgba(255, 0, 0, 0.5');
 
 		//draw little trajectory dots
 		if(this._isPlayerControlled && this._sim.currentTask === 'charge-jump' &&
@@ -161,14 +168,17 @@ define([
 				this._sim.top - 51 * (1 + charge), 0, false);
 		}
 	};
-	Athlete.prototype._renderSim = function(ctx, sim, sprite) {
+	Athlete.prototype._renderSim = function(ctx, sim, sprite, hitboxColor) {
 		var frame;
 		if(sim.isAirborne()) {
 			if(sim.currentTask === 'charge-spike') {
 				frame = 0 + 6 * 6;
 			}
 			else if(sim.currentTask === 'spike') {
-				frame = Math.min(1 + Math.floor(sim.currentTaskDuration / 0.15), 3) + 6 * 6;
+				frame = Math.min(1 + Math.floor(sim.currentTaskDuration / 0.06), 4) + 6 * 6;
+			}
+			else if(sim.currentTask === 'spike-success') {
+				frame = (sim.currentTaskDuration > 0.5 ? 3 : 2) + 7 * 6;
 			}
 			else if(sim.vel.y < 100) {
 				frame = 1 + 3 * 6;
@@ -197,9 +207,33 @@ define([
 		else {
 			frame = 0 + 0 * 6;
 		}
+
+		var jiggleX = 0;
+		var jiggleY = 0;
+		if(sim.freezeTime > 0) {
+			jiggleX = 3 * Math.random() - 3 / 2;
+			jiggleY = 3 * Math.random() - 3 / 2;
+		}
+
 		sprite.render(ctx, null,
-			sim.centerX - sprite.width / 2,
-			sim.bottom - sprite.height, frame, false);
+			sim.centerX - sprite.width / 2 + jiggleX,
+			sim.bottom - sprite.height + jiggleY, frame, false);
+
+		//draw hitboxes
+		if(hitboxColor && Constants.DEBUG_RENDER_HITBOXES) {
+			for(var i = 0; i < sim.hitboxes.length; i++) {
+				sim.hitboxes[i].render(ctx, hitboxColor);
+			}
+		}
+	};
+	Athlete.prototype.checkForBallHit = function(ball) {
+		var hit = this._sim.checkForBallHit(ball.id, ball._sim);
+		if(hit) {
+			hit.actionType = 'get-hit';
+			hit.freezeTime = 0.2;
+			ball.forcePerformAction(hit);
+			this._sim.performAction({ actionType: 'hit-success', freezeTime: 0.2 });
+		}
 	};
 	return Athlete;
 });

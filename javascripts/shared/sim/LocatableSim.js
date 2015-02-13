@@ -23,6 +23,9 @@ define([
 		};
 		this.x = params.x || 0;
 		this.y = params.y || 0;
+
+		//extra vars
+		this.freezeTime = params.freezeTime || 0.0;
 	}
 	LocatableSim.prototype = Object.create(SUPERCLASS.prototype);
 	LocatableSim.prototype.getState = function() {
@@ -33,6 +36,9 @@ define([
 		state.y = this.y;
 		state.vel = { x: this.vel.x, y: this.vel.y };
 		state.velMult = this.velMult;
+
+		//extra vars
+		state.freezeTime = this.freezeTime;
 
 		return state;
 	};
@@ -45,14 +51,22 @@ define([
 		this.vel.x = state.vel.x;
 		this.vel.y = state.vel.y;
 		this.velMult = state.velMult;
+
+		//extra vars
+		this.freezeTime = state.freezeTime;
 	};
 	LocatableSim.prototype.startOfFrame = function(t) {
 		this._prevVel = { x: this.vel.x, y: this.vel.y };
 		SUPERCLASS.prototype.startOfFrame.call(this, t);
 	};
 	LocatableSim.prototype.tick = function(t) {
-		this.x += t * this.velMult * (this._prevVel.x + this.vel.x) / 2;
-		this.y += t * this.velMult * (this._prevVel.y + this.vel.y) / 2;
+		if(this.freezeTime > 0) {
+			this.freezeTime = Math.max(this.freezeTime - t, 0);
+		}
+		else {
+			this.x += t * this.velMult * (this._prevVel.x + this.vel.x) / 2;
+			this.y += t * this.velMult * (this._prevVel.y + this.vel.y) / 2;
+		}
 		SUPERCLASS.prototype.tick.call(this, t);
 	};
 	LocatableSim.prototype.isGrounded = function() {

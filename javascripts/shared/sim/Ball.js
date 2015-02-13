@@ -5,7 +5,7 @@ define([
 	SUPERCLASS,
 	SharedConstants
 ) {
-	var gravity = 200;
+	var gravity = 15;
 	function Ball(params, simType) {
 		params.width = 44;
 		params.height = 44;
@@ -22,12 +22,20 @@ define([
 	};
 	Ball.prototype.tick = function(t) {
 		//gravity
-		this.vel.y += gravity * t;
+		if(this.freezeTime === 0) {
+			this.vel.y += gravity * t;
+		}
 
 		//move the ball (apply velocity)
 		SUPERCLASS.prototype.tick.call(this, t);
 	};
 	Ball.prototype.performAction = function(action) {
+		if(action.actionType === 'get-hit') {
+			this.vel.x = action.vel.x;
+			this.vel.y = action.vel.y;
+			this.freezeTime = action.freezeTime;
+			return true;
+		}
 		return false;
 	};
 	Ball.prototype._onHitWall = function(x, y) {

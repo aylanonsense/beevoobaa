@@ -74,5 +74,14 @@ define([
 		}
 		return null;
 	};
+	Athlete.prototype.checkForBallHit = function(ball) {
+		var hit = this._sim.checkForBallHit(ball.id, ball._sim);
+		if(hit) {
+			hit.actionType = 'get-hit';
+			hit.freezeTime = 0.2;
+			ball.forcePerformAction(hit);
+			this.forcePerformAction({ actionType: 'hit-success', freezeTime: 0.2 });
+		}
+	};
 	return Athlete;
 });

@@ -1,7 +1,9 @@
 define([
-	'shared/sim/LocatableTaskSim'
+	'shared/sim/LocatableTaskSim',
+	'shared/hit/HitBox'
 ], function(
-	SUPERCLASS
+	SUPERCLASS,
+	HitBox
 ) {
 	function Athlete(params, simType) {
 		params.width = 28;
@@ -13,16 +15,28 @@ define([
 		this.gravity = 95;
 		this.minJumpSpeed = 50;
 		this.maxJumpSpeed = 240;
+
+		//hitboxes (deterministic based on other vars, no need to sync)
+		this.hitboxes = [];
+
+		this.ballsHitThisSwing = [];
 	}
 	Athlete.prototype = Object.create(SUPERCLASS.prototype);
 	Athlete.prototype.getState = function() {
 		var state = SUPERCLASS.prototype.getState.call(this);
+		state.ballsHitThisSwing = this.ballsHitThisSwing.slice(0);
 		return state;
 	};
 	Athlete.prototype.setState = function(state) {
 		SUPERCLASS.prototype.setState.call(this, state);
+		this.ballsHitThisSwing = state.ballsHitThisSwing.slice(0);
+		this._recalculateHitboxes();
 	};
 	Athlete.prototype.startOfFrame = function(t) {
+		if(this.currentTask !== 'spike' && this.ballsHitThisSwing.length > 0) {
+			this.ballsHitThisSwing = [];
+		}
+
 		//stop animations that last a fixed amount of time
 		if(this.currentTask === 'land-from-jump' && this.currentTaskDuration >= 0.50) {
 			this._clearTask();
@@ -30,12 +44,17 @@ define([
 		if(this.currentTask === 'spike' && this.currentTaskDuration > 1.00) {
 			this._clearTask();
 		}
+		if(this.currentTask === 'spike-success' && this.currentTaskDuration >= 1.00) {
+			this._clearTask();
+		}
 
 		SUPERCLASS.prototype.startOfFrame.call(this, t);
 	};
 	Athlete.prototype.tick = function(t) {
 		//gravity
-		this.vel.y += this.velMult * this.gravity * t;
+		if(this.freezeTime === 0) {
+			this.vel.y += this.velMult * this.gravity * t;
+		}
 
 		//if the player is following a waypoint (moving or stationary) we need to change velocity
 		if(this.currentTask === 'follow-waypoint') {
@@ -81,8 +100,6 @@ define([
 			this._clearTask();
 		}
 
-		if(this.currentTask === 'reposition') {
-		}
 		//we do the same check but for repositioning
 		if(this.currentTask === 'reposition' &&
 			((xBefore <= this.currentTaskDetails.x && this.currentTaskDetails.x <= this.x) ||
@@ -92,6 +109,17 @@ define([
 			var nextTask = this.currentTaskDetails.nextTask;
 			this._clearTask();
 			this._setTask(nextTask.task, nextTask.details, nextTask.priority);
+		}
+
+		this._recalculateHitboxes();
+	};
+	Athlete.prototype._recalculateHitboxes = function() {
+		if(this.currentTask === 'spike' && 0.06 <= this.currentTaskDuration &&
+			this.currentTaskDuration <= 0.18) {
+			this.hitboxes = [ new HitBox({ x: this.right - 20, y: this.top - 40, width: 75, height: 75 }) ];
+		}
+		else {
+			this.hitboxes = [];
 		}
 	};
 	Athlete.prototype.endOfFrame = function(t) {
@@ -133,7 +161,7 @@ define([
 				return this._setTask('charge-spike', {}, 5);
 			}
 			else {
-				//TODO
+				//TODO strong-hit while grounded
 			}
 		}
 		else if(action.actionType === 'strong-hit') {
@@ -145,11 +173,31 @@ define([
 				}, 5);
 			}
 			else {
-				//TODO
+				//TODO strong-hit while grounded
+			}
+		}
+		else if(action.actionType === 'hit-success') {
+			if(this.currentTask === 'spike') {
+				this._clearTask();
+				if(this.vel.x > -50) { this.vel.x = -50; }
+				if(this.vel.y > -100) { this.vel.y = -100; }
+				this.freezeTime = action.freezeTime;
+				this._setTask('spike-success', {}, 5);
 			}
 		}
 
 		return false;
+	};
+	Athlete.prototype.checkForBallHit = function(ballId, ball) {
+		if(this.ballsHitThisSwing.indexOf(ballId) === -1) {
+			for(var i = 0; i < this.hitboxes.length; i++) {
+				if(this.hitboxes[i].isOverlappingBall(ball)) {
+					this.ballsHitThisSwing.push(ballId);
+					return { vel: { x: 150, y: 100 } }; //TODO
+				}
+			}
+		}
+		return null;
 	};
 	Athlete.prototype._repositionAndSetTask = function(x, task, details, priority) {
 		if(this.x !== x) {

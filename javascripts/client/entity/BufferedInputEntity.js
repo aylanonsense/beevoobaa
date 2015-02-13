@@ -3,8 +3,8 @@ define([
 ], function(
 	SUPERCLASS
 ) {
-	function BufferedInputEntity(SimClass, params) {
-		SUPERCLASS.call(this, SimClass, params);
+	function BufferedInputEntity(entityType, SimClass, params) {
+		SUPERCLASS.call(this, entityType, SimClass, params);
 		this._cancelBufferedAction = null;
 		this._bufferTimeRemaining = null;
 	}

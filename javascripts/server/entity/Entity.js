@@ -8,13 +8,13 @@ define([
 	var nextEntityId = 0;
 	function Entity(entityType, SimClass, params) {
 		this.id = nextEntityId++;
-		this._entityType = entityType;
+		this.entityType = entityType;
 		this._sim = new SimClass(params, 'server');
 	}
 	Entity.prototype.getState = function() {
 		var state = this._sim.getState();
 		state.id = this.id;
-		state.entityType = this._entityType;
+		state.entityType = this.entityType;
 		return state;
 	};
 	Entity.prototype.startOfFrame = function(t) {
@@ -40,6 +40,14 @@ define([
 			entityId: this.id,
 			action: action,
 			time: now()
+		});
+	};
+	Entity.prototype.forcePerformAction = function(action) {
+		var self = this;
+		this._sim.queueAction(function() {
+			return action;
+		}, function(action) {
+			self._sendAction(action);
 		});
 	};
 	Entity.prototype._generateActionFromCommand = function(command, predictedAction) {

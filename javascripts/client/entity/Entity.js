@@ -5,12 +5,15 @@ define([
 	Connection,
 	Clock
 ) {
-	function Entity(SimClass, params) {
+	function Entity(entityType, SimClass, params) {
 		this.id = params.id;
+		this.entityType = entityType;
 		this._isPlayerControlled = false;
 		this._outOfSync = false;
 		this._sim = new SimClass(params, 'client');
 		this._serverSim = new SimClass(params, 'client-server');
+		this._futureSim = new SimClass(params, 'client-future');
+		this._predictFutureState();
 	}
 	Entity.prototype._sendCommand = function(command, action) {
 		Connection.bufferSend({
@@ -40,6 +43,9 @@ define([
 		}
 		this._serverSim.queueAction(function() { return action; });
 	};
+	Entity.prototype.forcePerformAction = function(action) {
+		this._sim.queueAction(function() { return action; });
+	};
 	Entity.prototype.onKeyboardEvent = function(evt, keyboard) {
 		//to be implemented in subclasses
 	};
@@ -54,9 +60,18 @@ define([
 	Entity.prototype.endOfFrame = function(t, tServer) {
 		this._sim.endOfFrame(t);
 		this._serverSim.endOfFrame(tServer);
+		this._predictFutureState();
 	};
 	Entity.prototype.render = function(ctx) {
 		//to be implemented in subclasses
+	};
+	Entity.prototype._predictFutureState = function() {
+		this._futureSim.setState(this._serverSim.getState());
+		for(var t = (Clock.getServerReceiveTime() - Clock.getClientTime()) / 1000; t >= 0; t -= 1 / 60) {
+			this._futureSim.startOfFrame(Math.min(t, 1 / 60));
+			this._futureSim.tick(Math.min(t, 1 / 60));
+			this._futureSim.endOfFrame(Math.min(t, 1 / 60));
+		}
 	};
 	return Entity;
 });
