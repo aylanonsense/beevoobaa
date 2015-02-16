@@ -69,8 +69,7 @@ define([
 	};
 	Ball.prototype.forcePerformAction = function(action) {
 		//ball is hit client-side (happens first)
-		this._timeShouldNotSync = (15 + 1.05 * ((Clock.getServerTime() - Clock.getClientTime()) +
-			(Clock.getServerReceiveTime() - Clock.getClientTime()))) / 1000;
+		this._timeShouldNotSync = 15 + 1.10 * (Clock.getServerReceiveTime() - Clock.getClientTime()) / 1000;
 		SUPERCLASS.prototype.forcePerformAction.call(this, action);
 	};
 	Ball.prototype.onReceiveAction = function(action) {
