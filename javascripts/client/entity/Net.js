@@ -17,7 +17,7 @@ define([
 	Net.prototype.render = function(ctx) {
 		SPRITE.render(ctx, null,
 			this._sim.centerX - SPRITE.width / 2,
-			this._sim.bottom - SPRITE.height, 0, false);
+			this._sim.bottom - SPRITE.height + 60, 0, false);
 
 		SUPERCLASS.prototype.render.call(this, ctx);
 	};

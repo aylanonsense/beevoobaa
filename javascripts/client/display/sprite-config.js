@@ -1,4 +1,13 @@
 define({
+	Beach: {
+		imagePath: '/image/sprites.gif',
+		width: 18,
+		height: 157,
+		scale: 4,
+		flip: false,
+		crop: { x: 361, y: 1, width: 18, height: 157 },
+		trim: { x: 1, y: 1, width: 16, height: 155 }
+	},
 	Athlete: {
 		imagePath: '/image/sprites.gif',
 		width: 24,
@@ -67,10 +76,10 @@ define({
 	Net: {
 		imagePath: '/image/sprites.gif',
 		width: 9,
-		height: 47,
+		height: 53,
 		scale: 4,
 		flip: false,
 		crop: { x: 146, y: 81, width: 9, height: 53 },
-		trim: { x: 2, y: 2, width: 5, height: 33 }
+		trim: { x: 2, y: 2, width: 5, height: 49 }
 	}
 });

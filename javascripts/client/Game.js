@@ -2,12 +2,14 @@ define([
 	'client/entity/Athlete',
 	'client/entity/Ball',
 	'client/entity/Net',
+	'create!client/display/Sprite > Beach',
 	'client/Constants',
 	'shared/Constants'
 ], function(
 	Athlete,
 	Ball,
 	Net,
+	BEACH_SPRITE,
 	Constants,
 	SharedConstants
 ) {
@@ -21,7 +23,8 @@ define([
 	}
 
 	function tick(t, tServer) {
-		for(var i = 0; i < entities.length; i++) {
+		var i, j;
+		for(i = 0; i < entities.length; i++) {
 			entities[i].startOfFrame(t, tServer);
 		}
 		for(i = 0; i < entities.length; i++) {
@@ -40,7 +43,7 @@ define([
 		//any player may run into the net
 		for(i = 0; i < entities.length; i++) {
 			if(entities[i].entityType === 'Athlete') {
-				for(var j = 0; j < entities.length; j++) {
+				for(j = 0; j < entities.length; j++) {
 					if(entities[j].entityType === 'Net') {
 						entities[i].checkForNet(entities[j]);
 					}
@@ -51,7 +54,7 @@ define([
 		//the ball may run into the net
 		for(i = 0; i < entities.length; i++) {
 			if(entities[i].entityType === 'Ball') {
-				for(var j = 0; j < entities.length; j++) {
+				for(j = 0; j < entities.length; j++) {
 					if(entities[j].entityType === 'Net') {
 						entities[i].checkForNet(entities[j]);
 					}
@@ -65,20 +68,10 @@ define([
 	}
 
 	function render(ctx) {
-		//draw sand layer 1
-		ctx.fillStyle = '#ccb11c';
-		ctx.fillRect(0, SharedConstants.BOUNDS.FLOOR - 20 * 4, Constants.CANVAS_WIDTH,
-			Constants.CANVAS_HEIGHT - (SharedConstants.BOUNDS.FLOOR - 20 * 4));
-
-		//draw sand layer 2
-		ctx.fillStyle = '#ddbf1b';
-		ctx.fillRect(0, SharedConstants.BOUNDS.FLOOR - 17 * 4, Constants.CANVAS_WIDTH,
-			Constants.CANVAS_HEIGHT - (SharedConstants.BOUNDS.FLOOR - 17 * 4));
-
-		//draw sand layer 3
-		ctx.fillStyle = '#e8c817';
-		ctx.fillRect(0, SharedConstants.BOUNDS.FLOOR - 4 * 4, Constants.CANVAS_WIDTH,
-			Constants.CANVAS_HEIGHT - (SharedConstants.BOUNDS.FLOOR - 4 * 4));
+		//draw background
+		for(var x = 0; x < Constants.CANVAS_WIDTH; x += BEACH_SPRITE.width) {
+			BEACH_SPRITE.render(ctx, null, x, Constants.CANVAS_HEIGHT - BEACH_SPRITE.height, 0, false);
+		}
 
 		//draw entities
 		for(var i = 0; i < entities.length; i++) {
