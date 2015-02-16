@@ -6,6 +6,8 @@ define([
 	'create!client/display/Sprite > AthleteGhost2',
 	'create!client/display/Sprite > Cursor',
 	'shared/sim/Athlete',
+	'client/Spawner',
+	'client/effect/ChargeBurst',
 	'shared/Constants',
 	'client/Constants'
 ], function(
@@ -16,6 +18,8 @@ define([
 	FUTURE_GHOST_SPRITE,
 	CURSOR_SPRITE,
 	AthleteSim,
+	Spawner,
+	ChargeBurst,
 	SharedConstants,
 	Constants
 ) {
@@ -132,8 +136,19 @@ define([
 			if(this._sim.currentTask === 'charge-jump' && this._sim.currentTaskDuration >= 2.0) {
 				this._bufferCommand('jump', { charge: 1.0, dir: this._chargedDir });
 			}
-			else if(this._sim.currentTask === 'charge-spike' && this._sim.currentTaskDuration >= 2.0) {
-				this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
+			else if(this._sim.currentTask === 'charge-spike') {
+				if(this._sim.currentTaskDuration - t < 0.50 && 0.50 <= this._sim.currentTaskDuration) {
+					Spawner.spawnEffect(new ChargeBurst(this._sim));
+				}
+				else if(this._sim.currentTaskDuration - t < 1.00 && 1.00 <= this._sim.currentTaskDuration) {
+					Spawner.spawnEffect(new ChargeBurst(this._sim));
+				}
+				else if(this._sim.currentTaskDuration - t < 1.50 && 1.50 <= this._sim.currentTaskDuration) {
+					Spawner.spawnEffect(new ChargeBurst(this._sim));
+				}
+				if(this._sim.currentTaskDuration >= 2.0) {
+					this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
+				}
 			}
 		}
 		SUPERCLASS.prototype.tick.call(this, t, tServer);
@@ -153,12 +168,12 @@ define([
 	};
 	Athlete.prototype.render = function(ctx) {
 		//draw a server ghost
-		if(Constants.DEBUG_RENDER_SERVER_STATE) {
+		if(Constants.DEBUG_RENDER_SERVER_GHOSTS) {
 			this._renderSim(ctx, this._serverSim, SERVER_GHOST_SPRITE, 'rgba(255, 175, 100, 0.2');
 		}
 
 		//draw future ghost
-		if(Constants.DEBUG_RENDER_FUTURE_STATE) {
+		if(Constants.DEBUG_RENDER_FUTURE_GHOSTS) {
 			this._renderSim(ctx, this._futureSim, FUTURE_GHOST_SPRITE, null);
 		}
 

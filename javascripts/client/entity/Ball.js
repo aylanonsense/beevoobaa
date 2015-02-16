@@ -70,12 +70,12 @@ define([
 	};
 	Ball.prototype.render = function(ctx) {
 		//draw a server shadow
-		if(Constants.DEBUG_RENDER_SERVER_STATE) {
+		if(Constants.DEBUG_RENDER_SERVER_GHOSTS) {
 			this._renderSim(ctx, this._serverSim, SERVER_GHOST_SPRITE);
 		}
 
 		//draw future shadow
-		if(Constants.DEBUG_RENDER_FUTURE_STATE) {
+		if(Constants.DEBUG_RENDER_FUTURE_GHOSTS) {
 			this._renderSim(ctx, this._futureSim, FUTURE_GHOST_SPRITE);
 		}
 

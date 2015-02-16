@@ -4,6 +4,7 @@ define([
 	'client/entity/Net',
 	'create!client/display/Sprite > Beach',
 	'create!client/display/Sprite > BeachDetails',
+	'client/Spawner',
 	'client/Constants',
 	'shared/Constants'
 ], function(
@@ -12,16 +13,19 @@ define([
 	Net,
 	BEACH_SPRITE,
 	BEACH_DETAILS_SPRITE,
+	Spawner,
 	Constants,
 	SharedConstants
 ) {
 	var MILLISECONDS_LATE_ALLOWED = 65;
 	var myAthlete = null;
 	var entities = [];
+	var effects = [];
 
 	function reset() {
 		myAthlete = null;
 		entities = [];
+		effects = [];
 	}
 
 	function tick(t, tServer) {
@@ -67,6 +71,12 @@ define([
 		for(i = 0; i < entities.length; i++) {
 			entities[i].endOfFrame(t, tServer);
 		}
+
+		//update effects
+		for(i = 0; i < effects.length; i++) {
+			effects[i].tick(t);
+		}
+		effects = effects.filter(function(effect) { return effect.isAlive(); });
 	}
 
 	function render(ctx) {
@@ -77,9 +87,17 @@ define([
 		BEACH_DETAILS_SPRITE.render(ctx, null, 0,
 			Constants.CANVAS_HEIGHT - BEACH_DETAILS_SPRITE.height, 0, false);
 
-		//draw entities
+		//draw shadows
 		for(var i = 0; i < entities.length; i++) {
 			entities[i].renderShadow(ctx);
+		}
+		for(i = 0; i < effects.length; i++) {
+			effects[i].renderShadow(ctx);
+		}
+
+		//draw effects
+		for(i = 0; i < effects.length; i++) {
+			effects[i].render(ctx);
 		}
 
 		//draw entities
@@ -203,6 +221,10 @@ define([
 			}
 		}
 	}
+
+	Spawner.onEffectSpawned(function(effect) {
+		effects.push(effect);
+	});
 
 	return {
 		reset: reset,

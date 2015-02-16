@@ -1,4 +1,13 @@
 define({
+	ChargeBurst: {
+		imagePath: '/image/sprites.gif',
+		width: 27,
+		height: 27,
+		scale: 4,
+		flip: true,
+		crop: { x: 326, y: 168, width: 162, height: 54 },
+		trim: { x: 10, y: 7, width: 7, height: 16 }
+	},
 	Beach: {
 		imagePath: '/image/sprites.gif',
 		width: 18,
