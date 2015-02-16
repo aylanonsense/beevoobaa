@@ -1,4 +1,13 @@
 define({
+	NetText: {
+		imagePath: '/image/sprites.gif',
+		width: 51,
+		height: 11,
+		scale: 4,
+		flip: true,
+		crop: { x: 326, y: 223, width: 102, height: 66 },
+		trim: { x: 1, y: 1, width: 49, height: 7 }
+	},
 	ChargeBurst: {
 		imagePath: '/image/sprites.gif',
 		width: 27,

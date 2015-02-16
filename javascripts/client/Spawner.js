@@ -9,6 +9,7 @@ define(function() {
 		for(var i = 0; i < spawnEffectCallbacks.length; i++) {
 			spawnEffectCallbacks[i](effect);
 		}
+		return effect;
 	}
 
 	return {

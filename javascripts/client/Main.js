@@ -14,6 +14,8 @@ requirejs([
 	'client/net/Pinger',
 	'client/Clock',
 	'client/net/Connection',
+	'client/Spawner',
+	'client/effect/NetText',
 	'client/Game'
 ], function(
 	$,
@@ -21,6 +23,8 @@ requirejs([
 	Pinger,
 	Clock,
 	Connection,
+	Spawner,
+	NetText,
 	Game
 ) {
 	var $canvas = $('<canvas width="' + Constants.CANVAS_WIDTH + 'px" height="' +
@@ -35,6 +39,7 @@ requirejs([
 	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
 	var timeDebt = 0;
 	var directionToChangeTimeDebt = 0;
+	var speedNetText = null;
 
 	//add network listeners
 	Connection.onConnected(function() {
@@ -130,16 +135,38 @@ requirejs([
 
 			//the client may need to speed up or slow down to match the server
 			if(timeDebt > 75 / 1000) { //client is ahead of server
+				if(directionToChangeTimeDebt !== -1) {
+					speedNetText = Spawner.spawnEffect(new NetText({
+						text: 'Slow Down 10%',
+						x: Constants.CANVAS_WIDTH / 2,
+						y: Constants.CANVAS_HEIGHT / 4
+					}));
+				}
 				directionToChangeTimeDebt = -1; //slow down client, please
 			}
 			else if(timeDebt < -75 / 1000) { //client is behind server
+				if(directionToChangeTimeDebt !== 1) {
+					speedNetText = Spawner.spawnEffect(new NetText({
+						text: 'Speed Up 10%',
+						x: Constants.CANVAS_WIDTH / 2,
+						y: Constants.CANVAS_HEIGHT / 4
+					}));
+				}
 				directionToChangeTimeDebt = 1; //speed up client, please
 			}
 			else if(directionToChangeTimeDebt > 0 && timeDebt < 0 / 1000) {
 				directionToChangeTimeDebt = 0; //stop speeding up the client, you've done enough
+				if(speedNetText) {
+					speedNetText.die();
+					speedNetText = null;
+				}
 			}
 			else if(directionToChangeTimeDebt < 0 && timeDebt > -5 / 1000) {
 				directionToChangeTimeDebt = 0; //stop slowing down the client, you've done enough
+				if(speedNetText) {
+					speedNetText.die();
+					speedNetText = null;
+				}
 			}
 
 			var tClient = t;

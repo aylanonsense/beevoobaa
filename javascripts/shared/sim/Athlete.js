@@ -209,6 +209,9 @@ define([
 				this.left = net.right + 10;
 				this.vel.x = 0;
 			}
+			if(this.currentTask === 'follow-waypoint') {
+				this._clearTask();
+			}
 		}
 		else if(this.isAirborne() && this.left < net.right &&
 			net.left < this.right && this.bottom > net.top) {
