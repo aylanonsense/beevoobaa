@@ -5,7 +5,7 @@ define([
 	SUPERCLASS,
 	SharedConstants
 ) {
-	var gravity = 15;
+	var gravity = 25;
 	function Ball(params, simType) {
 		params.width = 44;
 		params.height = 44;
@@ -51,6 +51,9 @@ define([
 		else if(y < 0 && this.vel.y < 0) {
 			this.vel.y *= -1.00;
 		}
+	};
+	Ball.prototype.checkForNet = function(net) {
+		//TODO
 	};
 	return Ball;
 });

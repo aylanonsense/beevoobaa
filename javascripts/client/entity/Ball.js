@@ -52,8 +52,6 @@ define([
 		}
 	};
 	Ball.prototype.render = function(ctx) {
-		SUPERCLASS.prototype.render.call(this, ctx);
-
 		//draw a server shadow
 		if(Constants.DEBUG_RENDER_SERVER_STATE) {
 			this._renderSim(ctx, this._serverSim, SERVER_SPRITE_OUTLINE);
@@ -66,6 +64,8 @@ define([
 
 		//draw the sprite
 		this._renderSim(ctx, this._sim, SPRITE);
+
+		SUPERCLASS.prototype.render.call(this, ctx);
 	};
 	Ball.prototype.forcePerformAction = function(action) {
 		//ball is hit client-side (happens first)
@@ -87,6 +87,9 @@ define([
 		sprite.render(ctx, null,
 			sim.centerX - sprite.width / 2 + jiggleX,
 			sim.centerY - sprite.height / 2 + jiggleY, 0, false);
+	};
+	Ball.prototype.checkForNet = function(net) {
+		//TODO
 	};
 	return Ball;
 });

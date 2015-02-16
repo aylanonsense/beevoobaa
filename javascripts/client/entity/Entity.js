@@ -1,7 +1,9 @@
 define([
+	'client/Constants',
 	'client/net/Connection',
 	'client/Clock'
 ], function(
+	Constants,
 	Connection,
 	Clock
 ) {
@@ -64,6 +66,11 @@ define([
 	};
 	Entity.prototype.render = function(ctx) {
 		//to be implemented in subclasses
+		if(Constants.DEBUG_TRACE_ENTITIES) {
+			ctx.strokeStyle = '#0ff';
+			ctx.lineWidth = 2;
+			ctx.strokeRect(this._sim.x, this._sim.y, this._sim.width, this._sim.height);
+		}
 	};
 	Entity.prototype._predictFutureState = function() {
 		this._futureSim.setState(this._serverSim.getState());

@@ -83,5 +83,8 @@ define([
 			this.forcePerformAction({ actionType: 'hit-success', freezeTime: 0.2 });
 		}
 	};
+	Athlete.prototype.checkForNet = function(net) {
+		this._sim.checkForNet(net._sim);
+	};
 	return Athlete;
 });

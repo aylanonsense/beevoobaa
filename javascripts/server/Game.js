@@ -20,8 +20,9 @@ define([
 	var entities = [ new Net({}), new Ball({ x: 300, y: 200, vel: { x: -50, y: -50 } }) ];
 
 	function tick(t) {
+		var i, j;
 		//update each entity
-		for(var i = 0; i < entities.length; i++) {
+		for(i = 0; i < entities.length; i++) {
 			entities[i].startOfFrame(t);
 		}
 		for(i = 0; i < entities.length; i++) {
@@ -31,9 +32,31 @@ define([
 		//check for entity interactions
 		for(i = 0; i < entities.length; i++) {
 			if(entities[i].entityType === 'Athlete') {
-				for(var j = 0; j < entities.length; j++) {
+				for(j = 0; j < entities.length; j++) {
 					if(entities[j].entityType === 'Ball') {
 						entities[i].checkForBallHit(entities[j]);
+					}
+				}
+			}
+		}
+
+		//any player may run into the net
+		for(i = 0; i < entities.length; i++) {
+			if(entities[i].entityType === 'Athlete') {
+				for(j = 0; j < entities.length; j++) {
+					if(entities[j].entityType === 'Net') {
+						entities[i].checkForNet(entities[j]);
+					}
+				}
+			}
+		}
+
+		//the ball may run into the net
+		for(i = 0; i < entities.length; i++) {
+			if(entities[i].entityType === 'Ball') {
+				for(j = 0; j < entities.length; j++) {
+					if(entities[j].entityType === 'Net') {
+						entities[i].checkForNet(entities[j]);
 					}
 				}
 			}

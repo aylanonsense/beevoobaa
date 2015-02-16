@@ -12,5 +12,8 @@ define([
 	Ball.prototype._generateActionFromCommand = function(command, action) {
 		return null;
 	};
+	Ball.prototype.checkForNet = function(net) {
+		this._sim.checkForNet(net._sim);
+	};
 	return Ball;
 });

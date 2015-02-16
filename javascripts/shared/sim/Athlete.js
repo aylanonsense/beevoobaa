@@ -199,6 +199,35 @@ define([
 		}
 		return null;
 	};
+	Athlete.prototype.checkForNet = function(net) {
+		if(this.left < net.right && net.left < this.right) {
+			if(this.isGrounded()) {
+				if(this.centerX < net.centerX) {
+					this.right = net.left;
+					this.vel.x = 0;
+				}
+				else {
+					this.left = net.right;
+					this.vel.x = 0;
+				}
+			}
+			else if(this.bottom > net.top) {
+				if(this.vel.y > 0 && this.bottom - 15 < net.top) {
+					this.vel.y *= -1;
+				}
+				else {
+					if(this.centerX < net.centerX) {
+						this.right = net.left;
+						if(this.vel.x > 0) { this.vel.x *= -0.3; }
+					}
+					else {
+						this.left = net.right;
+						if(this.vel.x < 0) { this.vel.x *= -0.3; }
+					}
+				}
+			}
+		}
+	};
 	Athlete.prototype._repositionAndSetTask = function(x, task, details, priority) {
 		if(this.x !== x) {
 			return this._setTask('reposition', {
@@ -208,6 +237,20 @@ define([
 		}
 		else {
 			return this._setTask(task, details, priority);
+		}
+	};
+	Athlete.prototype._onHitWall = function(x, y) {
+		if(x > 0 && this.vel.x > 0) {
+			this.vel.x *= -0.3;
+		}
+		else if(x < 0 && this.vel.x < 0) {
+			this.vel.x *= -0.3;
+		}
+		if(y > 0 && this.vel.y > 0) {
+			this.vel.y = 0;
+		}
+		else if(y < 0 && this.vel.y < 0) {
+			this.vel.y = 0;
 		}
 	};
 	return Athlete;

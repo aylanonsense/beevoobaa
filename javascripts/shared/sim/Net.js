@@ -6,7 +6,7 @@ define([
 	SharedConstants
 ) {
 	function Net(params, simType) {
-		params.width = 20;
+		params.width = 45;
 		params.height = 96;
 		SUPERCLASS.call(this, params, simType);
 

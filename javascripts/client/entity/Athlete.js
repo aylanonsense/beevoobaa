@@ -135,8 +135,6 @@ define([
 		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
 	Athlete.prototype.render = function(ctx) {
-		SUPERCLASS.prototype.render.call(this, ctx);
-
 		//draw a server shadow
 		if(Constants.DEBUG_RENDER_SERVER_STATE) {
 			this._renderSim(ctx, this._serverSim, SERVER_SPRITE_OUTLINE, 'rgba(255, 175, 100, 0.2');
@@ -167,6 +165,8 @@ define([
 				this._sim.centerX - CURSOR_SPRITE.width / 2 + this._chargedDir * 65,
 				this._sim.top - 51 * (1 + charge), 0, false);
 		}
+
+		SUPERCLASS.prototype.render.call(this, ctx);
 	};
 	Athlete.prototype._renderSim = function(ctx, sim, sprite, hitboxColor) {
 		var frame;
@@ -234,6 +234,10 @@ define([
 			ball.forcePerformAction(hit);
 			this._sim.performAction({ actionType: 'hit-success', freezeTime: 0.2 });
 		}
+	};
+	Athlete.prototype.checkForNet = function(net) {
+		this._sim.checkForNet(net._sim);
+		this._serverSim.checkForNet(net._serverSim);
 	};
 	return Athlete;
 });

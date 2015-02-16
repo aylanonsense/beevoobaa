@@ -36,6 +36,29 @@ define([
 				}
 			}
 		}
+
+		//any player may run into the net
+		for(i = 0; i < entities.length; i++) {
+			if(entities[i].entityType === 'Athlete') {
+				for(var j = 0; j < entities.length; j++) {
+					if(entities[j].entityType === 'Net') {
+						entities[i].checkForNet(entities[j]);
+					}
+				}
+			}
+		}
+
+		//the ball may run into the net
+		for(i = 0; i < entities.length; i++) {
+			if(entities[i].entityType === 'Ball') {
+				for(var j = 0; j < entities.length; j++) {
+					if(entities[j].entityType === 'Net') {
+						entities[i].checkForNet(entities[j]);
+					}
+				}
+			}
+		}
+
 		for(i = 0; i < entities.length; i++) {
 			entities[i].endOfFrame(t, tServer);
 		}
