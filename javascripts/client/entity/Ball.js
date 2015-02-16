@@ -4,6 +4,7 @@ define([
 	'create!client/display/Sprite > BallShadow',
 	'create!client/display/Sprite > BallShadow2',
 	'shared/sim/Ball',
+	'client/Clock',
 	'client/Constants'
 ], function(
 	SUPERCLASS,
@@ -11,12 +12,13 @@ define([
 	SERVER_SPRITE_OUTLINE,
 	FUTURE_SPRITE_OUTLINE,
 	BallSim,
+	Clock,
 	Constants
 ) {
 	function Ball(params) {
 		SUPERCLASS.call(this, 'Ball', BallSim, params);
 		this._isPlayerControlled = true;
-		this._shouldSyncWithFuture = true;
+		this._timeShouldNotSync = 0.0;
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype._generateActionFromCommand = function(command) {
@@ -24,7 +26,7 @@ define([
 	};
 	Ball.prototype.endOfFrame = function(t, tServer) {
 		SUPERCLASS.prototype.endOfFrame.call(this, t, tServer);
-		if(this._shouldSyncWithFuture) {
+		if(this._timeShouldNotSync === 0) {
 			var dx = this._futureSim.x - this._sim.x;
 			var dy = this._futureSim.y - this._sim.y;
 			var dist = Math.sqrt(dx * dx + dy * dy);
@@ -45,6 +47,9 @@ define([
 				this._sim.vel.y = this._futureSim.vel.y;
 			}
 		}
+		else {
+			this._timeShouldNotSync = Math.max(0, this._timeShouldNotSync - t);
+		}
 	};
 	Ball.prototype.render = function(ctx) {
 		SUPERCLASS.prototype.render.call(this, ctx);
@@ -64,14 +69,14 @@ define([
 	};
 	Ball.prototype.forcePerformAction = function(action) {
 		//ball is hit client-side (happens first)
-		this._shouldSyncWithFuture = false;
+		this._timeShouldNotSync = (15 + 1.05 * ((Clock.getServerTime() - Clock.getClientTime()) +
+			(Clock.getServerReceiveTime() - Clock.getClientTime()))) / 1000;
 		SUPERCLASS.prototype.forcePerformAction.call(this, action);
 	};
 	Ball.prototype.onReceiveAction = function(action) {
 		//ball is hit server-side (happens second, future state and client state should now be aligned)
 		SUPERCLASS.prototype.onReceiveAction.call(this, action);
 		this._predictFutureState();
-		this._shouldSyncWithFuture = true;
 	};
 	Ball.prototype._renderSim = function(ctx, sim, sprite) {
 		var jiggleX = 0;
