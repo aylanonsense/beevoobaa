@@ -72,6 +72,9 @@ define([
 			ctx.strokeRect(this._sim.x, this._sim.y, this._sim.width, this._sim.height);
 		}
 	};
+	Entity.prototype.renderShadow = function(ctx) {
+		//to be implemented in subclasses
+	};
 	Entity.prototype._predictFutureState = function() {
 		this._futureSim.setState(this._serverSim.getState());
 		for(var t = (Clock.getServerReceiveTime() - Clock.getClientTime()) / 1000; t >= 0; t -= 1 / 60) {

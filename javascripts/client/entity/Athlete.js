@@ -2,17 +2,21 @@ define([
 	'client/entity/BufferedInputEntity',
 	'create!client/display/Sprite > Athlete',
 	'create!client/display/Sprite > AthleteShadow',
-	'create!client/display/Sprite > AthleteShadow2',
+	'create!client/display/Sprite > AthleteGhost',
+	'create!client/display/Sprite > AthleteGhost2',
 	'create!client/display/Sprite > Cursor',
 	'shared/sim/Athlete',
+	'shared/Constants',
 	'client/Constants'
 ], function(
 	SUPERCLASS,
 	SPRITE,
-	SERVER_SPRITE_OUTLINE,
-	FUTURE_SPRITE_OUTLINE,
+	SHADOW_SPRITE,
+	SERVER_GHOST_SPRITE,
+	FUTURE_GHOST_SPRITE,
 	CURSOR_SPRITE,
 	AthleteSim,
+	SharedConstants,
 	Constants
 ) {
 	var INPUT_BUFFER_TIME = 5.5 / 60;
@@ -134,15 +138,28 @@ define([
 		}
 		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
+	Athlete.prototype.renderShadow = function(ctx) {
+		var frame;
+		if(SharedConstants.BOUNDS.FLOOR - this._sim.bottom > 175) { frame = 2; }
+		else if(SharedConstants.BOUNDS.FLOOR - this._sim.bottom > 65) { frame = 1; }
+		else { frame = 0; }
+
+		//draw a shadow
+		SHADOW_SPRITE.render(ctx, null,
+			this._sim.centerX - SHADOW_SPRITE.width / 2,
+			SharedConstants.BOUNDS.FLOOR - SHADOW_SPRITE.height, frame, false);
+
+		SUPERCLASS.prototype.renderShadow.call(this, ctx);
+	};
 	Athlete.prototype.render = function(ctx) {
-		//draw a server shadow
+		//draw a server ghost
 		if(Constants.DEBUG_RENDER_SERVER_STATE) {
-			this._renderSim(ctx, this._serverSim, SERVER_SPRITE_OUTLINE, 'rgba(255, 175, 100, 0.2');
+			this._renderSim(ctx, this._serverSim, SERVER_GHOST_SPRITE, 'rgba(255, 175, 100, 0.2');
 		}
 
-		//draw future shadow
+		//draw future ghost
 		if(Constants.DEBUG_RENDER_FUTURE_STATE) {
-			this._renderSim(ctx, this._futureSim, FUTURE_SPRITE_OUTLINE, null);
+			this._renderSim(ctx, this._futureSim, FUTURE_GHOST_SPRITE, null);
 		}
 
 		//draw the sprite

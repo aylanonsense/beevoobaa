@@ -1,18 +1,22 @@
 define([
 	'client/entity/BufferedInputEntity',
 	'create!client/display/Sprite > Ball',
-	'create!client/display/Sprite > BallShadow',
-	'create!client/display/Sprite > BallShadow2',
+	'create!client/display/Sprite > AthleteShadow',
+	'create!client/display/Sprite > BallGhost',
+	'create!client/display/Sprite > BallGhost2',
 	'shared/sim/Ball',
 	'client/Clock',
+	'shared/Constants',
 	'client/Constants'
 ], function(
 	SUPERCLASS,
 	SPRITE,
-	SERVER_SPRITE_OUTLINE,
-	FUTURE_SPRITE_OUTLINE,
+	SHADOW_SPRITE,
+	SERVER_GHOST_SPRITE,
+	FUTURE_GHOST_SPRITE,
 	BallSim,
 	Clock,
+	SharedConstants,
 	Constants
 ) {
 	function Ball(params) {
@@ -51,15 +55,28 @@ define([
 			this._timeShouldNotSync = Math.max(0, this._timeShouldNotSync - t);
 		}
 	};
+	Ball.prototype.renderShadow = function(ctx) {
+		var frame;
+		if(SharedConstants.BOUNDS.FLOOR - this._sim.bottom > 175) { frame = 2; }
+		else if(SharedConstants.BOUNDS.FLOOR - this._sim.bottom > 65) { frame = 1; }
+		else { frame = 0; }
+
+		//draw a shadow
+		SHADOW_SPRITE.render(ctx, null,
+			this._sim.centerX - SHADOW_SPRITE.width / 2,
+			SharedConstants.BOUNDS.FLOOR - SHADOW_SPRITE.height, frame, false);
+
+		SUPERCLASS.prototype.renderShadow.call(this, ctx);
+	};
 	Ball.prototype.render = function(ctx) {
 		//draw a server shadow
 		if(Constants.DEBUG_RENDER_SERVER_STATE) {
-			this._renderSim(ctx, this._serverSim, SERVER_SPRITE_OUTLINE);
+			this._renderSim(ctx, this._serverSim, SERVER_GHOST_SPRITE);
 		}
 
 		//draw future shadow
 		if(Constants.DEBUG_RENDER_FUTURE_STATE) {
-			this._renderSim(ctx, this._futureSim, FUTURE_SPRITE_OUTLINE);
+			this._renderSim(ctx, this._futureSim, FUTURE_GHOST_SPRITE);
 		}
 
 		//draw the sprite
@@ -89,7 +106,8 @@ define([
 			sim.centerY - sprite.height / 2 + jiggleY, 0, false);
 	};
 	Ball.prototype.checkForNet = function(net) {
-		//TODO
+		this._sim.checkForNet(net._sim);
+		this._serverSim.checkForNet(net._serverSim);
 	};
 	return Ball;
 });

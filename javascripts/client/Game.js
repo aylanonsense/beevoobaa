@@ -3,6 +3,7 @@ define([
 	'client/entity/Ball',
 	'client/entity/Net',
 	'create!client/display/Sprite > Beach',
+	'create!client/display/Sprite > BeachDetails',
 	'client/Constants',
 	'shared/Constants'
 ], function(
@@ -10,6 +11,7 @@ define([
 	Ball,
 	Net,
 	BEACH_SPRITE,
+	BEACH_DETAILS_SPRITE,
 	Constants,
 	SharedConstants
 ) {
@@ -72,9 +74,16 @@ define([
 		for(var x = 0; x < Constants.CANVAS_WIDTH; x += BEACH_SPRITE.width) {
 			BEACH_SPRITE.render(ctx, null, x, Constants.CANVAS_HEIGHT - BEACH_SPRITE.height, 0, false);
 		}
+		BEACH_DETAILS_SPRITE.render(ctx, null, 0,
+			Constants.CANVAS_HEIGHT - BEACH_DETAILS_SPRITE.height, 0, false);
 
 		//draw entities
 		for(var i = 0; i < entities.length; i++) {
+			entities[i].renderShadow(ctx);
+		}
+
+		//draw entities
+		for(i = 0; i < entities.length; i++) {
 			entities[i].render(ctx);
 		}
 	}
