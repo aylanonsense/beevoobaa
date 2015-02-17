@@ -5,6 +5,8 @@ define([
 	'create!client/display/Sprite > AthleteGhost',
 	'create!client/display/Sprite > AthleteGhost2',
 	'create!client/display/Sprite > Cursor',
+	'create!client/display/Sprite > ChargeFire',
+	'create!client/display/Sprite > ChargeSwipe',
 	'shared/sim/Athlete',
 	'client/Spawner',
 	'client/effect/ChargeBurst',
@@ -17,6 +19,8 @@ define([
 	SERVER_GHOST_SPRITE,
 	FUTURE_GHOST_SPRITE,
 	CURSOR_SPRITE,
+	CHARGE_FIRE_SPRITE,
+	SWIPE_FIRE_SPRITE,
 	AthleteSim,
 	Spawner,
 	ChargeBurst,
@@ -24,6 +28,7 @@ define([
 	Constants
 ) {
 	var INPUT_BUFFER_TIME = 5.5 / 60;
+	var SEC_PER_CHARGE_LEVEL = 0.5;
 	function Athlete(params) {
 		SUPERCLASS.call(this, 'Athlete', AthleteSim, params);
 		this._cancelBufferedAction = null;
@@ -75,6 +80,7 @@ define([
 		}
 	};
 	Athlete.prototype._generateActionFromCommand = function(command) {
+		var charge, dir;
 		if(command === 'move-left') {
 			return { actionType: 'follow-waypoint', x: this._sim.x, dir: -1 };
 		}
@@ -91,11 +97,15 @@ define([
 			return { actionType: 'charge-strong-hit' };
 		}
 		else if(command === 'strong-hit') {
-			return { actionType: 'strong-hit', charge: 1.0, dir: 0.0 }; //TODO correct charge / dir
+			charge = 0.0;
+			if(this._sim.currentTask === 'charge-spike') {
+				charge = Math.min(this._sim.currentTaskDuration / SEC_PER_CHARGE_LEVEL / 4, 1.00);
+			}
+			return { actionType: 'strong-hit', charge: charge, dir: 0.0 };
 		}
 		else if(command === 'jump') {
-			var dir = 0.0;
-			var charge = 0.0;
+			dir = 0.0;
+			charge = 0.0;
 			if(this._sim.currentTask === 'charge-jump') {
 				charge = Math.min(1.0, this._sim.currentTaskDuration);
 				dir = this._chargedDir;
@@ -137,16 +147,19 @@ define([
 				this._bufferCommand('jump', { charge: 1.0, dir: this._chargedDir });
 			}
 			else if(this._sim.currentTask === 'charge-spike') {
-				if(this._sim.currentTaskDuration - t < 0.50 && 0.50 <= this._sim.currentTaskDuration) {
+				/*if(this._sim.currentTaskDuration - t < SEC_PER_CHARGE_LEVEL &&
+					SEC_PER_CHARGE_LEVEL <= this._sim.currentTaskDuration) {
 					Spawner.spawnEffect(new ChargeBurst(this._sim));
 				}
-				else if(this._sim.currentTaskDuration - t < 1.00 && 1.00 <= this._sim.currentTaskDuration) {
+				else if(this._sim.currentTaskDuration - t < 2 * SEC_PER_CHARGE_LEVEL &&
+					2 * SEC_PER_CHARGE_LEVEL <= this._sim.currentTaskDuration) {
 					Spawner.spawnEffect(new ChargeBurst(this._sim));
 				}
-				else if(this._sim.currentTaskDuration - t < 1.50 && 1.50 <= this._sim.currentTaskDuration) {
+				else if(this._sim.currentTaskDuration - t < 3 * SEC_PER_CHARGE_LEVEL &&
+					3 * SEC_PER_CHARGE_LEVEL <= this._sim.currentTaskDuration) {
 					Spawner.spawnEffect(new ChargeBurst(this._sim));
-				}
-				if(this._sim.currentTaskDuration >= 2.0) {
+				}*/
+				if(this._sim.currentTaskDuration >= 4 * SEC_PER_CHARGE_LEVEL) {
 					this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
 				}
 			}
@@ -179,6 +192,28 @@ define([
 
 		//draw the sprite
 		this._renderSim(ctx, this._sim, SPRITE, 'rgba(255, 0, 0, 0.5');
+
+		if(this._sim.currentTask === 'charge-spike') {
+			var fireFrame;
+			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 6; }
+			else if(this._sim.currentTaskDuration < 2 * SEC_PER_CHARGE_LEVEL) { fireFrame = 1 * 6; }
+			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 6; }
+			else { fireFrame = 3 * 6; }
+			CHARGE_FIRE_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+		}
+
+		if(this._sim.currentTask === 'spike') {
+			var swingFrame = Math.floor(this._sim.currentTaskDuration / 0.06);
+			if(swingFrame <= 4) {
+				if(this._sim.currentTaskDetails.charge < 0.25) { swingFrame += 0; }
+				else if(this._sim.currentTaskDetails.charge < 0.50) { swingFrame += 1 * 8; }
+				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 8; }
+				else { swingFrame += 3 * 8; }
+				SWIPE_FIRE_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
+					swingFrame);
+			}
+		}
 
 		//draw little trajectory dots
 		if(this._isPlayerControlled && this._sim.currentTask === 'charge-jump' &&

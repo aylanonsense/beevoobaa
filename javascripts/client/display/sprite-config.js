@@ -17,6 +17,33 @@ define({
 		crop: { x: 326, y: 168, width: 162, height: 54 },
 		trim: { x: 10, y: 7, width: 7, height: 16 }
 	},
+	BallFire: {
+		imagePath: '/image/sprites.gif',
+		width: 21,
+		height: 21,
+		scale: 4,
+		flip: false,
+		crop: { x: 375, y: 441, width: 126, height: 84 },
+		trim: { x: 5, y: 5, width: 11, height: 11 }
+	},
+	ChargeFire: {
+		imagePath: '/image/sprites.gif',
+		width: 27,
+		height: 27,
+		scale: 4,
+		flip: true,
+		crop: { x: 429, y: 223, width: 162, height: 108 },
+		trim: { x: 10, y: 7, width: 7, height: 16 }
+	},
+	ChargeSwipe: {
+		imagePath: '/image/sprites.gif',
+		width: 27,
+		height: 27,
+		scale: 4,
+		flip: true,
+		crop: { x: 375, y: 332, width: 216, height: 108 },
+		trim: { x: 7, y: 10, width: 7, height: 16 }
+	},
 	Beach: {
 		imagePath: '/image/sprites.gif',
 		width: 18,

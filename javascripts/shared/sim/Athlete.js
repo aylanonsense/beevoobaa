@@ -209,7 +209,7 @@ define([
 				this.left = net.right + 10;
 				this.vel.x = 0;
 			}
-			if(this.currentTask === 'follow-waypoint') {
+			if(this.currentTask === 'follow-waypoint' || this.currentTask === 'reposition') {
 				this._clearTask();
 			}
 		}

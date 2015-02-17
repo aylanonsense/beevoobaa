@@ -11,6 +11,7 @@ define([
 	Athlete.prototype = Object.create(SUPERCLASS.prototype);
 	//TODO server should automatically cause players to jump
 	Athlete.prototype._generateActionFromCommand = function(command, action) {
+		var charge, dir;
 		action = action || {};
 		if(command === 'move-left') {
 			return {
@@ -40,8 +41,8 @@ define([
 			};
 		}
 		else if(command === 'jump') {
-			var charge = 0.0;
-			var dir = 0.0;
+			charge = 0.0;
+			dir = 0.0;
 			if(this._sim.currentTask === 'charge-jump') {
 				charge = Math.min(1.0, this._sim.currentTaskDuration);
 			}
@@ -66,11 +67,14 @@ define([
 			};
 		}
 		else if(command === 'strong-hit') {
-			return {
-				actionType: 'strong-hit',
-				charge: 1.0, //TODO correct charge
-				dir: 0.0 //TODO correct dir
-			};
+			charge = 0.0;
+			if(this._sim.currentTask === 'charge-spike') {
+				charge = Math.min(this._sim.currentTaskDuration / 0.50 / 4, 1.00);
+			}
+			if(typeof action.charge === 'number') {
+				charge = Math.max(charge - 0.15, Math.min(action.charge, charge + 0.15));
+			}
+			return { actionType: 'strong-hit', charge: charge, dir: 0.0 };
 		}
 		return null;
 	};
