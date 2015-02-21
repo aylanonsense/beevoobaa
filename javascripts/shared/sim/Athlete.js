@@ -289,7 +289,12 @@ define([
 		else if(action.actionType === 'hit-success') {
 			if(this.currentTask === 'spike') {
 				this._clearTask();
-				if(this.vel.x > -50) { this.vel.x = -50; }
+				if(this.team === 'red') {
+					if(this.vel.x > -50) { this.vel.x = -50; }
+				}
+				else {
+					if(this.vel.x < 50) { this.vel.x = 50; }
+				}
 				if(this.vel.y > -100) { this.vel.y = -100; }
 				this.freezeTime = action.freezeTime;
 				this._setTask('spike-success', { charge: action.charge }, 5);

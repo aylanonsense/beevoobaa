@@ -29,6 +29,12 @@ requirejs([
 ) {
 	var $canvas = $('<canvas width="' + Constants.CANVAS_WIDTH + 'px" height="' +
 		Constants.CANVAS_HEIGHT + 'px"></canvas>').appendTo("#game-canvas-area");
+	$('#show-network').on('click', function() {
+		var isChecked = $(this).prop('checked');
+		Constants.DEBUG_RENDER_NETWORK = isChecked;
+		Constants.DEBUG_RENDER_SERVER_GHOSTS = isChecked;
+		Constants.DEBUG_RENDER_FUTURE_GHOSTS = isChecked;
+	});
 	var ctx = $canvas[0].getContext('2d');
 	var bufferedMessages = [];
 	var prevGameTime = null;
