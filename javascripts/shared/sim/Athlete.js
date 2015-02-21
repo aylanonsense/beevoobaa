@@ -340,12 +340,10 @@ define([
 						}
 					}
 					else if(this.currentTask === 'block') {
-						/*if(charge >= 0.75) { velX = 190; velY = 250; }
-						else if(charge >= 0.50) { velX = 160; velY = 200; }
-						else if(charge >= 0.25) { velX = 130; velY = 140; }
-						else { velX = 70; velY = 25; }*/
-						velX = 40;
-						velY = 20;
+						if(charge >= 0.75) { velX = 60; velY = 20; }
+						else if(charge >= 0.50) { velX = 40; velY = 10; }
+						else if(charge >= 0.25) { velX = 20; velY = 5; }
+						else { velX = 0; velY = 0; }
 					}
 					return {
 						vel: { x: velX, y: velY },

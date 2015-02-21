@@ -8,6 +8,8 @@ define([
 	'create!client/display/Sprite > ChargeFire',
 	'create!client/display/Sprite > ChargeSwipe',
 	'create!client/display/Sprite > BumpEffects',
+	'create!client/display/Sprite > BlockEffects',
+	'create!client/display/Sprite > SetEffects',
 	'shared/sim/Athlete',
 	'client/Spawner',
 	'client/effect/ChargeBurst',
@@ -23,6 +25,8 @@ define([
 	CHARGE_FIRE_SPRITE,
 	SWIPE_FIRE_SPRITE,
 	BUMP_EFFECTS_SPRITE,
+	BLOCK_EFFECTS_SPRITE,
+	SET_EFFECTS_SPRITE,
 	AthleteSim,
 	Spawner,
 	ChargeBurst,
@@ -172,7 +176,11 @@ define([
 					this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
 				}
 			}
-			//TODO
+			else if(this._sim.currentTask === 'charge-block' || this._sim.currentTask === 'charge-set') {
+				if(this._sim.currentTaskDuration >= 4 * SEC_PER_CHARGE_LEVEL) {
+					this._bufferCommand('weak-hit', { charge: 1.0, dir: 0.0 }); //TODO
+				}
+			}
 		}
 		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
@@ -221,7 +229,22 @@ define([
 			BUMP_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
 				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
 		}
-		//TODO
+		else if(this._sim.currentTask === 'charge-set') {
+			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 10; }
+			else if(this._sim.currentTaskDuration < 2 * SEC_PER_CHARGE_LEVEL) { fireFrame = 1 * 10; }
+			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 10; }
+			else { fireFrame = 3 * 10; }
+			SET_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+		}
+		else if(this._sim.currentTask === 'charge-block') {
+			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 9; }
+			else if(this._sim.currentTaskDuration < 2 * SEC_PER_CHARGE_LEVEL) { fireFrame = 1 * 9; }
+			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 9; }
+			else { fireFrame = 3 * 9; }
+			BLOCK_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+		}
 
 		if(this._sim.currentTask === 'spike') {
 			swingFrame = Math.floor(this._sim.currentTaskDuration / 0.06);
@@ -245,7 +268,28 @@ define([
 					6 + swingFrame);
 			}
 		}
-		//TODO
+		else if(this._sim.currentTask === 'set') {
+			swingFrame = Math.floor(this._sim.currentTaskDuration / 0.06);
+			if(swingFrame <= 3) {
+				if(this._sim.currentTaskDetails.charge < 0.25) { swingFrame += 0; }
+				else if(this._sim.currentTaskDetails.charge < 0.50) { swingFrame += 1 * 10; }
+				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 10; }
+				else { swingFrame += 3 * 10; }
+				SET_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
+					6 + swingFrame);
+			}
+		}
+		else if(this._sim.currentTask === 'block') {
+			swingFrame = Math.floor(this._sim.currentTaskDuration / 0.06);
+			if(swingFrame <= 2) {
+				if(this._sim.currentTaskDetails.charge < 0.25) { swingFrame += 0; }
+				else if(this._sim.currentTaskDetails.charge < 0.50) { swingFrame += 1 * 9; }
+				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 9; }
+				else { swingFrame += 3 * 9; }
+				BLOCK_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
+					6 + swingFrame);
+			}
+		}
 
 		//draw little trajectory dots
 		if(this._isPlayerControlled && this._sim.currentTask === 'charge-jump' &&

@@ -1,4 +1,22 @@
 define({
+	SetEffects: {
+		imagePath: '/image/sprites.gif',
+		width: 24,
+		height: 24,
+		scale: 4,
+		flip: true,
+		crop: { x: 592, y: 162, width: 240, height: 96 },
+		trim: { x: 7, y: 8, width: 7, height: 16 }
+	},
+	BlockEffects: {
+		imagePath: '/image/sprites.gif',
+		width: 24,
+		height: 24,
+		scale: 4,
+		flip: true,
+		crop: { x: 592, y: 259, width: 216, height: 96 },
+		trim: { x: 10, y: 8, width: 7, height: 16 }
+	},
 	BumpEffects: {
 		imagePath: '/image/sprites.gif',
 		width: 24,
