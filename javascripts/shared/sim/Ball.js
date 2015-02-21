@@ -14,6 +14,7 @@ define([
 			(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
 		this.timeSinceLastHit = null;
 		this.lastHitCharge = null;
+		this._onHitFloorCallbacks = [];
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype.getState = function() {
@@ -38,6 +39,9 @@ define([
 		//move the ball (apply velocity)
 		SUPERCLASS.prototype.tick.call(this, t);
 	};
+	Ball.prototype.onHitFloor = function(callback) {
+		this._onHitFloorCallbacks.push(callback);
+	};
 	Ball.prototype.endOfFrame = function(t) {
 		SUPERCLASS.prototype.endOfFrame.call(this, t);
 		if(this.timeSinceLastHit !== null) {
@@ -55,6 +59,17 @@ define([
 				(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
 			return true;
 		}
+		else if(action.actionType === 'reset') {
+			this.x = action.x;
+			this.y = action.y;
+			this.vel.x = 0;
+			this.vel.y = 0;
+			this.timeSinceLastHit = null;
+			this.lastHitCharge = null;
+			this.verticalEnergy = Math.min(15000, this.vel.y * this.vel.y / 2 +
+				(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
+			return true;
+		}
 		return false;
 	};
 	Ball.prototype._onHitWall = function(x, y) {
@@ -66,6 +81,9 @@ define([
 		}
 		if(y > 0 && this.vel.y > 0) {
 			this.vel.y = -Math.sqrt(2 * this.verticalEnergy);
+			for(var i = 0; i < this._onHitFloorCallbacks.length; i++) {
+				this._onHitFloorCallbacks[i]();
+			}
 		}
 		else if(y < 0 && this.vel.y < 0) {
 			this.vel.y *= -1.00;

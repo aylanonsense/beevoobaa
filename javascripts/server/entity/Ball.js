@@ -15,5 +15,11 @@ define([
 	Ball.prototype.checkForNet = function(net) {
 		this._sim.checkForNet(net._sim);
 	};
+	Ball.prototype.resetPosition = function(x, y) {
+		this.forcePerformAction({ actionType: 'reset', x: x, y: y });
+	};
+	Ball.prototype.onHitFloor = function(callback) {
+		this._sim.onHitFloor(callback);
+	};
 	return Ball;
 });

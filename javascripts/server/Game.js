@@ -17,7 +17,19 @@ define([
 	var SECONDS_BETWEEN_FLUSH_MESSAGES = 2.5 / 60;
 	var timeToNextSendState = SECONDS_BETWEEN_SEND_STATES;
 	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
-	var entities = [ new Net({}), new Ball({ x: 300, y: 200, vel: { x: -50, y: -50 } }) ];
+	var ball = new Ball({ x: 300, y: 200, vel: { x: 0, y: 0 } });
+	ball.onHitFloor(function() {
+		if(ball._sim.centerX < SharedConstants.BOUNDS.LEFT_WALL +
+			(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL) / 2) {
+			//landed on red team's side
+			ball.resetPosition(SharedConstants.BOUNDS.RIGHT_WALL - 194, 100);
+		}
+		else {
+			//landed on blue team's side
+			ball.resetPosition(SharedConstants.BOUNDS.LEFT_WALL + 150, 100);
+		}
+	});
+	var entities = [ new Net({}), ball ];
 
 	function tick(t) {
 		var i, j;
