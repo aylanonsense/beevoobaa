@@ -107,6 +107,16 @@ define({
 		crop: { x: 1, y: 1, width: 144, height: 432 },
 		trim: { x: 7, y: 6, width: 7, height: 16 }
 	},
+	AltAthlete: {
+		imagePath: '/image/sprites.gif',
+		width: 24,
+		height: 24,
+		scale: 4,
+		flip: true,
+		crop: { x: 1, y: 1, width: 144, height: 432 },
+		trim: { x: 7, y: 6, width: 7, height: 16 },
+		replacements: { '#f70303': '#00f' }
+	},
 	AthleteGhost: {
 		imagePath: '/image/sprites.gif',
 		width: 24,

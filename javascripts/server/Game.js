@@ -81,14 +81,36 @@ define([
 		}
 	}
 
+	function getNumRedPlayers() {
+		var numRed = 0;
+		Server.forEach(function(conn) {
+			if(conn.gameData.athlete && conn.gameData.athlete._sim.team === 'red') {
+				numRed++;
+			}
+		});
+		return numRed;
+	}
+
+	function getNumBluePlayers() {
+		var numBlue = 0;
+		Server.forEach(function(conn) {
+			if(conn.gameData.athlete && conn.gameData.athlete._sim.team === 'blue') {
+				numBlue++;
+			}
+		});
+		return numBlue;
+	}
+
 	function onConnected(conn) {
-		console.log("Player " + conn.id + " connected!");
+		var team = (getNumRedPlayers() <= getNumBluePlayers() ? 'red' : 'blue');
+		console.log("Player " + conn.id + " connected! [" + team + "]");
 
 		//create a new athlete for this player
 		var athlete = new Athlete({
-			x: SharedConstants.BOUNDS.LEFT_WALL + Math.floor(Math.random() *
-				(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL - 50)),
-			y: SharedConstants.BOUNDS.FLOOR - 70
+			x: (team === 'red' ? SharedConstants.BOUNDS.LEFT_WALL + 100 :
+				SharedConstants.BOUNDS.RIGHT_WALL - 128),
+			y: SharedConstants.BOUNDS.FLOOR - 70,
+			team: team
 		});
 		entities.push(athlete);
 		conn.gameData.athlete = athlete;

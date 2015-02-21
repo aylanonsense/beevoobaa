@@ -16,6 +16,9 @@ define([
 		this.minJumpSpeed = 50;
 		this.maxJumpSpeed = 240;
 
+		//team
+		this.team = params.team || 'red';
+
 		//hitboxes (deterministic based on other vars, no need to sync)
 		this.hitboxes = [];
 
@@ -28,17 +31,19 @@ define([
 	Athlete.prototype.getState = function() {
 		var state = SUPERCLASS.prototype.getState.call(this);
 		state.ballsHitThisSwing = this.ballsHitThisSwing.slice(0);
+		state.team = this.team;
 		return state;
 	};
 	Athlete.prototype.setState = function(state) {
 		SUPERCLASS.prototype.setState.call(this, state);
 		this.ballsHitThisSwing = state.ballsHitThisSwing.slice(0);
+		this.team = state.team;
 		this._recalculateHitboxes();
 	};
 	Athlete.prototype.isSwinging = function() {
 		return this.currentTask === 'spike' || this.currentTask === 'bump' ||
 				this.currentTask === 'set' || this.currentTask === 'block';
-	}
+	};
 	Athlete.prototype.startOfFrame = function(t) {
 		if(!this.isSwinging() && this.ballsHitThisSwing.length > 0) {
 			this.ballsHitThisSwing = [];
@@ -122,42 +127,56 @@ define([
 
 		this._recalculateHitboxes();
 	};
+	Athlete.prototype._createHitBox = function(params, flip) {
+		if(flip) {
+			return new HitBox({
+				x: this.centerX - (params.x - this.centerX) - params.width,
+				y: params.y,
+				width: params.width,
+				height: params.height
+			})
+		}
+		else {
+			return new HitBox(params);
+		}
+	};
 	Athlete.prototype._recalculateHitboxes = function() {
+		var flipped = this.team === 'blue';
 		if(this.currentTask === 'spike' && 0.06 <= this.currentTaskDuration &&
 			this.currentTaskDuration <= (this.hitboxLeeway ? 0.23 : 0.18)) {
-			this.hitboxes = [ new HitBox({
+			this.hitboxes = [ this._createHitBox({
 				x: this.right - 20 + (this.hitboxLeeway ? -10 : 0),
 				y: this.top - 40 + (this.hitboxLeeway ? -10 : 0),
 				width: 75 + (this.hitboxLeeway ? 20 : 0),
 				height: 75 + (this.hitboxLeeway ? 20 : 0)
-			}) ];
+			}, flipped) ];
 		}
 		else if(this.currentTask === 'bump' && 0.06 <= this.currentTaskDuration &&
 			this.currentTaskDuration <= (this.hitboxLeeway ? 0.23 : 0.18)) {
-			this.hitboxes = [ new HitBox({
+			this.hitboxes = [ this._createHitBox({
 				x: this.right - 20 + (this.hitboxLeeway ? -10 : 0),
 				y: this.top - 20 + (this.hitboxLeeway ? -10 : 0),
 				width: 65 + (this.hitboxLeeway ? 20 : 0),
 				height: 60 + (this.hitboxLeeway ? 20 : 0)
-			}) ];
+			}, flipped) ];
 		}
 		else if(this.currentTask === 'set' && 0.10 <= this.currentTaskDuration &&
 			this.currentTaskDuration <= (this.hitboxLeeway ? 0.25 : 0.20)) {
-			this.hitboxes = [ new HitBox({
+			this.hitboxes = [ this._createHitBox({
 				x: this.centerX - 25 + (this.hitboxLeeway ? -10 : 0),
 				y: this.top - 45 + (this.hitboxLeeway ? -10 : 0),
 				width: 60 + (this.hitboxLeeway ? 20 : 0),
 				height: 50 + (this.hitboxLeeway ? 20 : 0)
-			}) ];
+			}, flipped) ];
 		}
 		else if(this.currentTask === 'block' && 0.10 <= this.currentTaskDuration &&
 			this.currentTaskDuration <= (this.hitboxLeeway ? 0.45 : 0.40)) {
-			this.hitboxes = [ new HitBox({
+			this.hitboxes = [ this._createHitBox({
 				x: this.right - 15 + (this.hitboxLeeway ? -10 : 0),
 				y: this.top - 30 + (this.hitboxLeeway ? -10 : 0),
 				width: 40 + (this.hitboxLeeway ? 20 : 0),
 				height: 80 + (this.hitboxLeeway ? 20 : 0)
-			}) ];
+			}, flipped) ];
 		}
 		else {
 			this.hitboxes = [];
@@ -295,6 +314,8 @@ define([
 		return false;
 	};
 	Athlete.prototype.checkForBallHit = function(ballId, ball) {
+		var flipped = (this.team === 'blue');
+		var flippable = true;
 		if(this.ballsHitThisSwing.indexOf(ballId) === -1) {
 			for(var i = 0; i < this.hitboxes.length; i++) {
 				if(this.hitboxes[i].isOverlappingBall(ball)) {
@@ -320,6 +341,7 @@ define([
 						else if(charge >= 0.50) { velX = ball.vel.x + 60; velY = -100; }
 						else if(charge >= 0.25) { velX = ball.vel.x + 40; velY = -80; }
 						else { velX = ball.vel.x + 25; velY = -50; }
+						flippable = false;
 					}
 					else if(this.currentTask === 'set') {
 						if(charge >= 0.75) {
@@ -338,6 +360,7 @@ define([
 							velX = (Math.abs(ball.vel.x) < 50 ? ball.vel.x * 0.50 : ball.vel.x * 1.00);
 							velY = -60;
 						}
+						flippable = false;
 					}
 					else if(this.currentTask === 'block') {
 						if(charge >= 0.75) { velX = 60; velY = 20; }
@@ -346,7 +369,7 @@ define([
 						else { velX = 0; velY = 0; }
 					}
 					return {
-						vel: { x: velX, y: velY },
+						vel: { x: (flipped && flippable ? -velX : velX), y: velY },
 						charge: charge,
 						level: level
 					};

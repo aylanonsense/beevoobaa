@@ -1,6 +1,7 @@
 define([
 	'client/entity/BufferedInputEntity',
 	'create!client/display/Sprite > Athlete',
+	'create!client/display/Sprite > AltAthlete',
 	'create!client/display/Sprite > AthleteShadow',
 	'create!client/display/Sprite > AthleteGhost',
 	'create!client/display/Sprite > AthleteGhost2',
@@ -18,6 +19,7 @@ define([
 ], function(
 	SUPERCLASS,
 	SPRITE,
+	ALT_SPRITE,
 	SHADOW_SPRITE,
 	SERVER_GHOST_SPRITE,
 	FUTURE_GHOST_SPRITE,
@@ -185,6 +187,7 @@ define([
 		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
 	Athlete.prototype.renderShadow = function(ctx) {
+		var flipped = this._sim.team === 'blue';
 		var frame;
 		if(SharedConstants.BOUNDS.FLOOR - this._sim.bottom > 175) { frame = 2; }
 		else if(SharedConstants.BOUNDS.FLOOR - this._sim.bottom > 65) { frame = 1; }
@@ -193,11 +196,12 @@ define([
 		//draw a shadow
 		SHADOW_SPRITE.render(ctx, null,
 			this._sim.centerX - SHADOW_SPRITE.width / 2,
-			SharedConstants.BOUNDS.FLOOR - SHADOW_SPRITE.height, frame, false);
+			SharedConstants.BOUNDS.FLOOR - SHADOW_SPRITE.height, frame, flipped);
 
 		SUPERCLASS.prototype.renderShadow.call(this, ctx);
 	};
 	Athlete.prototype.render = function(ctx) {
+		var flipped = this._sim.team === 'blue';
 		var fireFrame, swingFrame;
 
 		//draw a server ghost
@@ -211,7 +215,7 @@ define([
 		}
 
 		//draw the sprite
-		this._renderSim(ctx, this._sim, SPRITE, 'rgba(255, 0, 0, 0.5');
+		this._renderSim(ctx, this._sim, (this._sim.team === 'red' ? SPRITE : ALT_SPRITE), 'rgba(255, 0, 0, 0.5');
 
 		if(this._sim.currentTask === 'charge-spike') {
 			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 6; }
@@ -219,7 +223,7 @@ define([
 			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 6; }
 			else { fireFrame = 3 * 6; }
 			CHARGE_FIRE_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
-				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6, flipped);
 		}
 		else if(this._sim.currentTask === 'charge-bump') {
 			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 10; }
@@ -227,7 +231,7 @@ define([
 			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 10; }
 			else { fireFrame = 3 * 10; }
 			BUMP_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
-				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6, flipped);
 		}
 		else if(this._sim.currentTask === 'charge-set') {
 			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 10; }
@@ -235,7 +239,7 @@ define([
 			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 10; }
 			else { fireFrame = 3 * 10; }
 			SET_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
-				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6, flipped);
 		}
 		else if(this._sim.currentTask === 'charge-block') {
 			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 9; }
@@ -243,7 +247,7 @@ define([
 			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 9; }
 			else { fireFrame = 3 * 9; }
 			BLOCK_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
-				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6, flipped);
 		}
 
 		if(this._sim.currentTask === 'spike') {
@@ -254,7 +258,7 @@ define([
 				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 8; }
 				else { swingFrame += 3 * 8; }
 				SWIPE_FIRE_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
-					swingFrame);
+					swingFrame, flipped);
 			}
 		}
 		else if(this._sim.currentTask === 'bump') {
@@ -265,7 +269,7 @@ define([
 				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 10; }
 				else { swingFrame += 3 * 10; }
 				BUMP_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
-					6 + swingFrame);
+					6 + swingFrame, flipped);
 			}
 		}
 		else if(this._sim.currentTask === 'set') {
@@ -276,7 +280,7 @@ define([
 				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 10; }
 				else { swingFrame += 3 * 10; }
 				SET_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
-					6 + swingFrame);
+					6 + swingFrame, flipped);
 			}
 		}
 		else if(this._sim.currentTask === 'block') {
@@ -287,7 +291,7 @@ define([
 				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 9; }
 				else { swingFrame += 3 * 9; }
 				BLOCK_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
-					6 + swingFrame);
+					6 + swingFrame, flipped);
 			}
 		}
 
@@ -312,6 +316,7 @@ define([
 		SUPERCLASS.prototype.render.call(this, ctx);
 	};
 	Athlete.prototype._renderSim = function(ctx, sim, sprite, hitboxColor) {
+		var flipped = sim.team === 'blue';
 		var frame;
 		if(sim.isAirborne()) {
 			if(sim.currentTask === 'charge-spike') {
@@ -413,7 +418,7 @@ define([
 
 		sprite.render(ctx, null,
 			sim.centerX - sprite.width / 2 + jiggleX,
-			sim.bottom - sprite.height + jiggleY, frame, false);
+			sim.bottom - sprite.height + jiggleY, frame, flipped);
 
 		//draw hitboxes
 		if(hitboxColor && Constants.DEBUG_RENDER_HITBOXES) {

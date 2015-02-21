@@ -5,7 +5,7 @@ define([
 	SUPERCLASS,
 	SharedConstants
 ) {
-	var GRAVITY = 25;
+	var GRAVITY = 30;
 	function Ball(params, simType) {
 		params.width = 44;
 		params.height = 44;
