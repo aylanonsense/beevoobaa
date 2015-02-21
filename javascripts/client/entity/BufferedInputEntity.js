@@ -19,6 +19,9 @@ define([
 			self._bufferTimeRemaining = null;
 			self._cancelBufferedAction = null;
 		});
+		if(!this._cancelBufferedAction) {
+			this._bufferTimeRemaining = null;
+		}
 	};
 	BufferedInputEntity.prototype._generateActionFromCommand = function(command) {
 		//to be implemented in subclasses

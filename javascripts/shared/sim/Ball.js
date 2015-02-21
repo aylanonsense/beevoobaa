@@ -5,12 +5,13 @@ define([
 	SUPERCLASS,
 	SharedConstants
 ) {
-	var gravity = 25;
+	var GRAVITY = 25;
 	function Ball(params, simType) {
 		params.width = 44;
 		params.height = 44;
 		SUPERCLASS.call(this, params, simType);
-		this._verticalEnergy = (SharedConstants.BOUNDS.FLOOR - this.bottom) * gravity + this.vel.y * this.vel.y / 2;
+		this.verticalEnergy = Math.min(15000, this.vel.y * this.vel.y / 2 +
+			(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
 		this.timeSinceLastHit = null;
 		this.lastHitCharge = null;
 	}
@@ -19,17 +20,19 @@ define([
 		var state = SUPERCLASS.prototype.getState.call(this);
 		state.timeSinceLastHit = this.timeSinceLastHit;
 		state.lastHitCharge = this.lastHitCharge;
+		state.verticalEnergy = this.verticalEnergy;
 		return state;
 	};
 	Ball.prototype.setState = function(state) {
 		SUPERCLASS.prototype.setState.call(this, state);
 		this.timeSinceLastHit = state.timeSinceLastHit;
 		this.lastHitCharge = state.lastHitCharge;
+		this.verticalEnergy = state.verticalEnergy;
 	};
 	Ball.prototype.tick = function(t) {
-		//gravity
+		//GRAVITY
 		if(this.freezeTime === 0) {
-			this.vel.y += gravity * t;
+			this.vel.y += GRAVITY * t;
 		}
 
 		//move the ball (apply velocity)
@@ -47,7 +50,9 @@ define([
 			this.vel.y = action.vel.y;
 			this.freezeTime = action.freezeTime;
 			this.timeSinceLastHit = 0;
-			this.lastHitCharge = Math.random(); //TODO
+			this.lastHitCharge = action.charge;
+			this.verticalEnergy = Math.min(15000, this.vel.y * this.vel.y / 2 +
+				(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
 			return true;
 		}
 		return false;
@@ -60,7 +65,7 @@ define([
 			this.vel.x *= -1.00;
 		}
 		if(y > 0 && this.vel.y > 0) {
-			this.vel.y = -Math.sqrt(2 * this._verticalEnergy);
+			this.vel.y = -Math.sqrt(2 * this.verticalEnergy);
 		}
 		else if(y < 0 && this.vel.y < 0) {
 			this.vel.y *= -1.00;

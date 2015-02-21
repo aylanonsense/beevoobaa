@@ -1,4 +1,22 @@
 define({
+	BumpEffects: {
+		imagePath: '/image/sprites.gif',
+		width: 24,
+		height: 24,
+		scale: 4,
+		flip: true,
+		crop: { x: 489, y: 65, width: 240, height: 96 },
+		trim: { x: 7, y: 6, width: 7, height: 16 }
+	},
+	BallBumpFire: {
+		imagePath: '/image/sprites.gif',
+		width: 21,
+		height: 21,
+		scale: 4,
+		flip: false,
+		crop: { x: 502, y: 441, width: 126, height: 84 },
+		trim: { x: 5, y: 5, width: 11, height: 11 }
+	},
 	NetText: {
 		imagePath: '/image/sprites.gif',
 		width: 51,

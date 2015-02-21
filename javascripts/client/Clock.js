@@ -30,7 +30,7 @@ define(function() {
 		var serverTime = getServerTime();
 		var clientTime = getClientTime();
 		if(serverTime !== null && clientTime !== null) {
-			return 2 * serverTime - clientTime + 4 / 60; //a bit of extra buffer time
+			return 2 * serverTime - clientTime + 9 / 60; //a bit of extra buffer time
 		}
 		return null;
 	}

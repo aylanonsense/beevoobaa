@@ -44,6 +44,7 @@ define([
 		if(this._queuedActionGenerateFunc !== null) {
 			var action = this._queuedActionGenerateFunc();
 			if(!action) {
+				console.log("Canceling queued action because generateFunc returned null");
 				this._queuedActionGenerateFunc = null;
 				this._queuedActionCallback = null;
 				this._queuedActionNum = null;
@@ -62,7 +63,10 @@ define([
 	};
 	LocatableTaskSim.prototype.queueAction = function(generateFunc, callback) {
 		var action = generateFunc();
-		if(action && this.performAction(action)) {
+		if(!action) {
+			console.log("Request to queue action ignored because generateFunc returned null");
+		}
+		else if(this.performAction(action)) {
 			//we get rid of what WAS queued because this essentially overwrote it
 			this._queuedActionGenerateFunc = null;
 			this._queuedActionCallback = null;

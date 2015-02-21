@@ -7,6 +7,7 @@ define([
 	'create!client/display/Sprite > Cursor',
 	'create!client/display/Sprite > ChargeFire',
 	'create!client/display/Sprite > ChargeSwipe',
+	'create!client/display/Sprite > BumpEffects',
 	'shared/sim/Athlete',
 	'client/Spawner',
 	'client/effect/ChargeBurst',
@@ -21,6 +22,7 @@ define([
 	CURSOR_SPRITE,
 	CHARGE_FIRE_SPRITE,
 	SWIPE_FIRE_SPRITE,
+	BUMP_EFFECTS_SPRITE,
 	AthleteSim,
 	Spawner,
 	ChargeBurst,
@@ -31,6 +33,9 @@ define([
 	var SEC_PER_CHARGE_LEVEL = 0.5;
 	function Athlete(params) {
 		SUPERCLASS.call(this, 'Athlete', AthleteSim, params);
+		this._sim.hitboxLeeway = false;
+		this._serverSim.hitboxLeeway = true;
+		this._futureSim.hitboxLeeway = false;
 		this._cancelBufferedAction = null;
 		this._bufferTimeRemaining = null;
 		this._moveDir = null;
@@ -46,8 +51,14 @@ define([
 		}
 		else if(evt.gameKey === 'STRONG_HIT') {
 			if(evt.isDown) { this._bufferCommand('charge-strong-hit', INPUT_BUFFER_TIME); }
-			else if(this._sim.currentTask === 'charge-spike') {
+			else if(this._sim.currentTask === 'charge-spike' || this._sim.currentTask === 'charge-bump') {
 				this._bufferCommand('strong-hit', INPUT_BUFFER_TIME);
+			}
+		}
+		else if(evt.gameKey === 'WEAK_HIT') {
+			if(evt.isDown) { this._bufferCommand('charge-weak-hit', INPUT_BUFFER_TIME); }
+			else if(this._sim.currentTask === 'charge-set' || this._sim.currentTask === 'charge-block') {
+				this._bufferCommand('weak-hit', INPUT_BUFFER_TIME);
 			}
 		}
 		else if(evt.gameKey === 'MOVE_LEFT') {
@@ -94,14 +105,24 @@ define([
 			return { actionType: 'charge-jump', x: this._sim.x };
 		}
 		else if(command === 'charge-strong-hit') {
-			return { actionType: 'charge-strong-hit' };
+			return { actionType: 'charge-strong-hit', allowHit: true };
+		}
+		else if(command === 'charge-weak-hit') {
+			return { actionType: 'charge-weak-hit', allowHit: true };
 		}
 		else if(command === 'strong-hit') {
 			charge = 0.0;
-			if(this._sim.currentTask === 'charge-spike') {
+			if(this._sim.currentTask === 'charge-spike' || this._sim.currentTask === 'charge-bump') {
 				charge = Math.min(this._sim.currentTaskDuration / SEC_PER_CHARGE_LEVEL / 4, 1.00);
 			}
-			return { actionType: 'strong-hit', charge: charge, dir: 0.0 };
+			return { actionType: 'strong-hit', charge: charge, dir: 0.0, allowHit: true };
+		}
+		else if(command === 'weak-hit') {
+			charge = 0.0;
+			if(this._sim.currentTask === 'charge-set' || this._sim.currentTask === 'charge-block') {
+				charge = Math.min(this._sim.currentTaskDuration / SEC_PER_CHARGE_LEVEL / 4, 1.00);
+			}
+			return { actionType: 'weak-hit', charge: charge, dir: 0.0, allowHit: true };
 		}
 		else if(command === 'jump') {
 			dir = 0.0;
@@ -146,23 +167,12 @@ define([
 			if(this._sim.currentTask === 'charge-jump' && this._sim.currentTaskDuration >= 2.0) {
 				this._bufferCommand('jump', { charge: 1.0, dir: this._chargedDir });
 			}
-			else if(this._sim.currentTask === 'charge-spike') {
-				/*if(this._sim.currentTaskDuration - t < SEC_PER_CHARGE_LEVEL &&
-					SEC_PER_CHARGE_LEVEL <= this._sim.currentTaskDuration) {
-					Spawner.spawnEffect(new ChargeBurst(this._sim));
-				}
-				else if(this._sim.currentTaskDuration - t < 2 * SEC_PER_CHARGE_LEVEL &&
-					2 * SEC_PER_CHARGE_LEVEL <= this._sim.currentTaskDuration) {
-					Spawner.spawnEffect(new ChargeBurst(this._sim));
-				}
-				else if(this._sim.currentTaskDuration - t < 3 * SEC_PER_CHARGE_LEVEL &&
-					3 * SEC_PER_CHARGE_LEVEL <= this._sim.currentTaskDuration) {
-					Spawner.spawnEffect(new ChargeBurst(this._sim));
-				}*/
+			else if(this._sim.currentTask === 'charge-spike' || this._sim.currentTask === 'charge-bump') {
 				if(this._sim.currentTaskDuration >= 4 * SEC_PER_CHARGE_LEVEL) {
 					this._bufferCommand('strong-hit', { charge: 1.0, dir: 0.0 }); //TODO
 				}
 			}
+			//TODO
 		}
 		SUPERCLASS.prototype.tick.call(this, t, tServer);
 	};
@@ -180,9 +190,11 @@ define([
 		SUPERCLASS.prototype.renderShadow.call(this, ctx);
 	};
 	Athlete.prototype.render = function(ctx) {
+		var fireFrame, swingFrame;
+
 		//draw a server ghost
 		if(Constants.DEBUG_RENDER_SERVER_GHOSTS) {
-			this._renderSim(ctx, this._serverSim, SERVER_GHOST_SPRITE, 'rgba(255, 175, 100, 0.2');
+			this._renderSim(ctx, this._serverSim, SERVER_GHOST_SPRITE, 'rgba(0, 255, 255, 0.25');
 		}
 
 		//draw future ghost
@@ -194,7 +206,6 @@ define([
 		this._renderSim(ctx, this._sim, SPRITE, 'rgba(255, 0, 0, 0.5');
 
 		if(this._sim.currentTask === 'charge-spike') {
-			var fireFrame;
 			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 6; }
 			else if(this._sim.currentTaskDuration < 2 * SEC_PER_CHARGE_LEVEL) { fireFrame = 1 * 6; }
 			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 6; }
@@ -202,9 +213,18 @@ define([
 			CHARGE_FIRE_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
 				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
 		}
+		else if(this._sim.currentTask === 'charge-bump') {
+			if(this._sim.currentTaskDuration < SEC_PER_CHARGE_LEVEL) { fireFrame = 0 * 10; }
+			else if(this._sim.currentTaskDuration < 2 * SEC_PER_CHARGE_LEVEL) { fireFrame = 1 * 10; }
+			else if(this._sim.currentTaskDuration < 3 * SEC_PER_CHARGE_LEVEL) { fireFrame = 2 * 10; }
+			else { fireFrame = 3 * 10; }
+			BUMP_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame +
+				Math.floor(this._sim.currentTaskDuration / (SEC_PER_CHARGE_LEVEL / 6)) % 6);
+		}
+		//TODO
 
 		if(this._sim.currentTask === 'spike') {
-			var swingFrame = Math.floor(this._sim.currentTaskDuration / 0.06);
+			swingFrame = Math.floor(this._sim.currentTaskDuration / 0.06);
 			if(swingFrame <= 4) {
 				if(this._sim.currentTaskDetails.charge < 0.25) { swingFrame += 0; }
 				else if(this._sim.currentTaskDetails.charge < 0.50) { swingFrame += 1 * 8; }
@@ -214,6 +234,18 @@ define([
 					swingFrame);
 			}
 		}
+		else if(this._sim.currentTask === 'bump') {
+			swingFrame = Math.floor(this._sim.currentTaskDuration / 0.06);
+			if(swingFrame <= 3) {
+				if(this._sim.currentTaskDetails.charge < 0.25) { swingFrame += 0; }
+				else if(this._sim.currentTaskDetails.charge < 0.50) { swingFrame += 1 * 10; }
+				else if(this._sim.currentTaskDetails.charge < 0.75) { swingFrame += 2 * 10; }
+				else { swingFrame += 3 * 10; }
+				BUMP_EFFECTS_SPRITE.render(ctx, null, this._sim.x, this._sim.y,
+					6 + swingFrame);
+			}
+		}
+		//TODO
 
 		//draw little trajectory dots
 		if(this._isPlayerControlled && this._sim.currentTask === 'charge-jump' &&
@@ -247,11 +279,64 @@ define([
 			else if(sim.currentTask === 'spike-success') {
 				frame = (sim.currentTaskDuration > 0.5 ? 3 : 2) + 7 * 6;
 			}
+			else if(sim.currentTask === 'charge-block') {
+				frame = 0 + 10 * 6;
+			}
+			else if(sim.currentTask === 'block') {
+				if(sim.currentTaskDuration > 0.5) {
+					frame = 3 + 10 * 6;
+				}
+				else {
+					frame = Math.min(1 + Math.floor(sim.currentTaskDuration / 0.10), 2) + 10 * 6;
+				}
+			}
+			else if(sim.currentTask === 'block-success') {
+				if(sim.currentTaskDuration > 0.5) {
+					frame = 4 + 10 * 6;
+				}
+				else {
+					frame = 2 + 10 * 6;
+				}
+			}
 			else if(sim.vel.y < 100) {
 				frame = 1 + 3 * 6;
 			}
 			else {
 				frame = 2 + 3 * 6;
+			}
+		}
+		else if(this._sim.currentTask === 'charge-bump') {
+			frame = 0 + 4 * 6;
+		}
+		else if(this._sim.currentTask === 'bump') {
+			frame = Math.min(1 + Math.floor(sim.currentTaskDuration / 0.06), 4) + 4 * 6;
+		}
+		else if(this._sim.currentTask === 'bump-success') {
+			if(sim.currentTaskDuration > 0.5) {
+				frame = 4 + 5 * 6;
+			}
+			else if(sim.currentTaskDuration > 0.2) {
+				frame = 3 + 5 * 6;
+			}
+			else {
+				frame = 2 + 5 * 6;
+			}
+		}
+		else if(this._sim.currentTask === 'charge-set') {
+			frame = 0 + 8 * 6;
+		}
+		else if(this._sim.currentTask === 'set') {
+			frame = Math.min(1 + Math.floor(sim.currentTaskDuration / 0.10), 4) + 8 * 6;
+		}
+		else if(this._sim.currentTask === 'set-success') {
+			if(sim.currentTaskDuration > 0.5) {
+				frame = 4 + 9 * 6;
+			}
+			else if(sim.currentTaskDuration > 0.2) {
+				frame = 3 + 9 * 6;
+			}
+			else {
+				frame = 2 + 9 * 6;
 			}
 		}
 		else if(sim.currentTask === 'land-from-jump') {
@@ -298,8 +383,18 @@ define([
 		if(hit) {
 			hit.actionType = 'get-hit';
 			hit.freezeTime = 0.2;
+			this._sim.performAction({
+				actionType: 'hit-success',
+				freezeTime: 0.2,
+				charge: hit.charge
+			});
+			this._sendCommand('suggest-hit-success', {
+				actionType: 'hit-success',
+				freezeTime: 0.2,
+				charge: hit.charge,
+				ballPos: { x: ball._sim.x, y: ball._sim.y }
+			})
 			ball.forcePerformAction(hit);
-			this._sim.performAction({ actionType: 'hit-success', freezeTime: 0.2 });
 		}
 	};
 	Athlete.prototype.checkForNet = function(net) {

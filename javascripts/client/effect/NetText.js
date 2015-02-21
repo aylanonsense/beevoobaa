@@ -24,6 +24,7 @@ define([
 		this._frame = FRAMES[params.text];
 		this._isAlive = true;
 		this._isHidden = false;
+		this._duration = params.duration || null;
 	}
 	NetText.prototype = Object.create(SUPERCLASS.prototype);
 	NetText.prototype.render = function(ctx) {
@@ -36,6 +37,9 @@ define([
 			else {
 				x = this._x;
 				y = this._y;
+			}
+			if(this._duration !== null) {
+				y -= 30 * this._timeAlive / this._duration;
 			}
 			SUPERCLASS.prototype.render.call(this, ctx);
 			SPRITE.render(ctx, null, x - SPRITE.width / 2, y - SPRITE.height, this._frame, false);
@@ -51,7 +55,7 @@ define([
 		this._isAlive = false;
 	};
 	NetText.prototype.isAlive = function() {
-		return this._isAlive;
+		return this._isAlive && (this._duration === null || this._timeAlive < this._duration);
 	};
 	return NetText;
 });

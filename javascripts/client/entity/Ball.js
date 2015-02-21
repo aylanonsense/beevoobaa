@@ -7,6 +7,7 @@ define([
 	'create!client/display/Sprite > BallGhost2',
 	'shared/sim/Ball',
 	'client/Clock',
+	'client/Spawner',
 	'client/effect/NetText',
 	'shared/Constants',
 	'client/Constants'
@@ -19,6 +20,7 @@ define([
 	FUTURE_GHOST_SPRITE,
 	BallSim,
 	Clock,
+	Spawner,
 	NetText,
 	SharedConstants,
 	Constants
@@ -44,6 +46,7 @@ define([
 			//client sim and future sim have gotten quite out of sync, snap sim to future sim
 			if(dist > 25) {
 				//snapped!
+				Spawner.spawnEffect(new NetText({ sim: this._sim, text: "Snapped", duration: 0.8 }));
 				this._sim.x = this._futureSim.x;
 				this._sim.y = this._futureSim.y;
 				this._sim.vel.x = this._futureSim.vel.x;
@@ -93,18 +96,18 @@ define([
 			this._renderSim(ctx, this._futureSim, FUTURE_GHOST_SPRITE);
 		}
 
-		//draw the sprite
-		this._renderSim(ctx, this._sim, SPRITE);
-
 		//render "flames" around ball
-		if(this._sim.timeSinceLastHit !== null && this._sim.timeSinceLastHit < 0.35) {
-			var fireFrame = Math.floor(this._sim.timeSinceLastHit * 6 / 0.35);
+		if(this._sim.timeSinceLastHit !== null && this._sim.timeSinceLastHit < 0.25) {
+			var fireFrame = Math.floor(this._sim.timeSinceLastHit * 6 / 0.25);
 			if(this._sim.lastHitCharge < 0.25) { fireFrame += 0; }
 			else if(this._sim.lastHitCharge < 0.50) { fireFrame += 1 * 6; }
 			else if(this._sim.lastHitCharge < 0.75) { fireFrame += 2 * 6; }
 			else { fireFrame += 3 * 6; }
 			FIRE_SPRITE.render(ctx, null, this._sim.x, this._sim.y, fireFrame, false);
 		}
+
+		//draw the sprite
+		this._renderSim(ctx, this._sim, SPRITE);
 
 		SUPERCLASS.prototype.render.call(this, ctx);
 		this._adjustingNetText.render(ctx);
