@@ -90,7 +90,27 @@ define([
 		}
 	};
 	Ball.prototype.checkForNet = function(net) {
-		//TODO
+		if(this.left + 10 < net.right && net.left < this.right - 10 && this.bottom - 10 > net.top) {
+			if(this.vel.y > 0 && this.bottom - 20 < net.top) {
+				this.bottom = net.top;
+				var energy = Math.max(100, this.verticalEnergy -
+					(net.top - SharedConstants.BOUNDS.FLOOR) * GRAVITY);
+				this.vel.y = -Math.sqrt(2 * energy);
+				return true;
+			}
+			else {
+				if(this.centerX < net.centerX) {
+					this.right = net.left + 10;
+					if(this.vel.x > 0) { this.vel.x *= -1; }
+					return true;
+				}
+				else {
+					this.left = net.right - 10;
+					if(this.vel.x < 0) { this.vel.x *= -1; }
+					return true;
+				}
+			}
+		}
 	};
 	return Ball;
 });

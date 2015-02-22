@@ -23,7 +23,7 @@ define([
 	var myAthlete = null;
 	var entities = [];
 	var effects = [];
-	var redScore = null
+	var redScore = null;
 	var blueScore = null;
 
 	function reset() {
@@ -102,15 +102,20 @@ define([
 		}
 
 		//draw score
-		var scoreText = "" + (redScore || 0);
-		for(i = 0; i < scoreText.length; i++) {
-			SCORE_TEXT_SPRITE.render(ctx, null, 15 + i * SCORE_TEXT_SPRITE.width, 15, 10 + (+scoreText[i]), false);
+		var scoreText;
+		if(redScore !== null) {
+			scoreText = "" + redScore;
+			for(i = 0; i < scoreText.length; i++) {
+				SCORE_TEXT_SPRITE.render(ctx, null, 15 + i * SCORE_TEXT_SPRITE.width, 15, 10 + (+scoreText[i]), false);
+			}
 		}
-		scoreText = "" + (blueScore || 0);
-		for(i = 0; i < scoreText.length; i++) {
-			SCORE_TEXT_SPRITE.render(ctx, null, Constants.CANVAS_WIDTH - 15 -
-				SCORE_TEXT_SPRITE.width * scoreText.length +
-				i * SCORE_TEXT_SPRITE.width, 15, +scoreText[i], false);
+		if(blueScore !== null) {
+			scoreText = "" + blueScore;
+			for(i = 0; i < scoreText.length; i++) {
+				SCORE_TEXT_SPRITE.render(ctx, null, Constants.CANVAS_WIDTH - 15 -
+					SCORE_TEXT_SPRITE.width * scoreText.length +
+					i * SCORE_TEXT_SPRITE.width, 15, +scoreText[i], false);
+			}
 		}
 
 		//draw effects

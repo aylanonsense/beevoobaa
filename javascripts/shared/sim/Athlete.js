@@ -414,6 +414,7 @@ define([
 		else if(this.isAirborne() && this.left < net.right &&
 			net.left < this.right && this.bottom > net.top) {
 			if(this.vel.y > 0 && this.bottom - 15 < net.top) {
+				this.bottom = net.top;
 				this.vel.y *= -1;
 			}
 			else {

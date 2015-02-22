@@ -135,7 +135,10 @@ define([
 			sim.centerY - sprite.height / 2 + jiggleY, 0, false);
 	};
 	Ball.prototype.checkForNet = function(net) {
-		this._sim.checkForNet(net._sim);
+		if(this._sim.checkForNet(net._sim)) {
+			this._timeShouldNotSync = (15 + 1.10 *
+				(Clock.getServerReceiveTime() - Clock.getClientTime())) / 1000;
+		}
 		this._serverSim.checkForNet(net._serverSim);
 	};
 	return Ball;
