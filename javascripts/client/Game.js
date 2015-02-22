@@ -4,6 +4,7 @@ define([
 	'client/entity/Net',
 	'create!client/display/Sprite > Beach',
 	'create!client/display/Sprite > BeachDetails',
+	'create!client/display/Sprite > ScoreText',
 	'client/Spawner',
 	'client/Constants',
 	'shared/Constants'
@@ -13,6 +14,7 @@ define([
 	Net,
 	BEACH_SPRITE,
 	BEACH_DETAILS_SPRITE,
+	SCORE_TEXT_SPRITE,
 	Spawner,
 	Constants,
 	SharedConstants
@@ -21,11 +23,15 @@ define([
 	var myAthlete = null;
 	var entities = [];
 	var effects = [];
+	var redScore = null
+	var blueScore = null;
 
 	function reset() {
 		myAthlete = null;
 		entities = [];
 		effects = [];
+		redScore = null;
+		blueScore = null;
 	}
 
 	function tick(t, tServer) {
@@ -95,6 +101,18 @@ define([
 			effects[i].renderShadow(ctx);
 		}
 
+		//draw score
+		var scoreText = "" + (redScore || 0);
+		for(i = 0; i < scoreText.length; i++) {
+			SCORE_TEXT_SPRITE.render(ctx, null, 15 + i * SCORE_TEXT_SPRITE.width, 15, 10 + (+scoreText[i]), false);
+		}
+		scoreText = "" + (blueScore || 0);
+		for(i = 0; i < scoreText.length; i++) {
+			SCORE_TEXT_SPRITE.render(ctx, null, Constants.CANVAS_WIDTH - 15 -
+				SCORE_TEXT_SPRITE.width * scoreText.length +
+				i * SCORE_TEXT_SPRITE.width, 15, +scoreText[i], false);
+		}
+
 		//draw effects
 		for(i = 0; i < effects.length; i++) {
 			effects[i].render(ctx);
@@ -131,6 +149,8 @@ define([
 						}
 					}
 				}
+				redScore = msg.redScore;
+				blueScore = msg.blueScore;
 			}
 			return true;
 		}

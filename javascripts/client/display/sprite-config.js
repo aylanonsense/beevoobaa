@@ -1,4 +1,12 @@
 define({
+	ScoreText: {
+		imagePath: '/image/sprites.gif',
+		width: 6,
+		height: 9,
+		scale: 4,
+		flip: false,
+		crop: { x: 326, y: 290, width: 60, height: 18 }
+	},
 	SetEffects: {
 		imagePath: '/image/sprites.gif',
 		width: 24,

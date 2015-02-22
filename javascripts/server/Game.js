@@ -18,14 +18,19 @@ define([
 	var timeToNextSendState = SECONDS_BETWEEN_SEND_STATES;
 	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
 	var ball = new Ball({ x: 300, y: 200, vel: { x: 0, y: 0 } });
+	var redScore = 0;
+	var blueScore = 0;
+
 	ball.onHitFloor(function() {
 		if(ball._sim.centerX < SharedConstants.BOUNDS.LEFT_WALL +
 			(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL) / 2) {
 			//landed on red team's side
+			blueScore++;
 			ball.resetPosition(SharedConstants.BOUNDS.RIGHT_WALL - 194, 100);
 		}
 		else {
 			//landed on blue team's side
+			redScore++;
 			ball.resetPosition(SharedConstants.BOUNDS.LEFT_WALL + 150, 100);
 		}
 	});
@@ -163,6 +168,8 @@ define([
 			entities: entities.map(function(entity) { return entity.getState(); }),
 			living: entities.map(function(entity) { return entity.id; }),
 			athleteId: conn.gameData.athlete.id,
+			redScore: redScore,
+			blueScore: blueScore,
 			time: now()
 		});
 	}
