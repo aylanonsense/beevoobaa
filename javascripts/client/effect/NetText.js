@@ -14,7 +14,9 @@ define([
 		'Slow Down 10%': 3,
 		'Snapped': 4,
 		'Adjusting': 5,
-		'Desync': 6
+		'Desync': 6,
+		'Double Hit!': 8,
+		'3 Hit Limit!': 10
 	};
 	function NetText(params) {
 		SUPERCLASS.call(this);
@@ -28,7 +30,7 @@ define([
 	}
 	NetText.prototype = Object.create(SUPERCLASS.prototype);
 	NetText.prototype.render = function(ctx) {
-		if(!this._isHidden && Constants.DEBUG_RENDER_NETWORK) {
+		if(!this._isHidden && (Constants.DEBUG_RENDER_NETWORK || this._frame >= 8)) {
 			var x, y;
 			if(this._sim) {
 				x = this._sim.centerX;

@@ -432,6 +432,8 @@ define([
 		if(hit) {
 			hit.actionType = 'get-hit';
 			hit.freezeTime = 0.2;
+			hit.team = this._sim.team;
+			hit.athleteId = this.id;
 			this._sim.performAction({
 				actionType: 'hit-success',
 				freezeTime: 0.2,
@@ -442,7 +444,7 @@ define([
 				freezeTime: 0.2,
 				charge: hit.charge,
 				ballPos: { x: ball._sim.x, y: ball._sim.y }
-			})
+			});
 			ball.forcePerformAction(hit);
 		}
 	};

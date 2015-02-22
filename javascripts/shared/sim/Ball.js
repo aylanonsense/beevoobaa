@@ -14,7 +14,12 @@ define([
 			(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
 		this.timeSinceLastHit = null;
 		this.lastHitCharge = null;
+		this.lastTeamToHit = null;
+		this.lastAthleteToHit = null;
+		this.numHits = 0;
 		this._onHitFloorCallbacks = [];
+		this._onDoubleHitCallbacks = [];
+		this._onHitLimitCallbacks = [];
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype.getState = function() {
@@ -22,6 +27,9 @@ define([
 		state.timeSinceLastHit = this.timeSinceLastHit;
 		state.lastHitCharge = this.lastHitCharge;
 		state.verticalEnergy = this.verticalEnergy;
+		state.lastTeamToHit = this.lastTeamToHit;
+		state.lastAthleteToHit = this.lastAthleteToHit;
+		state.numHits = this.numHits;
 		return state;
 	};
 	Ball.prototype.setState = function(state) {
@@ -29,6 +37,9 @@ define([
 		this.timeSinceLastHit = state.timeSinceLastHit;
 		this.lastHitCharge = state.lastHitCharge;
 		this.verticalEnergy = state.verticalEnergy;
+		this.lastTeamToHit = state.lastTeamToHit;
+		this.lastAthleteToHit = state.lastAthleteToHit;
+		this.numHits = state.numHits;
 	};
 	Ball.prototype.tick = function(t) {
 		//GRAVITY
@@ -41,6 +52,12 @@ define([
 	};
 	Ball.prototype.onHitFloor = function(callback) {
 		this._onHitFloorCallbacks.push(callback);
+	};
+	Ball.prototype.onHitLimitExceeded = function(callback) {
+		this._onHitLimitCallbacks.push(callback);
+	};
+	Ball.prototype.onDoubleHit = function(callback) {
+		this._onDoubleHitCallbacks.push(callback);
 	};
 	Ball.prototype.endOfFrame = function(t) {
 		SUPERCLASS.prototype.endOfFrame.call(this, t);
@@ -55,8 +72,28 @@ define([
 			this.freezeTime = action.freezeTime;
 			this.timeSinceLastHit = 0;
 			this.lastHitCharge = action.charge;
+			if(this.lastTeamToHit !== action.team) {
+				this.lastTeamToHit = action.team;
+				this.numHits = 1;
+			}
+			else {
+				this.numHits++;
+			}
+			var prevAthlete = this.lastAthleteToHit;
+			this.lastAthleteToHit = action.athleteId;
 			this.verticalEnergy = Math.min(15000, this.vel.y * this.vel.y / 2 +
 				(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
+			var i;
+			if(this.numHits > 3) {
+				for(i = 0; i < this._onHitLimitCallbacks.length; i++) {
+					this._onHitLimitCallbacks[i](action.team, action.athleteId);
+				}
+			}
+			else if(this.lastAthleteToHit === prevAthlete) {
+				for(i = 0; i < this._onDoubleHitCallbacks.length; i++) {
+					this._onDoubleHitCallbacks[i](action.team, action.athleteId);
+				}
+			}
 			return true;
 		}
 		else if(action.actionType === 'reset') {
@@ -66,6 +103,9 @@ define([
 			this.vel.y = 0;
 			this.timeSinceLastHit = null;
 			this.lastHitCharge = null;
+			this.numHits = 0;
+			this.lastTeamToHit = null;
+			this.lastAthleteToHit = null;
 			this.verticalEnergy = Math.min(15000, this.vel.y * this.vel.y / 2 +
 				(SharedConstants.BOUNDS.FLOOR - this.bottom) * GRAVITY);
 			return true;

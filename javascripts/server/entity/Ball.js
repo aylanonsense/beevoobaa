@@ -21,5 +21,11 @@ define([
 	Ball.prototype.onHitFloor = function(callback) {
 		this._sim.onHitFloor(callback);
 	};
+	Ball.prototype.onHitLimitExceeded = function(callback) {
+		this._sim.onHitLimitExceeded(callback);
+	};
+	Ball.prototype.onDoubleHit = function(callback) {
+		this._sim.onDoubleHit(callback);
+	};
 	return Ball;
 });

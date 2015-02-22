@@ -115,6 +115,8 @@ define([
 		if(hit) {
 			hit.actionType = 'get-hit';
 			hit.freezeTime = 0.2;
+			hit.team = this._sim.team;
+			hit.athleteId = this.id;
 			ball.forcePerformAction(hit);
 			this.forcePerformAction({
 				actionType: 'hit-success',

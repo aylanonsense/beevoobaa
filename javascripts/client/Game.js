@@ -6,6 +6,7 @@ define([
 	'create!client/display/Sprite > BeachDetails',
 	'create!client/display/Sprite > ScoreText',
 	'client/Spawner',
+	'client/effect/NetText',
 	'client/Constants',
 	'shared/Constants'
 ], function(
@@ -16,6 +17,7 @@ define([
 	BEACH_DETAILS_SPRITE,
 	SCORE_TEXT_SPRITE,
 	Spawner,
+	NetText,
 	Constants,
 	SharedConstants
 ) {
@@ -156,6 +158,20 @@ define([
 				}
 				redScore = msg.redScore;
 				blueScore = msg.blueScore;
+			}
+			return true;
+		}
+		else if(msg.messageType === 'hit-limit-foul') {
+			entity = getEntityById(msg.entityId);
+			if(entity) {
+				Spawner.spawnEffect(new NetText({ text: '3 Hit Limit!', sim: entity._sim, duration: 2.00 }));
+			}
+			return true;
+		}
+		else if(msg.messageType === 'double-hit-foul') {
+			entity = getEntityById(msg.entityId);
+			if(entity) {
+				Spawner.spawnEffect(new NetText({ text: 'Double Hit!', sim: entity._sim, duration: 2.00 }));
 			}
 			return true;
 		}

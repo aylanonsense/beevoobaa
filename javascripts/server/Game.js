@@ -17,32 +17,71 @@ define([
 	var SECONDS_BETWEEN_FLUSH_MESSAGES = 2.5 / 60;
 	var timeToNextSendState = SECONDS_BETWEEN_SEND_STATES;
 	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
-	var ball = new Ball({ x: 300, y: 200, vel: { x: 0, y: 0 } });
+	var ball = new Ball({ x: SharedConstants.BOUNDS.LEFT_WALL + 150, y: 50, vel: { x: 0, y: 0 } });
 	var redScore = 0;
 	var blueScore = 0;
+	var entities = [ new Net({}), ball ];
+
+	function addBlueScore() {
+		blueScore++;
+		if(blueScore >= 25 && blueScore > redScore + 1) {
+			blueScore = 0;
+			redScore = 0;
+		}
+		ball.resetPosition(SharedConstants.BOUNDS.RIGHT_WALL - 194, 50);
+	}
+
+	function addRedScore() {
+		redScore++;
+		if(redScore >= 25 && redScore > blueScore + 1) {
+			redScore = 0;
+			blueScore = 0;
+		}
+		ball.resetPosition(SharedConstants.BOUNDS.LEFT_WALL + 150, 50);
+	}
 
 	ball.onHitFloor(function() {
 		if(ball._sim.centerX < SharedConstants.BOUNDS.LEFT_WALL +
 			(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL) / 2) {
-			//landed on red team's side
-			blueScore++;
-			if(blueScore >= 25 && blueScore > redScore + 1) {
-				blueScore = 0;
-				redScore = 0;
-			}
-			ball.resetPosition(SharedConstants.BOUNDS.RIGHT_WALL - 194, 100);
+			addBlueScore();
 		}
 		else {
-			//landed on blue team's side
-			redScore++;
-			if(redScore >= 25 && redScore > blueScore + 1) {
-				redScore = 0;
-				blueScore = 0;
-			}
-			ball.resetPosition(SharedConstants.BOUNDS.LEFT_WALL + 150, 100);
+			addRedScore();
 		}
 	});
-	var entities = [ new Net({}), ball ];
+	ball.onDoubleHit(function(team, athleteId) {
+		var numPlayers = (team === 'red' ? getNumRedPlayers() : getNumBluePlayers());
+		if(numPlayers > 1) {
+			if(team === 'red') {
+				addBlueScore();
+			}
+			else {
+				addRedScore();
+			}
+			Server.forEach(function(conn) {
+				Server.bufferSend(conn, {
+					messageType: 'double-hit-foul',
+					entityId: athleteId,
+					time: now()
+				});
+			});
+		}
+	});
+	ball.onHitLimitExceeded(function(team, athleteId) {
+		if(team === 'red') {
+			addBlueScore();
+		}
+		else {
+			addRedScore();
+		}
+		Server.forEach(function(conn) {
+			Server.bufferSend(conn, {
+				messageType: 'hit-limit-foul',
+				entityId: athleteId,
+				time: now()
+			});
+		});
+	});
 
 	function tick(t) {
 		var i, j;
