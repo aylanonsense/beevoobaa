@@ -1,8 +1,10 @@
 define([
 	'shared/sim/LocatableTaskSim',
+	'shared/Constants',
 	'shared/hit/HitBox'
 ], function(
 	SUPERCLASS,
+	SharedConstants,
 	HitBox
 ) {
 	function Athlete(params, simType) {
@@ -101,8 +103,20 @@ define([
 		//the player may be landing from a jump
 		if(wasAirborne && this.isGrounded()) {
 			this._clearTask();
-			this._setTask('land-from-jump', {}, 2);
-			this.vel.x = 0;
+			var mid = SharedConstants.BOUNDS.LEFT_WALL +
+					(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL) / 2 ;
+			if(this.team === 'red' && this.x > mid) {
+				this.vel.y = -350;
+				this.vel.x = -60;
+			}
+			else if(this.team === 'blue' && this.x < mid) {
+				this.vel.y = -350;
+				this.vel.x = 60;
+			}
+			else {
+				this._setTask('land-from-jump', {}, 2);
+				this.vel.x = 0;
+			}
 		}
 
 		//we may have reached the waypoint, in which case (if it's stationary) we stop on it

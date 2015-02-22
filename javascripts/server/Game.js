@@ -26,11 +26,19 @@ define([
 			(SharedConstants.BOUNDS.RIGHT_WALL - SharedConstants.BOUNDS.LEFT_WALL) / 2) {
 			//landed on red team's side
 			blueScore++;
+			if(blueScore >= 25 && blueScore > redScore + 1) {
+				blueScore = 0;
+				redScore = 0;
+			}
 			ball.resetPosition(SharedConstants.BOUNDS.RIGHT_WALL - 194, 100);
 		}
 		else {
 			//landed on blue team's side
 			redScore++;
+			if(redScore >= 25 && redScore > blueScore + 1) {
+				redScore = 0;
+				blueScore = 0;
+			}
 			ball.resetPosition(SharedConstants.BOUNDS.LEFT_WALL + 150, 100);
 		}
 	});
