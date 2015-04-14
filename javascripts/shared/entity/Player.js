@@ -1,12 +1,17 @@
 define([
 	'shared/utils/EventHelper',
+	'shared/utils/capValue',
 	'shared/Constants'
 ], function(
 	EventHelper,
+	capValue,
 	SharedConstants
 ) {
-	var JUMP_SPEED = 100;
-	var GRAVITY = 100;
+	var MIN_JUMP_SPEED = 100;
+	var MAX_JUMP_SPEED = 500;
+	var MIN_JUMP_CHARGE_TIME = 5 / 60;
+	var MAX_JUMP_CHARGE_TIME = 50 / 60;
+	var GRAVITY = 800;
 	var GROUND_LEVEL = 400;
 	function Player(state) {
 		//constants (not stateful)
@@ -20,6 +25,7 @@ define([
 		this.waypointX = null;
 		this.waypointDir = 0;
 		this.currentTask = null;
+		this.currentTaskTime = null;
 		this.currentTaskTimeRemaining = null;
 		this.jumpVelY = null;
 
@@ -30,8 +36,11 @@ define([
 			this.setState(state);
 		}
 	}
-	Player.prototype.getCurrentTask = function() {
-		return this.currentTask;
+	Player.prototype._setTask = function(task, taskDuration) {
+		this.currentTask = task || null;
+		this.currentTaskTime = (!this.currentTask ? null : 0.0);
+		this.currentTaskTimeRemaining = (!this.currentTask || !taskDuration ?
+			null : taskDuration + 0.5 / SharedConstants.FRAME_RATE);
 	};
 	Player.prototype.canPerformAction = function(action) {
 		if(action.actionType === 'follow-waypoint') {
@@ -54,20 +63,20 @@ define([
 			}
 		}
 		else if(action.actionType === 'charge-jump') {
-			this.currentTask = 'charging-jump';
+			this._setTask('charging-jump');
 			this.waypointX = null;
 			this.waypointDir = 0;
 			this.x = action.x;
 			this._events.trigger('perform-action', action);
 		}
 		else if(action.actionType === 'release-jump') {
-			this.currentTask = null;
-			this.jumpVelY = -JUMP_SPEED;
+			this._setTask(null);
+			var chargeTime = (action.chargeTime <= MIN_JUMP_CHARGE_TIME +
+				0.5 / SharedConstants.FRAME_RATE ? 0.0 : action.chargeTime / MAX_JUMP_CHARGE_TIME);
+			chargeTime = capValue(0.0, chargeTime, 1.0);
+			this.jumpVelY = -(MIN_JUMP_SPEED + (MAX_JUMP_SPEED - MIN_JUMP_SPEED) * chargeTime);
 			this._events.trigger('perform-action', action);
 		}
-	};
-	Player.prototype.getCurrentTask = function() {
-		return this.currentTask;
 	};
 	Player.prototype.canWalk = function() {
 		return !this.isJumping();
@@ -88,6 +97,7 @@ define([
 			waypointX: this.waypointX,
 			waypointDir: this.waypointDir,
 			currentTask: this.currentTask,
+			currentTaskTime: this.currentTaskTime,
 			currentTaskTimeRemaining: this.currentTaskTimeRemaining,
 			jumpVelY: this.jumpVelY
 		};
@@ -98,15 +108,18 @@ define([
 		this.waypointX = state.waypointX;
 		this.waypointDir = state.waypointDir;
 		this.currentTask = state.currentTask;
+		this.currentTaskTime = state.currentTaskTime;
 		this.currentTaskTimeRemaining = state.currentTaskTimeRemaining;
 		this.jumpVelY = state.jumpVelY;
 	};
 	Player.prototype.startOfFrame = function(t) {
-		if(this.currentTaskTimeRemaining !== null) {
-			this.currentTaskTimeRemaining -= t;
-			if(this.currentTaskTimeRemaining <= 0.0) {
-				this.currentTask = null;
-				this.currentTaskTimeRemaining = null;
+		if(this.currentTask) {
+			this.currentTaskTime += t;
+			if(this.currentTaskTimeRemaining !== null) {
+				this.currentTaskTimeRemaining -= t;
+				if(this.currentTaskTimeRemaining <= 0.0) {
+					this._setTask(null);
+				}
 			}
 		}
 	};
@@ -118,8 +131,7 @@ define([
 				//landed on the ground
 				this.y = GROUND_LEVEL - this.height;
 				this.jumpVelY = null;
-				this.currentTask = 'landing';
-				this.currentTaskTimeRemaining = 25 / 60 + 0.5 / SharedConstants.FRAME_RATE;
+				this._setTask('landing', 25 / 60);
 			}
 		}
 		//player is walking (following a waypoint)

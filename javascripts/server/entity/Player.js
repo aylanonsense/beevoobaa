@@ -1,10 +1,12 @@
 define([
 	'shared/entity/Player',
 	'server/net/GameConnectionServer',
+	'shared/utils/capValue',
 	'shared/Constants'
 ], function(
 	PlayerSim,
 	GameConnectionServer,
+	capValue,
 	SharedConstants
 ) {
 	var nextId = 0;
@@ -43,20 +45,19 @@ define([
 				action = { actionType: 'follow-waypoint', x: action.x, dir: action.dir };
 			}
 			else if(action.actionType === 'charge-jump') {
-				var x = this._sim.x;
-				if(action.x > x) {
-					x = Math.min(x + 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE, action.x);
-				}
-				else {
-					x = Math.max(x - 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE, action.x);
-				}
-				action = { actionType: 'charge-jump', x: x };
+				action = {
+					actionType: 'charge-jump',
+					x: capValue(this._sim.x - 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE,
+						action.x, this._sim.x + 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE)
+				};
 			}
 			else if(action.actionType === 'release-jump') {
-				action = { actionType: 'release-jump' };
-			}
-			else if(action.actionType === 'mini-jump') {
-				action = { actionType: 'mini-jump' };
+				action = {
+					actionType: 'release-jump',
+					chargeTime: (this._sim.currentTask !== 'charging-jump' ? 0.0 :
+						capValue(this._sim.currentTaskTime - 2 / SharedConstants.FRAME_RATE,
+							action.chargeTime, this._sim.currentTaskTime + 2 / SharedConstants.FRAME_RATE))
+				};
 			}
 			else {
 				action = null;

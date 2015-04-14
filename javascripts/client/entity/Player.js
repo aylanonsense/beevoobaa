@@ -59,8 +59,11 @@ define([
 				action = { actionType: 'charge-jump', x: this._sim.x };
 			}
 			else if(this._bufferedInput === 'release-jump') {
-				if(this._sim.getCurrentTask() === 'charging-jump') {
-					action = { actionType: 'release-jump' };
+				if(this._sim.currentTask === 'charging-jump') {
+					action = {
+						actionType: 'release-jump',
+						chargeTime: this._sim.currentTaskTime
+					};
 				}
 			}
 			if(action && this._sim.canPerformAction(action)) {
@@ -77,16 +80,16 @@ define([
 	};
 	Player.prototype.render = function(ctx) {
 		//draw server "ghost"
-		if(this._serverSim.getCurrentTask() === 'charging-jump') { ctx.strokeStyle = '#00f'; }
-		else if(this._serverSim.getCurrentTask() === 'landing') { ctx.strokeStyle = '#0f0'; }
+		if(this._serverSim.currentTask === 'charging-jump') { ctx.strokeStyle = '#00f'; }
+		else if(this._serverSim.currentTask === 'landing') { ctx.strokeStyle = '#0f0'; }
 		else { ctx.strokeStyle = '#f00'; }
 		ctx.lineWidth = 1;
 		ctx.strokeRect(this._serverSim.x + 0.5, this._serverSim.y + 0.5,
 			this._serverSim.width - 1, this._serverSim.height - 1);
 
 		//draw actual entity
-		if(this._sim.getCurrentTask() === 'charging-jump') { ctx.fillStyle = '#00f'; }
-		else if(this._sim.getCurrentTask() === 'landing') { ctx.fillStyle = '#0f0'; }
+		if(this._sim.currentTask === 'charging-jump') { ctx.fillStyle = '#00f'; }
+		else if(this._sim.currentTask === 'landing') { ctx.fillStyle = '#0f0'; }
 		else { ctx.fillStyle = '#f00'; }
 		ctx.fillRect(this._sim.x, this._sim.y,
 			this._sim.width, this._sim.height);
