@@ -48,7 +48,8 @@ define([
 				action = {
 					actionType: 'charge-jump',
 					x: capValue(this._sim.x - 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE,
-						action.x, this._sim.x + 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE)
+						action.x, this._sim.x + 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE),
+					dir: action.dir
 				};
 			}
 			else if(action.actionType === 'release-jump') {
@@ -56,8 +57,13 @@ define([
 					actionType: 'release-jump',
 					chargeTime: (this._sim.currentTask !== 'charging-jump' ? 0.0 :
 						capValue(this._sim.currentTaskTime - 2 / SharedConstants.FRAME_RATE,
-							action.chargeTime, this._sim.currentTaskTime + 2 / SharedConstants.FRAME_RATE))
+							action.chargeTime, this._sim.currentTaskTime + 2 / SharedConstants.FRAME_RATE)),
+					dir: capValue(this._sim.aimPos - 2 * this._sim.aimSpeed / SharedConstants.FRAME_RATE,
+						action.dir, this._sim.aimPos + 2 * this._sim.aimSpeed / SharedConstants.FRAME_RATE),
 				};
+			}
+			else if(action.actionType === 'aim') {
+				action = { actionType: 'aim', pos: action.pos, dir: action.dir };
 			}
 			else {
 				action = null;

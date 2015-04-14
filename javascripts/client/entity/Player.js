@@ -60,7 +60,8 @@ define([
 				if(this._sim.currentTask === 'charging-jump') {
 					action = {
 						actionType: 'release-jump',
-						chargeTime: this._sim.currentTaskTime
+						chargeTime: this._sim.currentTaskTime,
+						dir: this._sim.aimPos
 					};
 				}
 			}
@@ -71,13 +72,21 @@ define([
 		if(this._isTryingToJump) {
 			this._tryToPerformAction({
 				actionType: 'charge-jump',
-				x: this._sim.x
+				x: this._sim.x,
+				dir: this._moveDir
 			});
 		}
 		if(!this._sim.isWalking() || this._sim.getEventualWalkDir() !== this._moveDir) {
 			this._tryToPerformAction({
 				actionType: 'follow-waypoint',
 				x: this._sim.x,
+				dir: this._moveDir
+			});
+		}
+		if(this._sim.isAiming() && this._sim.getEventualAimDir() !== this._moveDir) {
+			this._tryToPerformAction({
+				actionType: 'aim',
+				pos: this._sim.aimPos,
 				dir: this._moveDir
 			});
 		}
@@ -97,6 +106,16 @@ define([
 		ctx.lineWidth = 1;
 		ctx.strokeRect(this._serverSim.x + 0.5, this._serverSim.y + 0.5,
 			this._serverSim.width - 1, this._serverSim.height - 1);
+		if(this._serverSim.isAiming()) {
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = '#ddd';
+			ctx.beginPath();
+			ctx.moveTo(this._serverSim.x + this._serverSim.width / 2,
+				this._serverSim.y + this._serverSim.height / 2);
+			ctx.lineTo(this._serverSim.x + this._serverSim.width / 2 + this._serverSim.aimPos * 100,
+				this._serverSim.y + this._serverSim.height / 2 - 100);
+			ctx.stroke();
+		}
 
 		//draw actual entity
 		if(this._sim.currentTask === 'charging-jump') { ctx.fillStyle = '#00f'; }
@@ -104,6 +123,16 @@ define([
 		else { ctx.fillStyle = '#f00'; }
 		ctx.fillRect(this._sim.x, this._sim.y,
 			this._sim.width, this._sim.height);
+		if(this._sim.isAiming()) {
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = '#bbb';
+			ctx.beginPath();
+			ctx.moveTo(this._sim.x + this._sim.width / 2,
+				this._sim.y + this._sim.height / 2);
+			ctx.lineTo(this._sim.x + this._sim.width / 2 + this._sim.aimPos * 100,
+				this._sim.y + this._sim.height / 2 - 100);
+			ctx.stroke();
+		}
 	};
 
 

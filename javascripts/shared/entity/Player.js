@@ -9,8 +9,7 @@ define([
 ) {
 	var MIN_JUMP_SPEED = 100;
 	var MAX_JUMP_SPEED = 500;
-	var MIN_JUMP_CHARGE_TIME = 5 / 60;
-	var MAX_JUMP_CHARGE_TIME = 50 / 60;
+	var MAX_HORIZONTAL_JUMP_SPEED = 200;
 	var GRAVITY = 800;
 	var GROUND_LEVEL = 400;
 	function Player(state) {
@@ -18,15 +17,21 @@ define([
 		this.width = 40;
 		this.height = 60;
 		this.moveSpeed = 200;
+		this.aimSpeed = 2.0;
+		this.minJumpChargeTime = 5 / 60;
+		this.maxJumpChargeTime = 50 / 60;
 
 		//stateful vars
 		this.x = 0;
 		this.y = GROUND_LEVEL - this.height;
 		this.waypointX = null;
 		this.waypointDir = 0;
+		this.aimPos = null;
+		this.aimDir = 0;
 		this.currentTask = null;
 		this.currentTaskTime = null;
 		this.currentTaskTimeRemaining = null;
+		this.jumpVelX = null;
 		this.jumpVelY = null;
 
 		this._events = new EventHelper([ 'perform-action' ]);
@@ -52,6 +57,9 @@ define([
 		else if(action.actionType === 'release-jump') {
 			return this.currentTask === 'charging-jump';
 		}
+		else if(action.actionType === 'aim') {
+			return this.isAiming();
+		}
 		return false;
 	};
 	Player.prototype.performAction = function(action) {
@@ -66,20 +74,38 @@ define([
 			this._setTask('charging-jump');
 			this.waypointX = null;
 			this.waypointDir = 0;
+			this.aimPos = 0;
+			this.aimDir = action.dir;
 			this.x = action.x;
 			this._events.trigger('perform-action', action);
 		}
 		else if(action.actionType === 'release-jump') {
 			this._setTask(null);
-			var chargeTime = (action.chargeTime <= MIN_JUMP_CHARGE_TIME +
-				0.5 / SharedConstants.FRAME_RATE ? 0.0 : action.chargeTime / MAX_JUMP_CHARGE_TIME);
+			this.aimPos = null;
+			this.aimDir = 0;
+			var chargeTime = (action.chargeTime <= this.minJumpChargeTime +
+				0.5 / SharedConstants.FRAME_RATE ? 0.0 : action.chargeTime / this.maxJumpChargeTime);
 			chargeTime = capValue(0.0, chargeTime, 1.0);
 			this.jumpVelY = -(MIN_JUMP_SPEED + (MAX_JUMP_SPEED - MIN_JUMP_SPEED) * chargeTime);
+			this.jumpVelX = MAX_HORIZONTAL_JUMP_SPEED * action.dir;
 			this._events.trigger('perform-action', action);
+		}
+		else if(action.actionType === 'aim') {
+			if(this.aimPos !== action.pos || this.aimDir !== action.dir) {
+				this.aimPos = action.pos;
+				this.aimDir = action.dir;
+				this._events.trigger('perform-action', action);
+			}
 		}
 	};
 	Player.prototype.canWalk = function() {
 		return !this.isJumping();
+	};
+	Player.prototype.isAiming = function() {
+		return this.aimPos !== null;
+	};
+	Player.prototype.getEventualAimDir = function() {
+		return this.aimDir;
 	};
 	Player.prototype.isWalking = function() {
 		return this.waypointX !== null;
@@ -96,9 +122,12 @@ define([
 			y: this.y,
 			waypointX: this.waypointX,
 			waypointDir: this.waypointDir,
+			aimPos: this.aimPos,
+			aimDir: this.aimDir,
 			currentTask: this.currentTask,
 			currentTaskTime: this.currentTaskTime,
 			currentTaskTimeRemaining: this.currentTaskTimeRemaining,
+			jumpVelX: this.jumpVelX,
 			jumpVelY: this.jumpVelY
 		};
 	};
@@ -107,9 +136,12 @@ define([
 		this.y = state.y;
 		this.waypointX = state.waypointX;
 		this.waypointDir = state.waypointDir;
+		this.aimPos = state.aimPos;
+		this.aimDir = state.aimDir;
 		this.currentTask = state.currentTask;
 		this.currentTaskTime = state.currentTaskTime;
 		this.currentTaskTimeRemaining = state.currentTaskTimeRemaining;
+		this.jumpVelX = state.jumpVelX;
 		this.jumpVelY = state.jumpVelY;
 	};
 	Player.prototype.startOfFrame = function(t) {
@@ -127,6 +159,7 @@ define([
 		if(this.isJumping()) {
 			this.jumpVelY += GRAVITY * t;
 			this.y += this.jumpVelY * t;
+			this.x += this.jumpVelX * t;
 			if(this.y >= GROUND_LEVEL - this.height && this.jumpVelY > 0) {
 				//landed on the ground
 				this.y = GROUND_LEVEL - this.height;
@@ -145,6 +178,10 @@ define([
 			else if(this.x > this.waypointX) {
 				this.x = Math.max(this.x - this.moveSpeed * t, this.waypointX);
 			}
+		}
+		//player is aiming
+		if(this.aimPos !== null) {
+			this.aimPos = capValue(-1.0, this.aimPos + this.aimDir * this.aimSpeed * t, 1.0);
 		}
 	};
 	Player.prototype.endOfFrame = function(t) {};
