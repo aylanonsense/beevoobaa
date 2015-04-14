@@ -59,8 +59,8 @@ define([
 			playableEntity.setPlayerControl(true);
 		}
 		else if(msg.messageType === 'game-state-update') {
-			for(i = 0; i < msg.entities[i]; i++) {
-				getEntityById(msg.entities[i].id).onStateUpdateFromServer(msg.state);
+			for(i = 0; i < msg.entities.length; i++) {
+				getEntityById(msg.entities[i].id).onStateUpdateFromServer(msg.entities[i].state);
 			}
 		}
 		else if(msg.messageType === 'perform-action') {

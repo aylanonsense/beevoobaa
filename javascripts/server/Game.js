@@ -84,7 +84,6 @@ define([
 						messageType: 'game-state-update',
 						entities: entities.map(function(entity) {
 							return {
-								type: entity.entityType,
 								id: entity.id,
 								state: entity.getState()
 							};

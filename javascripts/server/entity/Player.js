@@ -68,8 +68,7 @@ define([
 			else {
 				action = null;
 			}
-			if(action && this._sim.canPerformAction(action)) {
-				this._sim.performAction(action);
+			if(this._tryToPerformAction(action)) {
 				this._bufferedClientActions.shift();
 			}
 			else {
@@ -89,6 +88,24 @@ define([
 				this._bufferedClientActions[this._bufferedClientActions.length - 1]
 			];
 		}
+
+		//if we've been charging a jump for a while, it may be time to auto-jump
+		if(this._sim.currentTask === 'charging-jump' &&
+			this._sim.currentTaskTime >= this._sim.absoluteMaxJumpChargeTime + 2.5 / SharedConstants.FRAME_RATE) {
+			//automatically release jump
+			this._tryToPerformAction({
+				actionType: 'release-jump',
+				chargeTime: this._sim.currentTaskTime,
+				dir: this._sim.aimPos
+			});
+		}
+	};
+	Player.prototype._tryToPerformAction = function(action) {
+		if(action && this._sim.canPerformAction(action)) {
+			this._sim.performAction(action);
+			return true;
+		}
+		return false;
 	};
 	Player.prototype.tick = function(t) {
 		this._sim.tick(t);

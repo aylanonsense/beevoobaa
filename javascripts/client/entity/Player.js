@@ -1,9 +1,11 @@
 define([
 	'shared/entity/Player',
-	'client/net/GameConnection'
+	'client/net/GameConnection',
+	'shared/Constants'
 ], function(
 	PlayerSim,
-	GameConnection
+	GameConnection,
+	SharedConstants
 ) {
 	function Player(id, state) {
 		this.id = id;
@@ -147,6 +149,8 @@ define([
 		if(this._simIsDesynced) {
 			this._sim.setState(state);
 			this._bufferedSimActions = [];
+			this._simIsDesynced = false;
+			console.log("Syncing desynced sim");
 		}
 		this._serverSim.setState(state);
 		this._bufferedServerSimActions = [];
@@ -173,6 +177,17 @@ define([
 		//client may have input as well
 		if(this.isPlayerControlled()) {
 			this._applyBufferedInput();
+		}
+
+		//if we've been charging a jump for a while, it may be time to auto-jump
+		if(this.isPlayerControlled() && this._sim.currentTask === 'charging-jump' &&
+			this._sim.currentTaskTime >= this._sim.absoluteMaxJumpChargeTime + 0.5 / SharedConstants.FRAME_RATE) {
+			//automatically release jump
+			this._tryToPerformAction({
+				actionType: 'release-jump',
+				chargeTime: this._sim.currentTaskTime,
+				dir: this._sim.aimPos
+			});
 		}
 	};
 	Player.prototype.tick = function(t) {

@@ -20,6 +20,7 @@ define([
 		this.aimSpeed = 2.0;
 		this.minJumpChargeTime = 5 / 60;
 		this.maxJumpChargeTime = 50 / 60;
+		this.absoluteMaxJumpChargeTime = 70 / 60;
 
 		//stateful vars
 		this.x = 0;
@@ -156,6 +157,7 @@ define([
 		}
 	};
 	Player.prototype.tick = function(t) {
+		//player is in the air, jumping
 		if(this.isJumping()) {
 			this.jumpVelY += GRAVITY * t;
 			this.y += this.jumpVelY * t;
