@@ -1,9 +1,8 @@
 define({
-	FAKE_LAG: 250,
-	BOUNDS: {
-		FLOOR: 525,
-		CEILING: null,
-		LEFT_WALL: 25,
-		RIGHT_WALL: 775
-	}
+	//simulation speed
+	FRAME_RATE: 60,
+
+	//network
+	CLIENT_OUTGOING_MESSAGE_BUFFER_TIME: 3 / 60,
+	SERVER_OUTGOING_MESSAGE_BUFFER_TIME: 3 / 60
 });

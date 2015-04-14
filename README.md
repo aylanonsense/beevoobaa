@@ -1,4 +1,2 @@
-multiplayer-game
-================
-
-A game that is ostensibly multiplayer.
+# beevoobaa
+A multiplayer beach volleyball simulator.

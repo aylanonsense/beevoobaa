@@ -1,3 +1,4 @@
 define({
-	TARGET_FRAME_RATE: 60
+	//simulation speed
+	TIME_BETWEEN_STATE_UPDATES: 1.40
 });

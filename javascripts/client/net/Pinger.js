@@ -1,194 +1,117 @@
 define([
-	'client/net/Connection',
-	'client/Clock'
+	'client/net/RawConnection',
+	'client/Clock',
+	'client/Constants',
+	'shared/utils/EventHelper',
+	'shared/utils/now'
 ], function(
-	Connection,
-	Clock
+	RawConnection,
+	Clock,
+	Constants,
+	EventHelper,
+	now
 ) {
-	var NEXT_PING_ID = 0;
-	var SECONDS_BETWEEN_PINGS = 1.00;
-	var NUM_CACHED_PINGS = 20;
-	var PINGS_TO_IGNORE = 4;
-	var timeToNextPing = SECONDS_BETWEEN_PINGS;
+	var nextPingId = 0;
 	var pings = [];
-	var pingsSinceDelayLowered = 0;
-	var serverTimeOffset = { min: null, max: null };
-	var clientEnforcedDelay = null;
-	var recentPackets = [];
+	var events = new EventHelper([ 'sync' ]);
+	var minServerTimeOffset = null;
+	var maxServerTimeOffset = null;
+	var adjustedRoundTripTime = null;
+	var pingsSinceRoundTripTimeLowered = 0;
+	var isSynced = false;
 
-	function reset() {
-		timeToNextPing = SECONDS_BETWEEN_PINGS;
-		pings = [];
-		pingsSinceDelayLowered = 0;
-		serverTimeOffset = { min: null, max: null };
-		clientEnforcedDelay = null;
-	}
-
-	function tick(t) {
-		timeToNextPing -= t;
-		if(timeToNextPing <= 0) {
-			//record ping being sent out
-			var id = NEXT_PING_ID++;
-			pings.push({ pingId: id, sent: performance.now(), received: null });
-			if(pings.length > NUM_CACHED_PINGS) { pings.shift(); }
-
-			//send ping
-			Connection.send({ messageType: 'ping', pingId: id });
-			timeToNextPing += SECONDS_BETWEEN_PINGS;
-		}
-	}
-
-	function onReceive(msg) {
+	RawConnection.on('receive', function(msg) {
 		if(msg.messageType === 'ping-response') {
-			var time = performance.now();
+			var time = now();
 			for(var i = 0; i < pings.length; i++) {
 				if(pings[i].pingId === msg.pingId) {
 					//we got a response to one of our pings
+					var gameTime = msg.gameTime;
 					pings[i].received = time;
-					var lag = pings[i].received - pings[i].sent;
+					var roundTripTime = pings[i].received - pings[i].sent;
 
 					//see if we can't gain a better estimate of server time
+					var minGameTime = gameTime;
+					var maxGameTime = gameTime + roundTripTime;
 					var offsetChanged = false;
-					var minServerTimeOffset = Math.min(time - msg.time, time - msg.time - lag);
-					var maxServerTimeOffset = Math.max(time - msg.time, time - msg.time - lag);
-					if(serverTimeOffset.min === null || serverTimeOffset.min < minServerTimeOffset) {
-						serverTimeOffset.min = minServerTimeOffset;
+					if(minServerTimeOffset === null || minServerTimeOffset < minGameTime - time) {
+						minServerTimeOffset = minGameTime - time;
 						offsetChanged = true;
 					}
-					if(serverTimeOffset.max === null || serverTimeOffset.max > maxServerTimeOffset) {
-						serverTimeOffset.max = maxServerTimeOffset;
+					if(maxServerTimeOffset === null || maxServerTimeOffset > maxGameTime - time) {
+						maxServerTimeOffset = maxGameTime - time;
 						offsetChanged = true;
 					}
 
-					//if we have a better estimate of server time, update the game clock
+					//with a better estimate, we can update the clock (game time is now more accurate)
 					if(offsetChanged) {
-						Clock.setServerTimeOffset(serverTimeOffset.min +
-							(serverTimeOffset.max - serverTimeOffset.min) / 2);
+						Clock.setGameTimeOffset((minServerTimeOffset + maxServerTimeOffset) / 2);
 					}
 
 					//may need to increase/decrease delay depending on lag
-					pingsSinceDelayLowered++;
-					recalculateClientEnforcedDelay();
+					recalculateRoundTripTime();
+
+					//we only need one ping response to qualify as "synced"
+					if(!isSynced) {
+						isSynced = true;
+						events.trigger('sync');
+					}
 					break;
 				}
 			}
-			return true;
 		}
-		return false;
-	}
+	});
 
-	function recalculateClientEnforcedDelay() {
-		//create a sorted array of latency times (worst latency first)
-		var latencies = pings.map(function(ping) {
+	function recalculateRoundTripTime() {
+		pingsSinceRoundTripTimeLowered++;
+
+		//create sorted list of client --> server --> client times (highest time first)
+		var latencies = pings.filter(function(ping) {
+			return ping.received !== null;
+		}).map(function(ping) {
 			return ping.received - ping.sent;
 		}).sort(function(a, b) { return b - a; });
 
-		//the worst latencies are ignored (3 / 15 of messages will come in late)
-		var idealDelay = latencies[Math.min(PINGS_TO_IGNORE, pings.length - 1)] + 3; //buffer ms added
-		var delayChanged = false;
+		//the laggiest couple of pings are ignored -- they may be anomalies -- so we choose
+		// the next highest as the one to shoot for
+		var roundTripTime = latencies[Math.min(Constants.PINGS_TO_IGNORE, latencies.length - 1)];
 
-		//if we don't have an enforced delay yet, this is the best estimate to use
-		if(clientEnforcedDelay === null) {
-			clientEnforcedDelay = idealDelay;
-			pingsSinceDelayLowered = 0;
-			delayChanged = true;
-		}
-		//if the network got worse we can safely adopt the new delay -- client will stutter
-		else if(clientEnforcedDelay <= idealDelay) {
-			clientEnforcedDelay = idealDelay;
-			pingsSinceDelayLowered = 0;
-			delayChanged = true;
+		//if we don't have a guess for round trip time yet, this is the best estimate to use
+		// OR if the network got worse we can safely adopt the new time -- client will stutter
+		if(adjustedRoundTripTime === null || adjustedRoundTripTime <= roundTripTime) {
+			pingsSinceRoundTripTimeLowered = 0;
+			adjustedRoundTripTime = roundTripTime;
+			Clock.setRoundTripTime(roundTripTime);
 		}
 		//if the network got better, we might not trust that it will stay good
 		else {
-			//we only lower the client's delay if the "gains" are worth it
-			var gains = Math.sqrt(clientEnforcedDelay - idealDelay); //we undervalue huge gains
-			if(gains * pingsSinceDelayLowered > 50) {
-				clientEnforcedDelay = idealDelay;
-				delayChanged = true;
+			//we only accept the network got better if the "gains" are worth it
+			var gains = Math.sqrt(adjustedRoundTripTime - roundTripTime); //we undervalue huge gains
+			if(gains * pingsSinceRoundTripTimeLowered >
+				Constants.GAINS_REQUIRED_TO_LOWER_ROUND_TRIP_TIME) {
+				adjustedRoundTripTime = roundTripTime;
+				Clock.setRoundTripTime(roundTripTime);
 			}
 		}
-
-		//if we changed the delay, the game clock needs to be updated
-		if(delayChanged) {
-			Clock.setClientTimeOffset(clientEnforcedDelay);
-		}
-	}
-
-	function render(ctx, x, y, width, height) {
-		ctx.fillStyle = '#060';
-		ctx.font = "7px Lucida Console";
-
-		//draw latency bars
-		var maxLag = Math.max.apply(this, pings.map(function(ping) {
-			return ping.received - ping.sent;
-		}));
-		var barX = x + width;
-		var barWidth = (width - 40) / NUM_CACHED_PINGS;
-		for(var i = pings.length - 1; i >= 0; i--) {
-			barX -= barWidth;
-			if(pings[i].received !== null) {
-				var lag = pings[i].received - pings[i].sent;
-				var textHeight = (width >= 325 ? 10 : 0);
-				var barHeight = (height - textHeight) * lag / maxLag;
-				ctx.fillRect(barX, y + height - textHeight - barHeight, barWidth - 1, barHeight);
-				if(textHeight > 0) {
-					ctx.fillText("" + Math.floor(lag), barX, y + height);
-				}
-			}
-		}
-
-		//draw delay line (or simulated latency)
-		if(clientEnforcedDelay !== null) {
-			ctx.strokeStyle = '#660';
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.moveTo(x + 40, y + (height - 10) * (1 - clientEnforcedDelay / maxLag));
-			ctx.lineTo(x + width, y + (height - 10) * (1 - clientEnforcedDelay / maxLag));
-			ctx.stroke();
-		}
-
-		//draw ping text
-		ctx.font = "11px Lucida Console";
-		var totalLag = 0;
-		var numPings = 0;
-		for(i = 0; i < pings.length; i++) {
-			if(pings[i].received !== null) {
-				numPings++;
-				totalLag += pings[i].received - pings[i].sent;
-			}
-		}
-		if(numPings > 0) {
-			ctx.fillStyle = '#666';
-			ctx.fillText(Math.round(totalLag / numPings) + "ms", x, y + 7);
-		}
-		if(clientEnforcedDelay !== null) {
-			ctx.fillStyle = '#660';
-			ctx.fillText(Math.round(clientEnforcedDelay) + "ms", x, y + 21);
-		}
-		if(recentPackets.length > 0) {
-			var numLatePackets = recentPackets.filter(function(packet) {
-				return packet.success;
-			}).length;
-			ctx.fillStyle = '#602';
-			ctx.fillText((Math.round(1000 * numLatePackets / recentPackets.length) / 10) +
-				"%", x, y + 35);
-		}
-	}
-
-	function recordPacketReceive(success) {
-		var time = performance.now();
-		recentPackets.push({ success: success, time: time });
-		recentPackets = recentPackets.filter(function(packet) {
-			return packet.time + 8000 > time;
-		});
 	}
 
 	return {
-		reset: reset,
-		tick: tick,
-		onReceive: onReceive,
-		recordPacketReceive: recordPacketReceive,
-		render: render
+		on: function(eventName, callback) {
+			events.on(eventName, callback);
+		},
+		ping: function() {
+			var id = nextPingId++;
+			pings.push({ pingId: id, sent: now(), received: null });
+			if(pings.length > Constants.NUM_CACHED_PINGS) { pings.shift(); }
+			RawConnection.send({ messageType: 'ping', pingId: id });
+		},
+		reset: function() {
+			pings = [];
+			minServerTimeOffset = null;
+			maxServerTimeOffset = null;
+			adjustedRoundTripTime = null;
+			pingsSinceRoundTripTimeLowered = 0;
+			isSynced = false;
+		}
 	};
 });

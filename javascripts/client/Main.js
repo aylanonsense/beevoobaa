@@ -1,221 +1,188 @@
-//configure requirejs
-requirejs.config({
-	baseUrl: '/',
-	paths: {
-		jquery: '/client/lib/jquery',
-		create: '/client/lib/instanqi8'
-	}
-});
-
-//start client
-requirejs([
-	'jquery',
-	'client/Constants',
+define([
+	'client/net/GameConnection',
 	'client/net/Pinger',
+	'shared/Constants',
+	'client/Constants',
+	'client/Game',
 	'client/Clock',
-	'client/net/Connection',
-	'client/Spawner',
-	'client/effect/NetText',
-	'client/Game'
+	'shared/utils/now'
 ], function(
-	$,
-	Constants,
+	GameConnection,
 	Pinger,
+	SharedConstants,
+	Constants,
+	Game,
 	Clock,
-	Connection,
-	Spawner,
-	NetText,
-	Game
+	now
 ) {
-	var $canvas = $('<canvas width="' + Constants.CANVAS_WIDTH + 'px" height="' +
-		Constants.CANVAS_HEIGHT + 'px"></canvas>').appendTo("#game-canvas-area");
-	$('#show-network').on('click', function() {
-		var isChecked = $(this).prop('checked');
-		Constants.DEBUG_RENDER_NETWORK = isChecked;
-		Constants.DEBUG_RENDER_SERVER_GHOSTS = isChecked;
-		Constants.DEBUG_RENDER_FUTURE_GHOSTS = isChecked;
-	});
-	var ctx = $canvas[0].getContext('2d');
-	var bufferedMessages = [];
-	var prevGameTime = null;
-	var prevTimestamp = performance.now();
-	var keyboard = {};
-	for(var key in Constants.KEY_BINDINGS) { keyboard[Constants.KEY_BINDINGS[key]] = false; }
-	var SECONDS_BETWEEN_FLUSH_MESSAGES = 2.5 / 60;
-	var timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
-	var timeDebt = 0;
-	var directionToChangeTimeDebt = 0;
-	var speedNetText = null;
+	return function() {
+		//set up the canvas
+		var canvas = document.getElementById("game-canvas");
+		canvas.setAttribute("width", Constants.CANVAS_WIDTH);
+		canvas.setAttribute("height", Constants.CANVAS_HEIGHT);
+		var ctx = canvas.getContext("2d");
 
-	//add network listeners
-	Connection.onConnected(function() {
-		reset();
-		Game.onConnected();
-	});
-	Connection.onReceive(function(msg) {
-		if(!Pinger.onReceive(msg)) {
-			var time = Clock.getClientTime();
-			if(time === null) {
-				//console.log("Message arrived from server pre-sync (so it was ignored)", msg);
-			}
-			else {
-				bufferedMessages.push(msg);
-			}
-		}
-	});
-	Connection.onDisconnected(function() {
-		Game.onDisconnected();
-		reset();
-	});
-	Connection.connect();
-
-	//add input listeners
-	$(document).on('keydown keyup', function(evt) {
-		evt.isDown = (evt.type === 'keydown');
-		if(Constants.KEY_BINDINGS[evt.which] &&
-			keyboard[Constants.KEY_BINDINGS[evt.which]] !== evt.isDown) {
-			keyboard[Constants.KEY_BINDINGS[evt.which]] = evt.isDown;
-			evt.gameKey = Constants.KEY_BINDINGS[evt.which];
-			Game.onKeyboardEvent(evt, keyboard);
-		}
-	});
-	$canvas.on('mousemove mouseup mousedown', Game.onMouseEvent);
-
-	function processBufferedMessages(endTime) {
-		var numMessagesToRemove = 0;
-		var time = Clock.getClientTime();
-		for(var i = 0; i < bufferedMessages.length; i++) {
-			var msg = bufferedMessages[i];
-			//if the msg is relevant now, apply it
-			if(msg.time <= endTime) {
-				if(!Game.onReceive(msg, time - msg.time)) {
-					throw new Error("Unsure how to handle '" + msg.messageType + "' message", msg);
-				}
-				numMessagesToRemove++;
-			}
-			//if it occurs in the future, the rest must also occur in the future
-			else if(msg.time > endTime) {
-				break;
-			}
-		}
-		if(numMessagesToRemove > 0) {
-			bufferedMessages = bufferedMessages.slice(numMessagesToRemove, bufferedMessages.length);
-		}
-	}
-
-	//set up the game loop
-	function loop(timestamp) {
-		//get game time
-		var t = Math.min(timestamp - prevTimestamp, 100) / 1000;
-		prevTimestamp = timestamp;
-		Pinger.tick(t);
-
-		//use game time to advance simulation
-		var gameTime = Clock.getClientTime();
-		if(gameTime === null || prevGameTime === null) {
-			//game is starting up, nothing is happening
-			prevGameTime = gameTime;
-			timeDebt = 0;
-		}
-		//if we have a lot of time to make up, just reset and let's start again
-		else if(gameTime - prevGameTime > 1000) {
-			reset();
-		}
-		else {
-			var tServer;
-
-			if(gameTime <= prevGameTime) {
-				//game stuttered, our simulation is now "ahead" of the server
-				tServer = 0;
-			}
-			else if(gameTime - prevGameTime > 50) {
-				//we have to make up a lot of time, so we chunk it
-				tServer = 50 / 1000;
-				prevGameTime += 50;
-			}
-			else {
-				//game is moving normally
-				tServer = (gameTime - prevGameTime) / 1000;
-				prevGameTime = gameTime;
-			}
-
-			//the client may need to speed up or slow down to match the server
-			if(timeDebt > 75 / 1000) { //client is ahead of server
-				if(directionToChangeTimeDebt !== -1) {
-					speedNetText = Spawner.spawnEffect(new NetText({
-						text: 'Slow Down 10%',
-						x: Constants.CANVAS_WIDTH / 2,
-						y: Constants.CANVAS_HEIGHT / 4
-					}));
-				}
-				directionToChangeTimeDebt = -1; //slow down client, please
-			}
-			else if(timeDebt < -75 / 1000) { //client is behind server
-				if(directionToChangeTimeDebt !== 1) {
-					speedNetText = Spawner.spawnEffect(new NetText({
-						text: 'Speed Up 10%',
-						x: Constants.CANVAS_WIDTH / 2,
-						y: Constants.CANVAS_HEIGHT / 4
-					}));
-				}
-				directionToChangeTimeDebt = 1; //speed up client, please
-			}
-			else if(directionToChangeTimeDebt > 0 && timeDebt < 0 / 1000) {
-				directionToChangeTimeDebt = 0; //stop speeding up the client, you've done enough
-				if(speedNetText) {
-					speedNetText.die();
-					speedNetText = null;
-				}
-			}
-			else if(directionToChangeTimeDebt < 0 && timeDebt > -5 / 1000) {
-				directionToChangeTimeDebt = 0; //stop slowing down the client, you've done enough
-				if(speedNetText) {
-					speedNetText.die();
-					speedNetText = null;
-				}
-			}
-
-			var tClient = t;
-			if(directionToChangeTimeDebt > 0) { tClient *= 1.1; } //speed up the client
-			else if(directionToChangeTimeDebt < 0) { tClient *= 0.9; } //slow down the client
-
-			processBufferedMessages(gameTime);
-			Game.tick(tClient, tServer);
-			timeDebt += tClient - tServer; //positive means client is ahead of server, negative means behind
-		}
-
-		render();
-		timeToNextFlushMessages -= t;
-		if(timeToNextFlushMessages <= 0) {
-			timeToNextFlushMessages = SECONDS_BETWEEN_FLUSH_MESSAGES;
-			Connection.flush();
-		}
-		requestAnimationFrame(loop);
-	}
-
-	function render() {
-		ctx.fillStyle = '#222';
-		ctx.fillRect(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
-		Game.render(ctx);
-		if(Constants.DEBUG_RENDER_NETWORK) {
-			Pinger.render(ctx, Constants.CANVAS_WIDTH - 100 - 10,
-				Constants.CANVAS_HEIGHT - 25 - 10, 100, 25);
-		}
-	}
-
-	function reset() {
+		//reset the game
 		Game.reset();
-		Pinger.reset();
-		Clock.reset();
-		Connection.reset();
-		bufferedMessages = [];
-		prevGameTime = null;
-		prevTimestamp = performance.now();
-		timeDebt = 0;
-		directionToChangeTimeDebt = 0;
-	}
 
-	//kick off the game loop
-	render();
-	requestAnimationFrame(loop);
+		//set up the game loop
+		var syncedSimTimePassed = 0.0;
+		var gameTimePassed = 0.0;
+		var simTimeAdjustDir = 0;
+		var prevTime = now();
+		var prevClientGameTime = null;
+		var timeToFlush = SharedConstants.CLIENT_OUTGOING_MESSAGE_BUFFER_TIME -
+			0.5 / SharedConstants.FRAME_RATE;
+		var timeToPing = 0.0;
+		function loop() {
+			//calculate time since last loop was run
+			var time = now();
+			var t = time - prevTime;
+			prevTime = time;
+
+			//if we're connected, we might face a circumstance where the network gets worse/better,
+			// in which case we'll adjust the speed of the simulation until it matches the game time
+			var tSim = t;
+			if(GameConnection.isConnected() && GameConnection.isSynced()) {
+				//we might need to adjust the sim time
+				//if we're moving faster than normal, we may want to return to normal speed
+				if(simTimeAdjustDir === 1 && syncedSimTimePassed >= gameTimePassed) {
+					simTimeAdjustDir = 0;
+					Clock.speed = 1.0; //for debug purposes
+				}
+				//if we're moving slower than normal, we may want to return to normal speed
+				else if(simTimeAdjustDir === -1 && syncedSimTimePassed <= gameTimePassed) {
+					simTimeAdjustDir = 0;
+					Clock.speed = 1.0; //for debug purposes
+				}
+				//if we're way behind, we may want to speed up
+				else if(syncedSimTimePassed < gameTimePassed - Constants.TIME_REQUIRED_TO_SPEED_UP_SIM) {
+					simTimeAdjustDir = 1;
+					Clock.speed = Constants.SPEED_UP_SIM_MULT; //for debug purposes
+				}
+				//if we're way ahead, we may want to slow down
+				else if(syncedSimTimePassed > gameTimePassed + Constants.TIME_REQUIRED_TO_SLOW_DOWN_SIM) {
+					simTimeAdjustDir = -1;
+					Clock.speed = Constants.SLOW_DOWN_SIM_MULT; //for debug purposes
+				}
+
+				//adjust the sim time passed accordingly
+				if(simTimeAdjustDir === 1) {
+					tSim *= Constants.SPEED_UP_SIM_MULT;
+				}
+				else if(simTimeAdjustDir === -1) {
+					tSim *= Constants.SLOW_DOWN_SIM_MULT;
+				}
+				syncedSimTimePassed += tSim;
+
+				//calculate the actual game time passed
+				var clientGameTime = Clock.getClientGameTime();
+				if(prevClientGameTime !== null) {
+					if(clientGameTime > prevClientGameTime) {
+						gameTimePassed += clientGameTime - prevClientGameTime;
+						prevClientGameTime = clientGameTime;
+					}
+				}
+				else {
+					prevClientGameTime = clientGameTime;
+				}
+
+				//finally, if we really get way out of sync, we may need to strategically reset
+				if(Math.abs(gameTimePassed - syncedSimTimePassed) > Constants.TIME_REQUIRED_TO_RESET) {
+					console.log("Resetting due to major desync!");
+					Game.tick(tSim);
+					Game.render(ctx);
+					reset();
+					requestAnimationFrame(loop);
+					return;
+				}
+			}
+
+			//the game moves forward ~one frame
+			Game.tick(tSim);
+			Game.render(ctx);
+
+			if(GameConnection.isConnected()) {
+				if(GameConnection.isSynced()) {
+					//every couple of frames any buffered messages are sent to the server
+					timeToFlush -= t;
+					if(timeToFlush <= 0.0) {
+						GameConnection.flush();
+						timeToFlush = SharedConstants.CLIENT_OUTGOING_MESSAGE_BUFFER_TIME -
+							0.5 / SharedConstants.FRAME_RATE;
+					}
+				}
+
+				//every so often we ping the server
+				timeToPing -= t;
+				if(timeToPing <= 0.0) {
+					Pinger.ping();
+					timeToPing = Constants.TIME_BETWEEN_PINGS;
+				}
+			}
+
+			//the next loop is scheduled
+			requestAnimationFrame(loop);
+		}
+
+		//kick off the game loop
+		requestAnimationFrame(loop);
+
+		//add mouse handler
+		canvas.onmousedown = onMouseEvent;
+		document.onmouseup = onMouseEvent;
+		document.onmousemove = onMouseEvent;
+		function onMouseEvent(evt) {
+			Game.onMouseEvent({
+				type: evt.type,
+				x: evt.clientX - canvas.offsetLeft + document.body.scrollLeft,
+				y: evt.clientY - canvas.offsetTop + document.body.scrollTop
+			});
+		}
+
+		//add keyboard handler
+		var keyboard = {};
+		for(var key in Constants.KEY_BINDINGS) { keyboard[Constants.KEY_BINDINGS[key]] = false; }
+		document.onkeyup = onKeyboardEvent;
+		document.onkeydown = onKeyboardEvent;
+		function onKeyboardEvent(evt) {
+			var isDown = (evt.type === 'keydown');
+			if(Constants.KEY_BINDINGS[evt.which]) {
+				evt.preventDefault();
+				if(keyboard[Constants.KEY_BINDINGS[evt.which]] !== isDown) {
+					keyboard[Constants.KEY_BINDINGS[evt.which]] = isDown;
+					Game.onKeyboardEvent({
+						isDown: isDown,
+						key: Constants.KEY_BINDINGS[evt.which]
+					}, keyboard);
+				}
+			}
+		}
+
+		//connect to server
+		GameConnection.connect();
+		GameConnection.on('sync', function() {
+			syncedSimTimePassed = 0.0;
+			gameTimePassed = 0.0;
+			simTimeAdjustDir = 0;
+			Clock.speed = 1.0; //for debug purposes
+		});
+		GameConnection.on('disconnect', reset);
+
+		//helpful methods
+		function reset() {
+			syncedSimTimePassed = 0.0;
+			gameTimePassed = 0.0;
+			simTimeAdjustDir = 0;
+			Clock.speed = 1.0; //for debug purposes
+			prevClientGameTime = null;
+			timeToFlush = SharedConstants.CLIENT_OUTGOING_MESSAGE_BUFFER_TIME -
+				0.5 / SharedConstants.FRAME_RATE;
+			timeToPing = 0.0;
+			GameConnection.reset();
+			Pinger.reset();
+			Game.reset();
+			Clock.reset();
+		}
+	};
 });

@@ -5,19 +5,18 @@ require = requirejs;
 
 //dependencies
 var express = require('express');
-var lessMiddleware = require('less-middleware');
 var socketIO = require('socket.io');
-var ConnectionServer = require('server/net/Server');
+var GameConnectionServer = require('server/net/GameConnectionServer');
+var Main = require('server/Main');
 
 //set up node server
 var app = express();
-app.use(lessMiddleware({ src: __dirname + "/public", compress: true }));
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/webnonsense'));
 app.use('/client', express.static(__dirname + '/javascripts/client'));
 app.use('/shared', express.static(__dirname + '/javascripts/shared'));
 var server = app.listen(process.env.PORT || 3000);
 var socketServer = socketIO(server);
-socketServer.on('connection', ConnectionServer.handleSocket);
+socketServer.on('connection', GameConnectionServer.handleSocket);
 
-//start server
-require('server/Main')();
+//start server application
+Main();
