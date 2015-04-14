@@ -14,6 +14,7 @@ define([
 		this._bufferedSimActions = [];
 		this._bufferedServerSimActions = [];
 		this._moveDir = 0;
+		this._isTryingToJump = false;
 		this._bufferedInput = null;
 		this._bufferedInputTime = 0.0;
 
@@ -41,10 +42,10 @@ define([
 			//charging/releasing a jump
 			else if(evt.key === 'JUMP') {
 				if(evt.isDown) {
-					this._bufferedInput = 'charge-jump';
-					this._bufferedInputTime = 5.5 / 60;
+					this._isTryingToJump = true;
 				}
 				else {
+					this._isTryingToJump = false;
 					this._bufferedInput = 'release-jump';
 					this._bufferedInputTime = 5.5 / 60;
 				}
@@ -55,10 +56,7 @@ define([
 		var action;
 		if(this._bufferedInput) {
 			action = null;
-			if(this._bufferedInput === 'charge-jump') {
-				action = { actionType: 'charge-jump', x: this._sim.x };
-			}
-			else if(this._bufferedInput === 'release-jump') {
+			if(this._bufferedInput === 'release-jump') {
 				if(this._sim.currentTask === 'charging-jump') {
 					action = {
 						actionType: 'release-jump',
@@ -66,17 +64,30 @@ define([
 					};
 				}
 			}
-			if(action && this._sim.canPerformAction(action)) {
-				this._sim.performAction(action);
+			if(this._tryToPerformAction(action)) {
 				this._bufferedInput = null;
 			}
 		}
-		if(!this._sim.isWalking() || this._sim.getEventualWalkDir() !== this._moveDir) {
-			action = { actionType: 'follow-waypoint', x: this._sim.x, dir: this._moveDir };
-			if(this._sim.canPerformAction(action)) {
-				this._sim.performAction(action);
-			}
+		if(this._isTryingToJump) {
+			this._tryToPerformAction({
+				actionType: 'charge-jump',
+				x: this._sim.x
+			});
 		}
+		if(!this._sim.isWalking() || this._sim.getEventualWalkDir() !== this._moveDir) {
+			this._tryToPerformAction({
+				actionType: 'follow-waypoint',
+				x: this._sim.x,
+				dir: this._moveDir
+			});
+		}
+	};
+	Player.prototype._tryToPerformAction = function(action) {
+		if(action && this._sim.canPerformAction(action)) {
+			this._sim.performAction(action);
+			return true;
+		}
+		return false;
 	};
 	Player.prototype.render = function(ctx) {
 		//draw server "ghost"
