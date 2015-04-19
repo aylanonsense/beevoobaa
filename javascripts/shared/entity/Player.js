@@ -1,10 +1,12 @@
 define([
 	'shared/utils/EventHelper',
 	'shared/utils/capValue',
+	'shared/collision/getActivePlayerHitBoxes',
 	'shared/Constants'
 ], function(
 	EventHelper,
 	capValue,
+	getActivePlayerHitBoxes,
 	SharedConstants
 ) {
 	var MIN_JUMP_SPEED = 100;
@@ -21,8 +23,8 @@ define([
 		this.maxJumpChargeTime = 50 / 60;
 		this.absoluteMaxJumpChargeTime = 70 / 60;
 		this.swingTime = {
-			spike: 20 / 60,
-			bump: 20 / 60,
+			spike: 60 / 60,
+			bump: 100 / 60,
 			set: 20 / 60,
 			block: 20 / 60
 		};
@@ -33,6 +35,9 @@ define([
 			block: 50 / 60
 		};
 		this.wallBouncePercent = 0.30;
+
+		//non-stateful non-constants
+		this.activeHitBoxes = null;
 
 		//stateful vars
 		this.x = 0;
@@ -204,6 +209,7 @@ define([
 				}
 			}
 		}
+		this.activeHitBoxes = getActivePlayerHitBoxes(this);
 	};
 	Player.prototype.tick = function(t) {
 		//player is in the air, jumping

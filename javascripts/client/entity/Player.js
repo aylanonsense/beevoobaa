@@ -180,6 +180,18 @@ define([
 					this._serverSim.y + this._serverSim.height / 2 - 100);
 				ctx.stroke();
 			}
+			if(this._serverSim.activeHitBoxes) {
+				for(var i = 0; i < this._serverSim.activeHitBoxes.length; i++) {
+					var hitBox = this._serverSim.activeHitBoxes[i];
+					ctx.strokeStyle = 'rgba(255, 100, 0, 0.2)';
+					ctx.lineWidth = 1;
+					ctx.strokeRect(this._serverSim.x + this._serverSim.width / 2 +
+						hitBox.offsetX,
+						this._serverSim.y + this._serverSim.height / 2 +
+						hitBox.offsetY,
+						hitBox.width, hitBox.height);
+				}
+			}
 		}
 
 		//draw actual entity
@@ -209,6 +221,15 @@ define([
 			ctx.lineTo(this._sim.x + this._sim.width / 2 + this._sim.aimPos * 100,
 				this._sim.y + this._sim.height / 2 - 100);
 			ctx.stroke();
+		}
+		if(this._sim.activeHitBoxes) {
+			for(var i = 0; i < this._sim.activeHitBoxes.length; i++) {
+				var hitBox = this._sim.activeHitBoxes[i];
+				ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+				ctx.fillRect(this._sim.x + this._sim.width / 2 + hitBox.offsetX,
+					this._sim.y + this._sim.height / 2 + hitBox.offsetY,
+					hitBox.width, hitBox.height);
+			}
 		}
 	};
 	Player.prototype.startOfFrame = function(t) {
