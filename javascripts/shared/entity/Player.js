@@ -8,10 +8,9 @@ define([
 	SharedConstants
 ) {
 	var MIN_JUMP_SPEED = 100;
-	var MAX_JUMP_SPEED = 500;
+	var MAX_JUMP_SPEED = 200;
 	var MAX_HORIZONTAL_JUMP_SPEED = 200;
-	var GRAVITY = 800;
-	var GROUND_LEVEL = 400;
+	var GRAVITY = 100;
 	function Player(state) {
 		//constants (not stateful)
 		this.width = 40;
@@ -21,10 +20,23 @@ define([
 		this.minJumpChargeTime = 5 / 60;
 		this.maxJumpChargeTime = 50 / 60;
 		this.absoluteMaxJumpChargeTime = 70 / 60;
+		this.swingTime = {
+			spike: 20 / 60,
+			bump: 20 / 60,
+			set: 20 / 60,
+			block: 20 / 60
+		};
+		this.swingChargeTime = {
+			spike: 50 / 60,
+			bump: 50 / 60,
+			set: 50 / 60,
+			block: 50 / 60
+		};
+		this.wallBouncePercent = 0.30;
 
 		//stateful vars
 		this.x = 0;
-		this.y = GROUND_LEVEL - this.height;
+		this.y = SharedConstants.BOTTOM_BOUND - this.height;
 		this.waypointX = null;
 		this.waypointDir = 0;
 		this.aimPos = null;
@@ -32,8 +44,10 @@ define([
 		this.currentTask = null;
 		this.currentTaskTime = null;
 		this.currentTaskTimeRemaining = null;
+		this.currentHit = null;
 		this.jumpVelX = null;
 		this.jumpVelY = null;
+		this.team = 'red';
 
 		this._events = new EventHelper([ 'perform-action' ]);
 
@@ -56,10 +70,23 @@ define([
 			return !this.isJumping() && !this.currentTask;
 		}
 		else if(action.actionType === 'release-jump') {
+			//TODO allow auto-release if not charging
 			return this.currentTask === 'charging-jump';
 		}
 		else if(action.actionType === 'aim') {
 			return this.isAiming();
+		}
+		else if(action.actionType === 'charge-hit') {
+			if(action.hit === 'spike' || action.hit === 'block') {
+				return this.isJumping() && !this.currentTask;
+			}
+			else {
+				return !this.isJumping() && !this.currentTask;
+			}
+		}
+		else if(action.actionType === 'release-hit') {
+			//TODO allow auto-release if not charging
+			return this.currentTask === 'charging-hit' && this.currentHit === action.hit;
 		}
 		return false;
 	};
@@ -98,9 +125,27 @@ define([
 				this._events.trigger('perform-action', action);
 			}
 		}
-	};
-	Player.prototype.canWalk = function() {
-		return !this.isJumping();
+		else if(action.actionType === 'charge-hit') {
+			this._setTask('charging-hit');
+			this.waypointX = null;
+			this.waypointDir = 0;
+			this.aimPos = 0;
+			this.aimDir = action.dir;
+			if(!this.isJumping() && action.x !== null) {
+				this.x = action.x;
+			}
+			this.currentHit = action.hit;
+			this._events.trigger('perform-action', action);
+		}
+		else if(action.actionType === 'release-hit') {
+			this._setTask('swinging', this.swingTime[action.hit]);
+			this.currentHit = action.hit;
+			this.waypointX = null;
+			this.waypointDir = 0;
+			this.aimPos = null;
+			this.aimDir = action.dir;
+			this._events.trigger('perform-action', action);
+		}
 	};
 	Player.prototype.isAiming = function() {
 		return this.aimPos !== null;
@@ -128,6 +173,8 @@ define([
 			currentTask: this.currentTask,
 			currentTaskTime: this.currentTaskTime,
 			currentTaskTimeRemaining: this.currentTaskTimeRemaining,
+			currentHit: this.currentHit,
+			team: this.team,
 			jumpVelX: this.jumpVelX,
 			jumpVelY: this.jumpVelY
 		};
@@ -142,6 +189,8 @@ define([
 		this.currentTask = state.currentTask;
 		this.currentTaskTime = state.currentTaskTime;
 		this.currentTaskTimeRemaining = state.currentTaskTimeRemaining;
+		this.currentHit = state.currentHit;
+		this.team = state.team;
 		this.jumpVelX = state.jumpVelX;
 		this.jumpVelY = state.jumpVelY;
 	};
@@ -162,9 +211,9 @@ define([
 			this.jumpVelY += GRAVITY * t;
 			this.y += this.jumpVelY * t;
 			this.x += this.jumpVelX * t;
-			if(this.y >= GROUND_LEVEL - this.height && this.jumpVelY > 0) {
+			if(this.y >= SharedConstants.BOTTOM_BOUND - this.height && this.jumpVelY > 0) {
 				//landed on the ground
-				this.y = GROUND_LEVEL - this.height;
+				this.y = SharedConstants.BOTTOM_BOUND - this.height;
 				this.jumpVelY = null;
 				this._setTask('landing', 25 / 60);
 			}
@@ -184,6 +233,20 @@ define([
 		//player is aiming
 		if(this.aimPos !== null) {
 			this.aimPos = capValue(-1.0, this.aimPos + this.aimDir * this.aimSpeed * t, 1.0);
+		}
+
+		//keep player in bounds
+		if(this.x < SharedConstants.LEFT_BOUND) {
+			this.x = SharedConstants.LEFT_BOUND;
+			if(this.jumpVelX !== null) {
+				this.jumpVelX *= (this.jumpVelX < 0 ? -1 : 1) * this.wallBouncePercent;
+			}
+		}
+		if(this.x > SharedConstants.RIGHT_BOUND - this.width) {
+			this.x = SharedConstants.RIGHT_BOUND - this.width;
+			if(this.jumpVelX !== null) {
+				this.jumpVelX *= (this.jumpVelX > 0 ? -1 : 1) * this.wallBouncePercent;
+			}
 		}
 	};
 	Player.prototype.endOfFrame = function(t) {};

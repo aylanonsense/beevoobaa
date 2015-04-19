@@ -1,11 +1,17 @@
 define([
 	'client/net/GameConnection',
+	'client/Clock',
 	'client/entity/Player',
-	'client/Constants'
+	'client/entity/Ball',
+	'client/Constants',
+	'shared/Constants'
 ], function(
 	GameConnection,
+	Clock,
 	Player,
-	Constants
+	Ball,
+	Constants,
+	SharedConstants
 ) {
 	var camera, entities, playableEntity;
 	function reset() {
@@ -31,6 +37,10 @@ define([
 		var entity = null;
 		if(type === 'Player') {
 			entity = new Player(id, state);
+			entities.push(entity);
+		}
+		else if(type === 'Ball') {
+			entity = new Ball(id, state);
 			entities.push(entity);
 		}
 		return entity;
@@ -82,8 +92,21 @@ define([
 			}
 		},
 		render: function(ctx) {
-			ctx.fillStyle = '#fff';
+			//clear canvas
+			ctx.fillStyle = (Clock.speed === 1 ? '#fff' : (Clock.speed > 1 ? '#fee' : '#eef'));
 			ctx.fillRect(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
+
+			//draw play area
+			ctx.strokeStyle = '#666';
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(SharedConstants.LEFT_BOUND, 0);
+			ctx.lineTo(SharedConstants.LEFT_BOUND, SharedConstants.BOTTOM_BOUND);
+			ctx.lineTo(SharedConstants.RIGHT_BOUND, SharedConstants.BOTTOM_BOUND);
+			ctx.lineTo(SharedConstants.RIGHT_BOUND, 0);
+			ctx.stroke();
+
+			//render entities
 			for(var i = 0; i < entities.length; i++) {
 				entities[i].render(ctx);
 			}

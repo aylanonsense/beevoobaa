@@ -1,11 +1,12 @@
 body {
 	margin: 0;
 	padding: 0;
-	background-color: #fff;
+	background-color: #ddd;
 }
 canvas {
 	display: block;
 	margin: 15px auto;
+	-webkit-transform: translateZ(0);
 }
 #instructions {
 	color: #bbb;

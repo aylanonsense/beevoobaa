@@ -1,37 +1,25 @@
 define([
+	'client/entity/Entity',
 	'shared/entity/Player',
-	'client/net/GameConnection',
+	'client/Constants',
 	'shared/Constants'
 ], function(
+	SUPERCLASS,
 	PlayerSim,
-	GameConnection,
+	Constants,
 	SharedConstants
 ) {
 	function Player(id, state) {
-		this.id = id;
-		this._isPlayerControlled = false;
-		this._sim = new PlayerSim(state);
-		this._serverSim = new PlayerSim(state);
-		this._simIsDesynced = false;
-		this._bufferedSimActions = [];
-		this._bufferedServerSimActions = [];
+		SUPERCLASS.call(this, id, PlayerSim, state);
 		this._moveDir = 0;
-		this._isTryingToJump = false;
+		this._inputBeingCharged = null;
+		this._isTryingToChargeJump = false;
+		this._isTryingToChargeStrongHit = false;
+		this._isTryingToChargeWeakHit = false;
 		this._bufferedInput = null;
 		this._bufferedInputTime = 0.0;
-
-		//player inputs are propagated to the server
-		var self = this;
-		this._sim.on('perform-action', function(action) {
-			if(self.isPlayerControlled()) {
-				GameConnection.bufferSend({
-					messageType: 'perform-action',
-					action: action
-				});
-			}
-		});
 	}
-	Player.prototype.onMouseEvent = function(evt) {};
+	Player.prototype = Object.create(SUPERCLASS.prototype);
 	Player.prototype.onKeyboardEvent = function(evt, keyboard) {
 		if(this.isPlayerControlled()) {
 			//changing directions
@@ -44,11 +32,45 @@ define([
 			//charging/releasing a jump
 			else if(evt.key === 'JUMP') {
 				if(evt.isDown) {
-					this._isTryingToJump = true;
+					this._isTryingToChargeJump = true;
+					this._inputBeingCharged === 'JUMP';
 				}
 				else {
-					this._isTryingToJump = false;
+					this._isTryingToChargeJump = false;
+					if(this._inputBeingCharged === 'JUMP') {
+						this._inputBeingCharged = null;
+					}
 					this._bufferedInput = 'release-jump';
+					this._bufferedInputTime = 5.5 / 60;
+				}
+			}
+			//charging/releasing strong hit (bump/spike)
+			else if(evt.key === 'STRONG_HIT') {
+				if(evt.isDown) {
+					this._isTryingToChargeStrongHit = true;
+					this._inputBeingCharged = 'STRONG_HIT';
+				}
+				else {
+					this._isTryingToChargeStrongHit = false;
+					if(this._inputBeingCharged === 'STRONG_HIT') {
+						this._inputBeingCharged = null;
+					}
+					this._bufferedInput = 'release-strong-hit';
+					this._bufferedInputTime = 5.5 / 60;
+				}
+			}
+			//charging/releasing weak hit (set/block)
+			else if(evt.key === 'WEAK_HIT') {
+				if(evt.isDown) {
+					this._isTryingToChargeWeakHit = true;
+					this._inputBeingCharged = 'WEAK_HIT';
+				}
+				else {
+					this._isTryingToChargeWeakHit = false;
+					if(this._inputBeingCharged === 'WEAK_HIT') {
+						this._inputBeingCharged = null;
+					}
+					this._bufferedInputTimeInput = 'release-weak-hit';
 					this._bufferedInputTime = 5.5 / 60;
 				}
 			}
@@ -66,17 +88,66 @@ define([
 						dir: this._sim.aimPos
 					};
 				}
+				else {
+					//TODO
+				}
+			}
+			else if(this._bufferedInput === 'release-strong-hit') {
+				if(this._sim.currentTask === 'charging-hit' &&
+					(this._sim.currentHit === 'spike' || this._sim.currentHit === 'bump')) {
+					this._sim.performAction({
+						actionType: 'release-hit',
+						hit: this._sim.currentHit
+					});
+				}
+				else {
+					//TODO
+				}
+			}
+			else if(this._bufferedInput === 'release-weak-hit') {
+				if(this._sim.currentTask === 'charging-hit' &&
+					(this._sim.currentHit === 'block' || this._sim.currentHit === 'set')) {
+					this._sim.performAction({
+						actionType: 'release-hit',
+						hit: this._sim.currentHit
+					});
+				}
+				else {
+					//TODO
+				}
 			}
 			if(this._tryToPerformAction(action)) {
 				this._bufferedInput = null;
 			}
 		}
-		if(this._isTryingToJump) {
-			this._tryToPerformAction({
+		if(this._isTryingToChargeJump) {
+			if(this._tryToPerformAction({
 				actionType: 'charge-jump',
 				x: this._sim.x,
 				dir: this._moveDir
-			});
+			})) {
+				this._isTryingToChargeJump = false;
+			}
+		}
+		if(this._isTryingToChargeStrongHit) {
+			if(this._tryToPerformAction({
+				actionType: 'charge-hit',
+				x: (this._sim.isJumping() ? null : this._sim.x),
+				hit: (this._sim.isJumping() ? 'spike' : 'bump')
+			})) {
+				this._isTryingToChargeStrongHit = false;
+				this._isTryingToChargeWeakHit = false;
+			}
+		}
+		if(this._isTryingToChargeWeakHit) {
+			if(this._tryToPerformAction({
+				actionType: 'charge-hit',
+				x: (this._sim.isJumping() ? null : this._sim.x),
+				hit: (this._sim.isJumping() ? 'block' : 'set')
+			})) {
+				this._isTryingToChargeStrongHit = false;
+				this._isTryingToChargeWeakHit = false;
+			}
 		}
 		if(!this._sim.isWalking() || this._sim.getEventualWalkDir() !== this._moveDir) {
 			this._tryToPerformAction({
@@ -93,36 +164,35 @@ define([
 			});
 		}
 	};
-	Player.prototype._tryToPerformAction = function(action) {
-		if(action && this._sim.canPerformAction(action)) {
-			this._sim.performAction(action);
-			return true;
-		}
-		return false;
-	};
 	Player.prototype.render = function(ctx) {
-		//draw server "ghost"
-		if(this._serverSim.currentTask === 'charging-jump') { ctx.strokeStyle = '#00f'; }
-		else if(this._serverSim.currentTask === 'landing') { ctx.strokeStyle = '#0f0'; }
-		else { ctx.strokeStyle = '#f00'; }
-		ctx.lineWidth = 1;
-		ctx.strokeRect(this._serverSim.x + 0.5, this._serverSim.y + 0.5,
-			this._serverSim.width - 1, this._serverSim.height - 1);
-		if(this._serverSim.isAiming()) {
-			ctx.lineWidth = 2;
-			ctx.strokeStyle = '#ddd';
-			ctx.beginPath();
-			ctx.moveTo(this._serverSim.x + this._serverSim.width / 2,
-				this._serverSim.y + this._serverSim.height / 2);
-			ctx.lineTo(this._serverSim.x + this._serverSim.width / 2 + this._serverSim.aimPos * 100,
-				this._serverSim.y + this._serverSim.height / 2 - 100);
-			ctx.stroke();
+		if(Constants.DEBUG_DRAW_SERVER_GHOSTS) {
+			//draw server "ghost"
+			if(this._serverSim.currentTask === 'charging-jump') { ctx.strokeStyle = '#0ff'; }
+			else if(this._serverSim.currentTask === 'landing') { ctx.strokeStyle = '#0f0'; }
+			else if(this._serverSim.currentTask === 'charging-hit') { ctx.strokeStyle = '#b60'; }
+			else if(this._serverSim.currentTask === 'swinging') { ctx.strokeStyle = '#f90'; }
+			else { ctx.strokeStyle = (this._serverSim.team === 'red' ? '#f00' : '#00f'); }
+			ctx.lineWidth = 1;
+			ctx.strokeRect(this._serverSim.x + 0.5, this._serverSim.y + 0.5,
+				this._serverSim.width - 1, this._serverSim.height - 1);
+			if(this._serverSim.isAiming()) {
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = '#ddd';
+				ctx.beginPath();
+				ctx.moveTo(this._serverSim.x + this._serverSim.width / 2,
+					this._serverSim.y + this._serverSim.height / 2);
+				ctx.lineTo(this._serverSim.x + this._serverSim.width / 2 + this._serverSim.aimPos * 100,
+					this._serverSim.y + this._serverSim.height / 2 - 100);
+				ctx.stroke();
+			}
 		}
 
 		//draw actual entity
-		if(this._sim.currentTask === 'charging-jump') { ctx.fillStyle = '#00f'; }
+		if(this._sim.currentTask === 'charging-jump') { ctx.fillStyle = '#0ff'; }
 		else if(this._sim.currentTask === 'landing') { ctx.fillStyle = '#0f0'; }
-		else { ctx.fillStyle = '#f00'; }
+		else if(this._sim.currentTask === 'charging-hit') { ctx.fillStyle = '#b60'; }
+		else if(this._sim.currentTask === 'swinging') { ctx.fillStyle = '#f90'; }
+		else { ctx.fillStyle = (this._sim.team === 'red' ? '#f00' : '#00f'); }
 		ctx.fillRect(this._sim.x, this._sim.y,
 			this._sim.width, this._sim.height);
 		if(this._sim.isAiming()) {
@@ -136,43 +206,8 @@ define([
 			ctx.stroke();
 		}
 	};
-
-
-
-	Player.prototype.onInputFromServer = function(action) {
-		if(!this.isPlayerControlled()) {
-			this._bufferedSimActions.push(action);
-		}
-		this._bufferedServerSimActions.push(action);
-	};
-	Player.prototype.onStateUpdateFromServer = function(state) {
-		if(this._simIsDesynced) {
-			this._sim.setState(state);
-			this._bufferedSimActions = [];
-			this._simIsDesynced = false;
-			console.log("Syncing desynced sim");
-		}
-		this._serverSim.setState(state);
-		this._bufferedServerSimActions = [];
-	};
 	Player.prototype.startOfFrame = function(t) {
-		this._sim.startOfFrame(t);
-		this._serverSim.startOfFrame(t);
-
-		//perform actions the server sent in the recent past
-		while(this._bufferedSimActions.length > 0 &&
-				this._sim.canPerformAction(this._bufferedSimActions[0])) {
-			this._sim.performAction(this._bufferedSimActions.shift());
-		}
-		while(this._bufferedServerSimActions.length > 0 &&
-				this._serverSim.canPerformAction(this._bufferedServerSimActions[0])) {
-			this._serverSim.performAction(this._bufferedServerSimActions.shift());
-		}
-
-		//if multiple actions are still buffered, it often means we've gotten a bit desynced
-		if(this._bufferedSimActions.length > 1) {
-			this._simIsDesynced = true;
-		}
+		SUPERCLASS.prototype.startOfFrame.call(this, t);
 
 		//client may have input as well
 		if(this.isPlayerControlled()) {
@@ -189,28 +224,23 @@ define([
 				dir: this._sim.aimPos
 			});
 		}
-	};
-	Player.prototype.tick = function(t) {
-		this._sim.tick(t);
-		this._serverSim.tick(t);
+		//if we've been charging a hit for a while, it may be time to auto-release the hit
+		if(this.isPlayerControlled() && this._sim.currentTask === 'charging-hit' &&
+			this._sim.currentTaskTime >= this._sim.swingChargeTime[this._sim.currentHit]) {
+			this._tryToPerformAction({
+				actionType: 'release-hit',
+				hit: this._sim.currentHit,
+				chargeTime: this._sim.currentTaskTime
+			});
+		}
 	};
 	Player.prototype.endOfFrame = function(t) {
-		this._sim.endOfFrame(t);
-		this._serverSim.endOfFrame(t);
+		SUPERCLASS.prototype.endOfFrame.call(this, t);
 
 		//input may become unbuffered
 		this._bufferedInputTime = Math.max(0.0, this._bufferedInputTime - t);
 		if(this._bufferedInputTime <= 0.0) {
 			this._bufferedInput = null;
-		}
-	};
-	Player.prototype.isPlayerControlled = function() {
-		return this._isPlayerControlled;
-	};
-	Player.prototype.setPlayerControl = function(isControlled) {
-		this._isPlayerControlled = isControlled;
-		if(isControlled) {
-			this._bufferedSimActions = [];
 		}
 	};
 	return Player;

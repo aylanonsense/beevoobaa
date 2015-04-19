@@ -1,18 +1,34 @@
 define([
 	'server/net/GameConnectionServer',
 	'server/entity/Player',
+	'server/entity/Ball',
 	'server/Constants'
 ], function(
 	GameConnectionServer,
 	Player,
+	Ball,
 	Constants
 ) {
 	//set up entities
-	var entities = [];
+	var entities = [ new Ball(400, 200, 300, 0) ];
 	function despawnEntityById(id) {
 		entities = entities.filter(function(entity) {
 			return entity.id !== id;
 		});
+	}
+
+	function getNextTeamColor() {
+		var numRedPlayers = 0;
+		var numBluePlayers = 0;
+		for(var i = 0; i < entities.length; i++) {
+			if(entities[i].entityType === 'Player') {
+				if(entities[i].getTeam() === 'red') { numRedPlayers++; }
+				else { numBluePlayers++; }
+			}
+		}
+		if(numRedPlayers > numBluePlayers) { return 'blue'; }
+		else if(numRedPlayers < numBluePlayers) { return 'red'; }
+		else { return (Math.random() < 0.5 ? 'red' : 'blue'); }
 	}
 
 	//set up network handlers
@@ -20,7 +36,7 @@ define([
 		console.log("[" + conn.connId + "] Connected!");
 
 		//create a new entity for this client to control
-		var player = new Player(400);
+		var player = new Player(400, getNextTeamColor());
 		entities.push(player);
 		GameConnectionServer.forEachSyncedExcept(conn, function(conn) {
 			conn.bufferSend({
