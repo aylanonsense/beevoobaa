@@ -11,167 +11,161 @@ define([
 ) {
 	function Player(id, state) {
 		SUPERCLASS.call(this, id, PlayerSim, state);
-		this._moveDir = 0;
-		this._inputBeingCharged = null;
-		this._isTryingToChargeJump = false;
-		this._isTryingToChargeStrongHit = false;
-		this._isTryingToChargeWeakHit = false;
+		this._heldDir = 0;
 		this._bufferedInput = null;
 		this._bufferedInputTime = 0.0;
+		this._inputBeingHeld = null;
 	}
 	Player.prototype = Object.create(SUPERCLASS.prototype);
+	Player.prototype._bufferInput = function(input, timeToBuffer) {
+		this._bufferedInput = input;
+		this._bufferedInputTime = timeToBuffer + 0.5 / SharedConstants.FRAME_RATE;
+	};
 	Player.prototype.onKeyboardEvent = function(evt, keyboard) {
 		if(this.isPlayerControlled()) {
 			//changing directions
 			if(evt.key === 'MOVE_LEFT') {
-				this._moveDir = (evt.isDown ? -1 : (keyboard.MOVE_RIGHT ? 1 : 0));
+				this._heldDir = (evt.isDown ? -1 : (keyboard.MOVE_RIGHT ? 1 : 0));
 			}
 			else if(evt.key === 'MOVE_RIGHT') {
-				this._moveDir = (evt.isDown ? 1 : (keyboard.MOVE_LEFT ? -1 : 0));
+				this._heldDir = (evt.isDown ? 1 : (keyboard.MOVE_LEFT ? -1 : 0));
 			}
 			//charging/releasing a jump
 			else if(evt.key === 'JUMP') {
 				if(evt.isDown) {
-					this._isTryingToChargeJump = true;
-					this._inputBeingCharged === 'JUMP';
+					this._inputBeingHeld = 'CHARGE_JUMP';
 				}
 				else {
-					this._isTryingToChargeJump = false;
-					if(this._inputBeingCharged === 'JUMP') {
-						this._inputBeingCharged = null;
+					if(this._inputBeingHeld === 'CHARGE_JUMP') {
+						this._inputBeingHeld = null;
 					}
-					this._bufferedInput = 'release-jump';
-					this._bufferedInputTime = 5.5 / 60;
+					this._bufferInput('RELEASE_JUMP', 5 / 60);
 				}
 			}
 			//charging/releasing strong hit (bump/spike)
 			else if(evt.key === 'STRONG_HIT') {
 				if(evt.isDown) {
-					this._isTryingToChargeStrongHit = true;
-					this._inputBeingCharged = 'STRONG_HIT';
+					this._inputBeingHeld = 'CHARGE_STRONG_HIT';
 				}
 				else {
-					this._isTryingToChargeStrongHit = false;
-					if(this._inputBeingCharged === 'STRONG_HIT') {
-						this._inputBeingCharged = null;
+					if(this._inputBeingHeld === 'CHARGE_STRONG_HIT') {
+						this._inputBeingHeld = null;
 					}
-					this._bufferedInput = 'release-strong-hit';
-					this._bufferedInputTime = 5.5 / 60;
+					this._bufferInput('RELEASE_STRONG_HIT', 5 / 60);
 				}
 			}
 			//charging/releasing weak hit (set/block)
 			else if(evt.key === 'WEAK_HIT') {
 				if(evt.isDown) {
-					this._isTryingToChargeWeakHit = true;
-					this._inputBeingCharged = 'WEAK_HIT';
+					this._inputBeingHeld = 'CHARGE_WEAK_HIT';
 				}
 				else {
-					this._isTryingToChargeWeakHit = false;
-					if(this._inputBeingCharged === 'WEAK_HIT') {
-						this._inputBeingCharged = null;
+					if(this._inputBeingHeld === 'CHARGE_WEAK_HIT') {
+						this._inputBeingHeld = null;
 					}
-					this._bufferedInputTimeInput = 'release-weak-hit';
-					this._bufferedInputTime = 5.5 / 60;
+					this._bufferInput('RELEASE_WEAK_HIT', 5 / 60);
 				}
 			}
 		}
 	};
 	Player.prototype._applyBufferedInput = function() {
-		var action;
+		//translate the buffered input into an action and perform it if able
 		if(this._bufferedInput) {
-			action = null;
-			if(this._bufferedInput === 'release-jump') {
-				if(this._sim.currentTask === 'charging-jump') {
-					action = {
-						actionType: 'release-jump',
-						chargeTime: this._sim.currentTaskTime,
-						dir: this._sim.aimPos
-					};
-				}
-				else {
-					//TODO
-				}
+			var action = null;
+			if(this._bufferedInput === 'RELEASE_JUMP' &&
+				this._sim.currentTask === 'charging-jump') {
+				action = {
+					actionType: 'release-jump',
+					chargeTime: this._sim.currentTaskTime,
+					dir: this._sim.aimPos
+				};
 			}
-			else if(this._bufferedInput === 'release-strong-hit') {
-				if(this._sim.currentTask === 'charging-hit' &&
-					(this._sim.currentHit === 'spike' || this._sim.currentHit === 'bump')) {
-					this._sim.performAction({
-						actionType: 'release-hit',
-						hit: this._sim.currentHit
-					});
-				}
-				else {
-					//TODO
-				}
+			else if(this._bufferedInput === 'RELEASE_STRONG_HIT' &&
+				this._sim.currentTask === 'charging-hit' &&
+				(this._sim.currentHit === 'spike' || this._sim.currentHit === 'bump')) {
+				this._sim.performAction({
+					actionType: 'release-hit',
+					hit: this._sim.currentHit
+				});
 			}
-			else if(this._bufferedInput === 'release-weak-hit') {
-				if(this._sim.currentTask === 'charging-hit' &&
-					(this._sim.currentHit === 'block' || this._sim.currentHit === 'set')) {
-					this._sim.performAction({
-						actionType: 'release-hit',
-						hit: this._sim.currentHit
-					});
-				}
-				else {
-					//TODO
-				}
+			else if(this._bufferedInput === 'RELEASE_WEAK_HIT' &&
+				this._sim.currentTask === 'charging-hit' &&
+				(this._sim.currentHit === 'block' || this._sim.currentHit === 'set')) {
+				this._sim.performAction({
+					actionType: 'release-hit',
+					hit: this._sim.currentHit
+				});
 			}
 			if(this._tryToPerformAction(action)) {
 				this._bufferedInput = null;
 			}
 		}
-		if(this._isTryingToChargeJump) {
+
+		//if we're holding down a button, we're waiting for an opportunity to charge
+		if(this._inputBeingHeld === 'CHARGE_JUMP') {
 			if(this._tryToPerformAction({
 				actionType: 'charge-jump',
 				x: this._sim.x,
-				dir: this._moveDir
+				dir: this._heldDir
 			})) {
-				this._isTryingToChargeJump = false;
+				this._inputBeingHeld = null;
 			}
 		}
-		if(this._isTryingToChargeStrongHit) {
+		else if(this._inputBeingHeld === 'CHARGE_STRONG_HIT') {
 			if(this._tryToPerformAction({
 				actionType: 'charge-hit',
 				x: (this._sim.isJumping() ? null : this._sim.x),
 				hit: (this._sim.isJumping() ? 'spike' : 'bump')
 			})) {
-				this._isTryingToChargeStrongHit = false;
-				this._isTryingToChargeWeakHit = false;
+				this._inputBeingHeld = null;
 			}
 		}
-		if(this._isTryingToChargeWeakHit) {
+		else if(this._inputBeingHeld === 'CHARGE_WEAK_HIT') {
 			if(this._tryToPerformAction({
 				actionType: 'charge-hit',
 				x: (this._sim.isJumping() ? null : this._sim.x),
 				hit: (this._sim.isJumping() ? 'block' : 'set')
 			})) {
-				this._isTryingToChargeStrongHit = false;
-				this._isTryingToChargeWeakHit = false;
+				this._inputBeingHeld = null;
 			}
 		}
-		if(!this._sim.isWalking() || this._sim.getEventualWalkDir() !== this._moveDir) {
+
+		//we're always trying to make the player walk in the direction being held
+		if(!this._sim.isWalking() || this._sim.getEventualWalkDir() !== this._heldDir) {
 			this._tryToPerformAction({
 				actionType: 'follow-waypoint',
 				x: this._sim.x,
-				dir: this._moveDir
+				dir: this._heldDir
 			});
 		}
-		if(this._sim.isAiming() && this._sim.getEventualAimDir() !== this._moveDir) {
+
+		//when the player is aiming, we adjust the aim direction to the direction being held
+		if(this._sim.isAiming() && this._sim.getEventualAimDir() !== this._heldDir) {
 			this._tryToPerformAction({
 				actionType: 'aim',
 				pos: this._sim.aimPos,
-				dir: this._moveDir
+				dir: this._heldDir
 			});
 		}
 	};
 	Player.prototype.render = function(ctx) {
 		if(Constants.DEBUG_DRAW_SERVER_GHOSTS) {
 			//draw server "ghost"
-			if(this._serverSim.currentTask === 'charging-jump') { ctx.strokeStyle = '#0ff'; }
-			else if(this._serverSim.currentTask === 'landing') { ctx.strokeStyle = '#0f0'; }
-			else if(this._serverSim.currentTask === 'charging-hit') { ctx.strokeStyle = '#b60'; }
-			else if(this._serverSim.currentTask === 'swinging') { ctx.strokeStyle = '#f90'; }
-			else { ctx.strokeStyle = (this._serverSim.team === 'red' ? '#f00' : '#00f'); }
+			if(this._serverSim.currentTask === 'charging-jump') {
+				ctx.strokeStyle = '#0ff';
+			}
+			else if(this._serverSim.currentTask === 'landing') {
+				ctx.strokeStyle = '#0f0';
+			}
+			else if(this._serverSim.currentTask === 'charging-hit') {
+				ctx.strokeStyle = '#b60';
+			}
+			else if(this._serverSim.currentTask === 'swinging') {
+				ctx.strokeStyle = '#f90';
+			}
+			else {
+				ctx.strokeStyle = (this._serverSim.team === 'red' ? '#f00' : '#00f');
+			}
 			ctx.lineWidth = 1;
 			ctx.strokeRect(this._serverSim.x + 0.5, this._serverSim.y + 0.5,
 				this._serverSim.width - 1, this._serverSim.height - 1);
@@ -181,18 +175,29 @@ define([
 				ctx.beginPath();
 				ctx.moveTo(this._serverSim.x + this._serverSim.width / 2,
 					this._serverSim.y + this._serverSim.height / 2);
-				ctx.lineTo(this._serverSim.x + this._serverSim.width / 2 + this._serverSim.aimPos * 100,
+				ctx.lineTo(this._serverSim.x + this._serverSim.width / 2 +
+					this._serverSim.aimPos * 100,
 					this._serverSim.y + this._serverSim.height / 2 - 100);
 				ctx.stroke();
 			}
 		}
 
 		//draw actual entity
-		if(this._sim.currentTask === 'charging-jump') { ctx.fillStyle = '#0ff'; }
-		else if(this._sim.currentTask === 'landing') { ctx.fillStyle = '#0f0'; }
-		else if(this._sim.currentTask === 'charging-hit') { ctx.fillStyle = '#b60'; }
-		else if(this._sim.currentTask === 'swinging') { ctx.fillStyle = '#f90'; }
-		else { ctx.fillStyle = (this._sim.team === 'red' ? '#f00' : '#00f'); }
+		if(this._sim.currentTask === 'charging-jump') {
+			ctx.fillStyle = '#0ff';
+		}
+		else if(this._sim.currentTask === 'landing') {
+			ctx.fillStyle = '#0f0';
+		}
+		else if(this._sim.currentTask === 'charging-hit') {
+			ctx.fillStyle = '#b60';
+		}
+		else if(this._sim.currentTask === 'swinging') {
+			ctx.fillStyle = '#f90';
+		}
+		else {
+			ctx.fillStyle = (this._sim.team === 'red' ? '#f00' : '#00f');
+		}
 		ctx.fillRect(this._sim.x, this._sim.y,
 			this._sim.width, this._sim.height);
 		if(this._sim.isAiming()) {
@@ -216,17 +221,19 @@ define([
 
 		//if we've been charging a jump for a while, it may be time to auto-jump
 		if(this.isPlayerControlled() && this._sim.currentTask === 'charging-jump' &&
-			this._sim.currentTaskTime >= this._sim.absoluteMaxJumpChargeTime + 0.5 / SharedConstants.FRAME_RATE) {
-			//automatically release jump
+				this._sim.currentTaskTime >= this._sim.absoluteMaxJumpChargeTime +
+				0.5 / SharedConstants.FRAME_RATE) {
 			this._tryToPerformAction({
 				actionType: 'release-jump',
 				chargeTime: this._sim.currentTaskTime,
 				dir: this._sim.aimPos
 			});
 		}
+
 		//if we've been charging a hit for a while, it may be time to auto-release the hit
 		if(this.isPlayerControlled() && this._sim.currentTask === 'charging-hit' &&
-			this._sim.currentTaskTime >= this._sim.swingChargeTime[this._sim.currentHit]) {
+				this._sim.currentTaskTime >= this._sim.swingChargeTime[this._sim.currentHit] +
+				0.5 / SharedConstants.FRAME_RATE) {
 			this._tryToPerformAction({
 				actionType: 'release-hit',
 				hit: this._sim.currentHit,
