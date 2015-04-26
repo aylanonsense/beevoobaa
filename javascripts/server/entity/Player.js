@@ -1,10 +1,12 @@
 define([
 	'server/entity/Entity',
+	'server/entity/EntityManager',
 	'shared/entity/Player',
 	'shared/utils/capValue',
 	'shared/Constants'
 ], function(
 	SUPERCLASS,
+	EntityManager,
 	PlayerSim,
 	capValue,
 	SharedConstants
@@ -13,6 +15,14 @@ define([
 		SUPERCLASS.call(this, 'Player', PlayerSim);
 		this._sim.x = x;
 		this._sim.team = team;
+
+		//whenever the entity hits a ball, the player tells the ball how to get hit
+		this._sim.on('perform-action', function(action) {
+			if(action.actionType === 'hit-ball') {
+				var ball = EntityManager.getEntityById(action.ballId);
+				ball.handleHit(action.hit);
+			}
+		});
 	}
 	Player.prototype = Object.create(SUPERCLASS.prototype);
 	Player.prototype.getTeam = function() {
@@ -74,6 +84,32 @@ define([
 					action.hit === this._sim.currentHit ? 0.0 :
 					capValue(this._sim.currentTaskTime - 2 / SharedConstants.FRAME_RATE,
 						action.chargeTime, this._sim.currentTaskTime + 2 / SharedConstants.FRAME_RATE)),
+			};
+		}
+		else if(action.actionType === 'hit-ball') {
+			var x;
+			if(this._sim.isJumping()) {
+				x = capValue(this._sim.x - 2 * Math.abs(this._sim.jumpVelX) / SharedConstants.FRAME_RATE,
+					action.x, this._sim.x + 2 * Math.abs(this._sim.jumpVelX) / SharedConstants.FRAME_RATE);
+			}
+			else {
+				x = capValue(this._sim.x - 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE,
+					action.x, this._sim.x + 2 * this._sim.moveSpeed / SharedConstants.FRAME_RATE);
+			}
+			var y;
+			if(this._sim.isJumping()) {
+				y = capValue(this._sim.y - 2 * Math.abs(this._sim.jumpVelY) / SharedConstants.FRAME_RATE,
+					action.y, this._sim.y + 2 * Math.abs(this._sim.jumpVelY) / SharedConstants.FRAME_RATE);
+			}
+			else {
+				y = this._sim.y;
+			}
+			return {
+				actionType: 'hit-ball',
+				hit: action.hit,
+				ballId: action.ballId,
+				x: x,
+				y: y
 			};
 		}
 		else {

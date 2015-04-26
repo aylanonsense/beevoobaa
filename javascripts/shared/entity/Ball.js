@@ -25,6 +25,11 @@ define([
 			this.setState(state);
 		}
 	}
+	Ball.prototype.handleHit = function(hit) {
+		//TODO
+		this.velY = -150;
+		this.velX = 0;
+	};
 	Ball.prototype.setPositionAndVelocity = function(x, y, velX, velY) {
 		this.x = x;
 		this.y = y;

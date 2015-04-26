@@ -3,7 +3,8 @@ define([
 ], function(
 	GameConnection
 ) {
-	function Entity(id, SimClass, state) {
+	function Entity(entityType, id, SimClass, state) {
+		this.entityType = entityType;
 		this.id = id;
 		this._isPlayerControlled = false;
 		this._sim = new SimClass(state);
@@ -23,6 +24,12 @@ define([
 			}
 		});
 	}
+	Entity.prototype.getClientSim = function() {
+		return this._sim;
+	};
+	Entity.prototype.getServerSim = function() {
+		return this._serverSim;
+	};
 	Entity.prototype.onMouseEvent = function(evt) {};
 	Entity.prototype.onKeyboardEvent = function(evt, keyboard) {};
 	Entity.prototype._tryToPerformAction = function(action) {

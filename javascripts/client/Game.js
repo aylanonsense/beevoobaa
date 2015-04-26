@@ -1,6 +1,7 @@
 define([
 	'client/net/GameConnection',
 	'client/Clock',
+	'client/entity/EntityManager',
 	'client/entity/Player',
 	'client/entity/Ball',
 	'client/Constants',
@@ -8,88 +9,76 @@ define([
 ], function(
 	GameConnection,
 	Clock,
+	EntityManager,
 	Player,
 	Ball,
 	Constants,
 	SharedConstants
 ) {
-	var camera, entities, playableEntity;
-	function reset() {
-		//render vars
-		camera = { x: 0, y: 0 };
+	var ENTITY_CLASSES = {
+		'Player': Player,
+		'Ball': Ball
+	};
 
-		//entities
-		entities = [];
+	//set up initial game state
+	var playableEntity;
+	function reset() {
+		EntityManager.reset();
 		playableEntity = null;
 	}
 	reset();
-
-	//entity methods
-	function getEntityById(id) {
-		for(var i = 0; i < entities.length; i++) {
-			if(entities[i].id === id) {
-				return entities[i];
-			}
-		}
-		return null;
-	}
-	function spawnEntity(type, id, state) {
-		var entity = null;
-		if(type === 'Player') {
-			entity = new Player(id, state);
-			entities.push(entity);
-		}
-		else if(type === 'Ball') {
-			entity = new Ball(id, state);
-			entities.push(entity);
-		}
-		return entity;
-	}
-	function despawnEntityById(id) {
-		entities = entities.filter(function(entity) {
-			return entity.id !== id;
-		});
-	}
 
 	//set up network handlers
 	GameConnection.on('receive', function(msg) {
 		var i;
 		if(msg.messageType === 'spawn-entity') {
-			spawnEntity(msg.type, msg.id, msg.state);
+			EntityManager.spawnEntity(ENTITY_CLASSES[msg.type], msg.id, msg.state);
 		}
 		else if(msg.messageType === 'despawn-entity') {
-			despawnEntityById(msg.id);
+			EntityManager.despawnEntityById(msg.id);
 		}
 		else if(msg.messageType === 'game-state') {
 			entities = [];
 			for(i = 0; i < msg.entities.length; i++) {
-				spawnEntity(msg.entities[i].type, msg.entities[i].id, msg.entities[i].state);
+				EntityManager.spawnEntity(
+					ENTITY_CLASSES[msg.entities[i].type],
+					msg.entities[i].id,
+					msg.entities[i].state
+				);
 			}
-			playableEntity = getEntityById(msg.playableEntityId);
+			playableEntity = EntityManager.getEntityById(msg.playableEntityId);
 			playableEntity.setPlayerControl(true);
 		}
 		else if(msg.messageType === 'game-state-update') {
 			for(i = 0; i < msg.entities.length; i++) {
-				getEntityById(msg.entities[i].id).onStateUpdateFromServer(msg.entities[i].state);
+				EntityManager.getEntityById(msg.entities[i].id)
+					.onStateUpdateFromServer(msg.entities[i].state);
 			}
 		}
 		else if(msg.messageType === 'perform-action') {
-			getEntityById(msg.id).onInputFromServer(msg.action);
+			EntityManager.getEntityById(msg.id).onInputFromServer(msg.action);
 		}
 	});
 
 	return {
 		reset: reset,
 		tick: function(t) {
-			for(var i = 0; i < entities.length; i++) {
-				entities[i].startOfFrame(t);
+			EntityManager.forEach(function(entity) {
+				entity.startOfFrame(t);
+			});
+			EntityManager.forEach(function(entity) {
+				entity.tick(t);
+			});
+			if(playableEntity) {
+				EntityManager.forEach(function(entity) {
+					if(entity.entityType === 'Ball') {
+						playableEntity.checkForBallHit(entity);
+					}
+				});
 			}
-			for(i = 0; i < entities.length; i++) {
-				entities[i].tick(t);
-			}
-			for(i = 0; i < entities.length; i++) {
-				entities[i].endOfFrame(t);
-			}
+			EntityManager.forEach(function(entity) {
+				entity.endOfFrame(t);
+			});
 		},
 		render: function(ctx) {
 			//clear canvas
@@ -107,9 +96,9 @@ define([
 			ctx.stroke();
 
 			//render entities
-			for(var i = 0; i < entities.length; i++) {
-				entities[i].render(ctx);
-			}
+			EntityManager.forEach(function(entity) {
+				entity.render(ctx);
+			});
 		},
 		onMouseEvent: function(evt) {
 			if(playableEntity) {

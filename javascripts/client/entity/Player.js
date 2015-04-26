@@ -2,21 +2,51 @@ define([
 	'client/entity/Entity',
 	'shared/entity/Player',
 	'client/Constants',
+	'client/entity/EntityManager',
 	'shared/Constants'
 ], function(
 	SUPERCLASS,
 	PlayerSim,
 	Constants,
+	EntityManager,
 	SharedConstants
 ) {
 	function Player(id, state) {
-		SUPERCLASS.call(this, id, PlayerSim, state);
+		SUPERCLASS.call(this, 'Player', id, PlayerSim, state);
 		this._heldDir = 0;
 		this._bufferedInput = null;
 		this._bufferedInputTime = 0.0;
 		this._inputBeingHeld = null;
+
+		//whenever the entity hits a ball, the player tells the ball how to get hit
+		var self = this;
+		this._sim.on('perform-action', function(action) {
+			if(action.actionType === 'hit-ball') {
+				var ball = EntityManager.getEntityById(action.ballId);
+				ball.handleHit(action.hit, self.isPlayerControlled());
+			}
+		});
 	}
 	Player.prototype = Object.create(SUPERCLASS.prototype);
+	Player.prototype.checkForBallHit = function(ball) {
+		if(this.isPlayerControlled()) {
+			//figure out if there is a hit
+			var hit = this._sim.checkForBallHit(ball.getClientSim());
+
+			//there was a hit! time to turn it into an action
+			if(hit) {
+				if(this._tryToPerformAction({
+					actionType: 'hit-ball',
+					hit: this._sim.currentHit,
+					ballId: ball.id,
+					x: this._sim.x,
+					y: this._sim.y
+				})) {
+					//TODO: if the player hit the ball, we need to tell the ball to get hit
+				}
+			}
+		}
+	};
 	Player.prototype._bufferInput = function(input, timeToBuffer) {
 		this._bufferedInput = input;
 		this._bufferedInputTime = timeToBuffer + 0.5 / SharedConstants.FRAME_RATE;
@@ -149,6 +179,7 @@ define([
 		}
 	};
 	Player.prototype.render = function(ctx) {
+		var i, hitBox;
 		if(Constants.DEBUG_DRAW_SERVER_GHOSTS) {
 			//draw server "ghost"
 			if(this._serverSim.currentTask === 'charging-jump') {
@@ -162,6 +193,9 @@ define([
 			}
 			else if(this._serverSim.currentTask === 'swinging') {
 				ctx.strokeStyle = '#f90';
+			}
+			else if(this._serverSim.currentTask === 'hitting-ball') {
+				ctx.strokeStyle = '#f0c';
 			}
 			else {
 				ctx.strokeStyle = (this._serverSim.team === 'red' ? '#f00' : '#00f');
@@ -181,8 +215,8 @@ define([
 				ctx.stroke();
 			}
 			if(this._serverSim.activeHitBoxes) {
-				for(var i = 0; i < this._serverSim.activeHitBoxes.length; i++) {
-					var hitBox = this._serverSim.activeHitBoxes[i];
+				for(i = 0; i < this._serverSim.activeHitBoxes.length; i++) {
+					hitBox = this._serverSim.activeHitBoxes[i];
 					ctx.strokeStyle = 'rgba(255, 100, 0, 0.2)';
 					ctx.lineWidth = 1;
 					ctx.strokeRect(this._serverSim.x + this._serverSim.width / 2 +
@@ -207,6 +241,9 @@ define([
 		else if(this._sim.currentTask === 'swinging') {
 			ctx.fillStyle = '#f90';
 		}
+		else if(this._sim.currentTask === 'hitting-ball') {
+			ctx.fillStyle = '#f0c';
+		}
 		else {
 			ctx.fillStyle = (this._sim.team === 'red' ? '#f00' : '#00f');
 		}
@@ -223,8 +260,8 @@ define([
 			ctx.stroke();
 		}
 		if(this._sim.activeHitBoxes) {
-			for(var i = 0; i < this._sim.activeHitBoxes.length; i++) {
-				var hitBox = this._sim.activeHitBoxes[i];
+			for(i = 0; i < this._sim.activeHitBoxes.length; i++) {
+				hitBox = this._sim.activeHitBoxes[i];
 				ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
 				ctx.fillRect(this._sim.x + this._sim.width / 2 + hitBox.offsetX,
 					this._sim.y + this._sim.height / 2 + hitBox.offsetY,

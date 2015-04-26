@@ -7,27 +7,29 @@ define([
 ) {
 	var SWING_HITBOXES = {
 		bump: [
-			{ start: 0 / 60, hitBoxes: [
-				new HitBox({ offsetX: 100, offsetY: 0, width: 50, height: 75,
-					vectorX: 1, vectorY: 0 })
-			] },
-			{ start: 20 / 60, hitBoxes: [
-				new HitBox({ offsetX: 100, offsetY: -50, width: 50, height: 75,
-					vectorX: 1, vectorY: 0 })
-			], end: 30 / 60 }
+			{ start: 3 / 60, hitBoxes: [
+				new HitBox({ offsetX: 20, offsetY: -40, width: 100, height: 80,
+					orientationX: -1, orientationY: 1 })
+			], end: 6 / 60 }
 		],
 		spike: [
-			{ start: 0 / 60, hitBoxes: [
-				new HitBox({ offsetX: 100, offsetY: 0, width: 50, height: 75,
-					vectorX: 1, vectorY: 0 })
-			] },
-			{ start: 20 / 60, hitBoxes: [
-				new HitBox({ offsetX: 100, offsetY: -50, width: 50, height: 75,
-					vectorX: 1, vectorY: 0 })
-			], end: 30 / 60 }
+			{ start: 3 / 60, hitBoxes: [
+				new HitBox({ offsetX: 10, offsetY: -50, width: 100, height: 120,
+					orientationX: -1, orientationY: 0 })
+			], end: 6 / 60 }
 		],
-		set: [],
-		block: []
+		set: [
+			{ start: 3 / 60, hitBoxes: [
+				new HitBox({ offsetX: -50, offsetY: -80, width: 100, height: 70,
+					orientationX: 0, orientationY: 1 })
+			], end: 6 / 60 }
+		],
+		block: [
+			{ start: 3 / 60, hitBoxes: [
+				new HitBox({ offsetX: 10, offsetY: -60, width: 60, height: 150,
+					orientationX: -1, orientationY: 0 })
+			], end: 6 / 60 }
+		]
 	};
 
 	//precalculate hitbox end times where end time is implied but not specified

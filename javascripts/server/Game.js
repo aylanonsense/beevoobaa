@@ -1,31 +1,28 @@
 define([
 	'server/net/GameConnectionServer',
+	'server/entity/EntityManager',
 	'server/entity/Player',
 	'server/entity/Ball',
 	'server/Constants'
 ], function(
 	GameConnectionServer,
+	EntityManager,
 	Player,
 	Ball,
 	Constants
 ) {
 	//set up entities
-	var entities = [ new Ball(400, 200, 300, 0) ];
-	function despawnEntityById(id) {
-		entities = entities.filter(function(entity) {
-			return entity.id !== id;
-		});
-	}
+	EntityManager.spawnEntity(new Ball(400, 200, 300, 0));
 
 	function getNextTeamColor() {
 		var numRedPlayers = 0;
 		var numBluePlayers = 0;
-		for(var i = 0; i < entities.length; i++) {
-			if(entities[i].entityType === 'Player') {
-				if(entities[i].getTeam() === 'red') { numRedPlayers++; }
+		EntityManager.forEach(function(entity) {
+			if(entity.entityType === 'Player') {
+				if(entity.getTeam() === 'red') { numRedPlayers++; }
 				else { numBluePlayers++; }
 			}
-		}
+		});
 		if(numRedPlayers > numBluePlayers) { return 'blue'; }
 		else if(numRedPlayers < numBluePlayers) { return 'red'; }
 		else { return (Math.random() < 0.5 ? 'red' : 'blue'); }
@@ -36,8 +33,7 @@ define([
 		console.log("[" + conn.connId + "] Connected!");
 
 		//create a new entity for this client to control
-		var player = new Player(400, getNextTeamColor());
-		entities.push(player);
+		var player = EntityManager.spawnEntity(new Player(400, getNextTeamColor()));
 		GameConnectionServer.forEachSyncedExcept(conn, function(conn) {
 			conn.bufferSend({
 				messageType: 'spawn-entity',
@@ -51,7 +47,7 @@ define([
 		conn.on('sync', function() {
 			conn.bufferSend({
 				messageType: 'game-state',
-				entities: entities.map(function(entity) {
+				entities: EntityManager.map(function(entity) {
 					return {
 						type: entity.entityType,
 						id: entity.id,
@@ -68,7 +64,7 @@ define([
 			}
 		});
 		conn.on('disconnect', function() {
-			despawnEntityById(player.id);
+			EntityManager.despawnEntityById(player.id);
 			GameConnectionServer.forEachSynced(function(conn) {
 				conn.bufferSend({
 					messageType: 'despawn-entity',
@@ -81,15 +77,15 @@ define([
 	var timeUntilStateUpdate = Constants.TIME_BETWEEN_STATE_UPDATES;
 	return {
 		tick: function(t) {
-			for(var i = 0; i < entities.length; i++) {
-				entities[i].startOfFrame(t);
-			}
-			for(i = 0; i < entities.length; i++) {
-				entities[i].tick(t);
-			}
-			for(i = 0; i < entities.length; i++) {
-				entities[i].endOfFrame(t);
-			}
+			EntityManager.forEach(function(entity) {
+				entity.startOfFrame(t);
+			});
+			EntityManager.forEach(function(entity) {
+				entity.tick(t);
+			});
+			EntityManager.forEach(function(entity) {
+				entity.endOfFrame(t);
+			});
 
 			//send a state update every so often (keep the clients in sync)
 			timeUntilStateUpdate -= t;
@@ -98,7 +94,7 @@ define([
 				GameConnectionServer.forEachSynced(function(conn) {
 					conn.bufferSend({
 						messageType: 'game-state-update',
-						entities: entities.map(function(entity) {
+						entities: EntityManager.map(function(entity) {
 							return {
 								id: entity.id,
 								state: entity.getState()

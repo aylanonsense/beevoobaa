@@ -10,6 +10,9 @@ define([
 		this._sim.setPositionAndVelocity(x, y, velX, velY);
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
+	Ball.prototype.handleHit = function(hit) {
+		this._sim.handleHit(hit);
+	};
 	Ball.prototype.startOfFrame = function(t) {
 		SUPERCLASS.prototype.startOfFrame.call(this, t);
 	};

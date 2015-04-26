@@ -10,9 +10,18 @@ define([
 	SharedConstants
 ) {
 	function Ball(id, state) {
-		SUPERCLASS.call(this, id, BallSim, state);
+		SUPERCLASS.call(this, 'Ball', id, BallSim, state);
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
+	Ball.prototype.handleHit = function(hit, applyToClientSideOnly) {
+		if(applyToClientSideOnly) {
+			this._sim.handleHit(hit);
+		}
+		else {
+			this._sim.handleHit(hit);
+			this._serverSim.handleHit(hit);
+		}
+	};
 	Ball.prototype.render = function(ctx) {
 		if(Constants.DEBUG_DRAW_SERVER_GHOSTS) {
 			//draw ghost

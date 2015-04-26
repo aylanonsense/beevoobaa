@@ -50,6 +50,7 @@ define([
 		this.currentTaskTime = null;
 		this.currentTaskTimeRemaining = null;
 		this.currentHit = null;
+		this.freezeTimeRemaining = null;
 		this.jumpVelX = null;
 		this.jumpVelY = null;
 		this.team = 'red';
@@ -61,6 +62,17 @@ define([
 			this.setState(state);
 		}
 	}
+	Player.prototype.checkForBallHit = function(ball) {
+		if(this.activeHitBoxes && this.activeHitBoxes.length > 0) {
+			for(var i = 0; i < this.activeHitBoxes.length; i++) {
+				var hit = this.activeHitBoxes[i].checkForHit(this, ball);
+				if(hit) {
+					return hit;
+				}
+			}
+		}
+		return null;
+	};
 	Player.prototype._setTask = function(task, taskDuration) {
 		this.currentTask = task || null;
 		this.currentTaskTime = (!this.currentTask ? null : 0.0);
@@ -92,6 +104,9 @@ define([
 		else if(action.actionType === 'release-hit') {
 			//TODO allow auto-release if not charging
 			return this.currentTask === 'charging-hit' && this.currentHit === action.hit;
+		}
+		else if(action.actionType === 'hit-ball') {
+			return this.currentTask === 'swinging' && this.currentHit === action.hit;
 		}
 		return false;
 	};
@@ -151,6 +166,16 @@ define([
 			this.aimDir = action.dir;
 			this._events.trigger('perform-action', action);
 		}
+		else if(action.actionType === 'hit-ball') {
+			this.x = action.x;
+			this.y = action.y;
+			this.jumpVelX = (this.isJumping() ? 0 : null);
+			this.jumpVelY = (this.isJumping() ? 0 : null);
+			this.currentHit = action.hit;
+			this._setTask('hitting-ball', 50 / 60);
+			this.freezeTimeRemaining = 30 / 60;
+			this._events.trigger('perform-action', action);
+		}
 	};
 	Player.prototype.isAiming = function() {
 		return this.aimPos !== null;
@@ -179,6 +204,7 @@ define([
 			currentTaskTime: this.currentTaskTime,
 			currentTaskTimeRemaining: this.currentTaskTimeRemaining,
 			currentHit: this.currentHit,
+			freezeTimeRemaining: this.freezeTimeRemaining,
 			team: this.team,
 			jumpVelX: this.jumpVelX,
 			jumpVelY: this.jumpVelY
@@ -195,12 +221,13 @@ define([
 		this.currentTaskTime = state.currentTaskTime;
 		this.currentTaskTimeRemaining = state.currentTaskTimeRemaining;
 		this.currentHit = state.currentHit;
+		this.freezeTimeRemaining = state.freezeTimeRemaining;
 		this.team = state.team;
 		this.jumpVelX = state.jumpVelX;
 		this.jumpVelY = state.jumpVelY;
 	};
 	Player.prototype.startOfFrame = function(t) {
-		if(this.currentTask) {
+		if(this.currentTask && this.freezeTimeRemaining === null) {
 			this.currentTaskTime += t;
 			if(this.currentTaskTimeRemaining !== null) {
 				this.currentTaskTimeRemaining -= t;
@@ -212,33 +239,36 @@ define([
 		this.activeHitBoxes = getActivePlayerHitBoxes(this);
 	};
 	Player.prototype.tick = function(t) {
-		//player is in the air, jumping
-		if(this.isJumping()) {
-			this.jumpVelY += GRAVITY * t;
-			this.y += this.jumpVelY * t;
-			this.x += this.jumpVelX * t;
-			if(this.y >= SharedConstants.BOTTOM_BOUND - this.height && this.jumpVelY > 0) {
-				//landed on the ground
-				this.y = SharedConstants.BOTTOM_BOUND - this.height;
-				this.jumpVelY = null;
-				this._setTask('landing', 25 / 60);
+		//if we're in freeze frames, we skip most of the tick step
+		if(this.freezeTimeRemaining === null) {
+			//player is in the air, jumping
+			if(this.isJumping()) {
+				this.jumpVelY += GRAVITY * t;
+				this.y += this.jumpVelY * t;
+				this.x += this.jumpVelX * t;
+				if(this.y >= SharedConstants.BOTTOM_BOUND - this.height && this.jumpVelY > 0) {
+					//landed on the ground
+					this.y = SharedConstants.BOTTOM_BOUND - this.height;
+					this.jumpVelY = null;
+					this._setTask('landing', 25 / 60);
+				}
 			}
-		}
-		//player is walking (following a waypoint)
-		else if(this.waypointX !== null) {
-			//update the waypoint the player is following
-			this.waypointX += this.waypointDir * this.moveSpeed * t;
-			//move towards the waypoint
-			if(this.x < this.waypointX) {
-				this.x = Math.min(this.x + this.moveSpeed * t, this.waypointX);
+			//player is walking (following a waypoint)
+			else if(this.waypointX !== null) {
+				//update the waypoint the player is following
+				this.waypointX += this.waypointDir * this.moveSpeed * t;
+				//move towards the waypoint
+				if(this.x < this.waypointX) {
+					this.x = Math.min(this.x + this.moveSpeed * t, this.waypointX);
+				}
+				else if(this.x > this.waypointX) {
+					this.x = Math.max(this.x - this.moveSpeed * t, this.waypointX);
+				}
 			}
-			else if(this.x > this.waypointX) {
-				this.x = Math.max(this.x - this.moveSpeed * t, this.waypointX);
+			//player is aiming
+			if(this.aimPos !== null) {
+				this.aimPos = capValue(-1.0, this.aimPos + this.aimDir * this.aimSpeed * t, 1.0);
 			}
-		}
-		//player is aiming
-		if(this.aimPos !== null) {
-			this.aimPos = capValue(-1.0, this.aimPos + this.aimDir * this.aimSpeed * t, 1.0);
 		}
 
 		//keep player in bounds
@@ -255,7 +285,14 @@ define([
 			}
 		}
 	};
-	Player.prototype.endOfFrame = function(t) {};
+	Player.prototype.endOfFrame = function(t) {
+		if(this.freezeTimeRemaining !== null) {
+			this.freezeTimeRemaining -= t;
+			if(this.freezeTimeRemaining <= 0) {
+				this.freezeTimeRemaining = null;
+			}
+		}
+	};
 	Player.prototype.on = function(eventName, callback) {
 		this._events.on(eventName, callback);
 	};
