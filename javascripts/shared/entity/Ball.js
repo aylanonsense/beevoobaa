@@ -16,6 +16,9 @@ define([
 		this.velX = 0;
 		this.velY = 0;
 		this.verticalEnergy = 0;
+		this.claimedTeam = null;
+		this.power = 0;
+		this.spin = 0;
 		this._recalculateVerticalEnergy();
 
 		this._events = new EventHelper([ 'perform-action' ]);
@@ -47,7 +50,10 @@ define([
 			y: this.y,
 			velX: this.velX,
 			velY: this.velY,
-			verticalEnergy: this.verticalEnergy
+			verticalEnergy: this.verticalEnergy,
+			power: this.power,
+			spin: this.spin,
+			claimedTeam: this.claimedTeam
 		};
 	};
 	Ball.prototype.setState = function(state) {
@@ -56,6 +62,9 @@ define([
 		this.velX = state.velX;
 		this.velY = state.velY;
 		this.verticalEnergy = state.verticalEnergy;
+		this.power = state.power;
+		this.spin = state.spin;
+		this.claimedTeam = state.claimedTeam;
 	};
 	Ball.prototype._recalculateVerticalEnergy = function() {
 		var height = SharedConstants.BOTTOM_BOUND - this.y - this.radius;

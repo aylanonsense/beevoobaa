@@ -25,11 +25,10 @@ define([
 	Ball.prototype.render = function(ctx) {
 		if(Constants.DEBUG_DRAW_SERVER_GHOSTS) {
 			//draw ghost
-			ctx.strokeStyle = '#60f';
-			ctx.lineWidth = 1;
+			ctx.fillStyle = '#0f6';
 			ctx.beginPath();
 			ctx.arc(this._serverSim.x, this._serverSim.y , this._serverSim.radius - 0.5, 0, 2 * Math.PI);
-			ctx.stroke();
+			ctx.fill();
 
 			//draw predicted future state ghost
 			ctx.strokeStyle = '#0f6';

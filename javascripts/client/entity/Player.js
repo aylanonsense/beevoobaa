@@ -182,50 +182,9 @@ define([
 		var i, hitBox;
 		if(Constants.DEBUG_DRAW_SERVER_GHOSTS) {
 			//draw server "ghost"
-			if(this._serverSim.currentTask === 'charging-jump') {
-				ctx.strokeStyle = '#0ff';
-			}
-			else if(this._serverSim.currentTask === 'landing') {
-				ctx.strokeStyle = '#0f0';
-			}
-			else if(this._serverSim.currentTask === 'charging-hit') {
-				ctx.strokeStyle = '#b60';
-			}
-			else if(this._serverSim.currentTask === 'swinging') {
-				ctx.strokeStyle = '#f90';
-			}
-			else if(this._serverSim.currentTask === 'hitting-ball') {
-				ctx.strokeStyle = '#f0c';
-			}
-			else {
-				ctx.strokeStyle = (this._serverSim.team === 'red' ? '#f00' : '#00f');
-			}
-			ctx.lineWidth = 1;
-			ctx.strokeRect(this._serverSim.x + 0.5, this._serverSim.y + 0.5,
+			ctx.fillStyle = '#0f6';
+			ctx.fillRect(this._serverSim.x + 0.5, this._serverSim.y + 0.5,
 				this._serverSim.width - 1, this._serverSim.height - 1);
-			if(this._serverSim.isAiming()) {
-				ctx.lineWidth = 2;
-				ctx.strokeStyle = '#ddd';
-				ctx.beginPath();
-				ctx.moveTo(this._serverSim.x + this._serverSim.width / 2,
-					this._serverSim.y + this._serverSim.height / 2);
-				ctx.lineTo(this._serverSim.x + this._serverSim.width / 2 +
-					this._serverSim.aimPos * 100,
-					this._serverSim.y + this._serverSim.height / 2 - 100);
-				ctx.stroke();
-			}
-			if(this._serverSim.activeHitBoxes) {
-				for(i = 0; i < this._serverSim.activeHitBoxes.length; i++) {
-					hitBox = this._serverSim.activeHitBoxes[i];
-					ctx.strokeStyle = 'rgba(255, 100, 0, 0.2)';
-					ctx.lineWidth = 1;
-					ctx.strokeRect(this._serverSim.x + this._serverSim.width / 2 +
-						hitBox.offsetX,
-						this._serverSim.y + this._serverSim.height / 2 +
-						hitBox.offsetY,
-						hitBox.width, hitBox.height);
-				}
-			}
 
 			//draw predicted future state ghost
 			ctx.strokeStyle = '#0f6';
@@ -266,9 +225,11 @@ define([
 			ctx.stroke();
 		}
 		if(this._sim.activeHitBoxes) {
-			for(i = 0; i < this._sim.activeHitBoxes.length; i++) {
+			for(i = this._sim.activeHitBoxes.length - 1; i >= 0; i--) {
 				hitBox = this._sim.activeHitBoxes[i];
-				ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+				if(hitBox.type === 'sweet') { ctx.fillStyle = '#f00'; }
+				else if(hitBox.type === 'sour') { ctx.fillStyle = '#00f'; }
+				else { ctx.fillStyle = '#c0c'; }
 				ctx.fillRect(this._sim.x + this._sim.width / 2 + hitBox.offsetX,
 					this._sim.y + this._sim.height / 2 + hitBox.offsetY,
 					hitBox.width, hitBox.height);

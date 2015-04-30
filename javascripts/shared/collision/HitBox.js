@@ -9,6 +9,7 @@ define([
 		this.height = params.height;
 		this.orientationX = params.orientationX;
 		this.orientationY = params.orientationY;
+		this.type = params.type;
 		var squareOrientationLength = this.orientationX * this.orientationX +
 			this.orientationY * this.orientationY;
 		if(squareOrientationLength !== 1) {
