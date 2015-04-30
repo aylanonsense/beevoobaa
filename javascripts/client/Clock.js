@@ -41,6 +41,9 @@ define([
 		setGameTimeOffset: function(offset) {
 			gameTimeOffset = offset;
 		},
+		getRoundTripTime: function() {
+			return getTimeFromClientToServer() + getTimeFromServerToClient();
+		},
 		setRoundTripTime: function(time) {
 			roundTripTime = time;
 		},

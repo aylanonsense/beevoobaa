@@ -30,6 +30,13 @@ define([
 			ctx.beginPath();
 			ctx.arc(this._serverSim.x, this._serverSim.y , this._serverSim.radius - 0.5, 0, 2 * Math.PI);
 			ctx.stroke();
+
+			//draw predicted future state ghost
+			ctx.strokeStyle = '#0f6';
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.arc(this._futureSim.x, this._futureSim.y , this._futureSim.radius - 0.5, 0, 2 * Math.PI);
+			ctx.stroke();
 		}
 
 		//draw ball

@@ -226,6 +226,12 @@ define([
 						hitBox.width, hitBox.height);
 				}
 			}
+
+			//draw predicted future state ghost
+			ctx.strokeStyle = '#0f6';
+			ctx.lineWidth = 1;
+			ctx.strokeRect(this._futureSim.x + 0.5, this._futureSim.y + 0.5,
+				this._futureSim.width - 1, this._futureSim.height - 1);
 		}
 
 		//draw actual entity

@@ -1,7 +1,9 @@
 define([
-	'client/net/GameConnection'
+	'client/net/GameConnection',
+	'client/Clock'
 ], function(
-	GameConnection
+	GameConnection,
+	Clock
 ) {
 	function Entity(entityType, id, SimClass, state) {
 		this.entityType = entityType;
@@ -9,6 +11,7 @@ define([
 		this._isPlayerControlled = false;
 		this._sim = new SimClass(state);
 		this._serverSim = new SimClass(state);
+		this._futureSim = new SimClass(state);
 		this._simIsDesynced = false;
 		this._bufferedSimActions = [];
 		this._bufferedServerSimActions = [];
@@ -29,6 +32,9 @@ define([
 	};
 	Entity.prototype.getServerSim = function() {
 		return this._serverSim;
+	};
+	Entity.prototype.getFutureSim = function() {
+		return this._futureSim;
 	};
 	Entity.prototype.onMouseEvent = function(evt) {};
 	Entity.prototype.onKeyboardEvent = function(evt, keyboard) {};
@@ -57,8 +63,20 @@ define([
 		this._bufferedServerSimActions = [];
 	};
 	Entity.prototype.startOfFrame = function(t) {
+		//from the server's current state, fast forward to create a prediction of future state
+		this._futureSim.setState(this._serverSim.getState());
+		for(var ffTime = Clock.getRoundTripTime(); ffTime > 0; ffTime -= 1 / 60) {
+			//fast forward state
+			var t2 = Math.min(1 / 60, ffTime);
+			this._futureSim.startOfFrame(t2);
+			this._futureSim.tick(t2);
+			this._futureSim.endOfFrame(t2);
+		}
+
+		//start of frame
 		this._sim.startOfFrame(t);
 		this._serverSim.startOfFrame(t);
+		this._futureSim.startOfFrame(t);
 
 		//perform actions the server sent in the recent past
 		while(this._bufferedSimActions.length > 0 &&
@@ -78,10 +96,12 @@ define([
 	Entity.prototype.tick = function(t) {
 		this._sim.tick(t);
 		this._serverSim.tick(t);
+		this._futureSim.tick(t);
 	};
 	Entity.prototype.endOfFrame = function(t) {
 		this._sim.endOfFrame(t);
 		this._serverSim.endOfFrame(t);
+		this._futureSim.endOfFrame(t);
 	};
 	Entity.prototype.isPlayerControlled = function() {
 		return this._isPlayerControlled;
