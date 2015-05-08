@@ -1,6 +1,6 @@
 define([
 	'client/net/RawConnection',
-	'client/Clock',
+	'client/game/Clock',
 	'shared/utils/EventHelper',
 	'shared/utils/DelayQueue',
 	'client/net/Pinger',
@@ -21,7 +21,7 @@ define([
 	//when we receive messages early we want to delay them until they are on time
 	var messagesReceivedEarly = new DelayQueue();
 	messagesReceivedEarly.on('dequeue', function(msg) {
-		events.trigger('receive', msg.actualMessage);
+		events.trigger('receive', msg.actualMessage, msg.gameTime);
 	});
 
 	//bind events off of the raw connection
@@ -38,8 +38,8 @@ define([
 		}
 	});
 	RawConnection.on('disconnect', function() {
-		events.trigger('disconnect');
 		isConnected = false;
+		events.trigger('disconnect');
 	});
 
 	//bind events off of our pinging service
@@ -50,6 +50,7 @@ define([
 	});
 
 	return {
+		data: {},
 		connect: function() {
 			RawConnection.connect();
 		},
@@ -70,7 +71,10 @@ define([
 				console.error("Cannot buffer send while desynced!");
 			}
 			else {
-				bufferedMessagesToSend.push({ actualMessage: msg, gameTime: Clock.getServerGameTime() });
+				bufferedMessagesToSend.push({
+					actualMessage: msg,
+					gameTime: Clock.getServerGameTime()
+				});
 			}
 		},
 		flush: function() {
@@ -91,6 +95,7 @@ define([
 			}
 		},
 		reset: function() {
+			this.data = {};
 			bufferedMessagesToSend = [];
 			if(isSynced) {
 				isSynced = false;

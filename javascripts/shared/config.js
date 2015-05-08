@@ -2,10 +2,10 @@ define({
 	//simulation speed
 	FRAME_RATE: 60,
 
-	//game
-	LEFT_BOUND: 50,
-	RIGHT_BOUND: 750,
-	BOTTOM_BOUND: 475,
+	//game vars
+	FLOOR_Y: 475,
+	LEFT_WALL_X: 100,
+	RIGHT_WALL_X: 700,
 
 	//network
 	CLIENT_OUTGOING_MESSAGE_BUFFER_TIME: 3 / 60,

@@ -1,12 +1,12 @@
 define([
+	'shared/net/generateFakeLag',
 	'shared/utils/EventHelper',
 	'shared/utils/DelayQueue',
-	'shared/utils/generateFakeLag',
 	'shared/utils/now'
 ], function(
+	generateFakeLag,
 	EventHelper,
 	DelayQueue,
-	generateFakeLag,
 	now
 ) {
 	function RawConnection(socket) {

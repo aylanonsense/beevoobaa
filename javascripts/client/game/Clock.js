@@ -1,8 +1,8 @@
 define([
-	'shared/Constants',
+	'shared/config',
 	'shared/utils/now'
 ], function(
-	SharedConstants,
+	sharedConfig,
 	now
 ) {
 	var gameTimeOffset = 0.0;
@@ -28,10 +28,10 @@ define([
 
 	//calculated latency client <--> server
 	function getTimeFromClientToServer() {
-		return roundTripTime / 2 + SharedConstants.CLIENT_OUTGOING_MESSAGE_BUFFER_TIME;
+		return roundTripTime / 2 + sharedConfig.CLIENT_OUTGOING_MESSAGE_BUFFER_TIME;
 	}
 	function getTimeFromServerToClient() {
-		return roundTripTime / 2 + SharedConstants.SERVER_OUTGOING_MESSAGE_BUFFER_TIME;
+		return roundTripTime / 2 + sharedConfig.SERVER_OUTGOING_MESSAGE_BUFFER_TIME;
 	}
 
 	return {

@@ -1,21 +1,19 @@
 define([
+	'server/game/Game',
 	'server/net/GameConnectionServer',
-	'shared/Constants',
-	'server/Clock',
-	'server/Game',
+	'shared/config',
 	'shared/utils/now'
 ], function(
-	GameConnectionServer,
-	SharedConstants,
-	Clock,
 	Game,
+	GameConnectionServer,
+	sharedConfig,
 	now
 ) {
 	return function() {
 		//set up the game loop
 		var prevTime = now();
-		var timeToFlush = SharedConstants.SERVER_OUTGOING_MESSAGE_BUFFER_TIME -
-			0.5 / SharedConstants.FRAME_RATE;
+		var timeToFlush = sharedConfig.SERVER_OUTGOING_MESSAGE_BUFFER_TIME -
+			0.5 / sharedConfig.FRAME_RATE;
 		function loop() {
 			//calculate time since last loop was run
 			var time = now();
@@ -33,12 +31,12 @@ define([
 						conn.flush();
 					}
 				});
-				timeToFlush = SharedConstants.SERVER_OUTGOING_MESSAGE_BUFFER_TIME -
-					0.5 / SharedConstants.FRAME_RATE;
+				timeToFlush = sharedConfig.SERVER_OUTGOING_MESSAGE_BUFFER_TIME -
+					0.5 / sharedConfig.FRAME_RATE;
 			}
 		}
 
 		//kick off the game loop
-		setInterval(loop, 1000 / SharedConstants.FRAME_RATE);
+		setInterval(loop, 1000 / sharedConfig.FRAME_RATE);
 	};
 });

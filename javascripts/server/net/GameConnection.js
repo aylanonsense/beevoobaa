@@ -1,6 +1,6 @@
 define([
 	'server/net/RawConnection',
-	'server/Clock',
+	'server/game/Clock',
 	'shared/utils/EventHelper',
 	'shared/utils/DelayQueue',
 	'shared/utils/now'
@@ -14,6 +14,7 @@ define([
 	var nextConnId = 0;
 	function GameConnection(socket) {
 		var self = this;
+		this.data = {};
 		this.connId = nextConnId++;
 		this._bufferedMessagesToSend = [];
 		this._isConnected = true;
@@ -23,7 +24,7 @@ define([
 		//when we receive messages early we want to delay them until they are on time
 		this._messagesReceivedEarly = new DelayQueue();
 		this._messagesReceivedEarly.on('dequeue', function(msg) {
-			self._events.trigger('receive', msg.actualMessage);
+			self._events.trigger('receive', msg.actualMessage, msg.gameTime);
 		});
 
 		//bind events off of the raw connection
@@ -82,7 +83,10 @@ define([
 			console.log("[" + this.connId + "] Cannot buffer send while disconnected!");
 		}
 		else {
-			this._bufferedMessagesToSend.push({ actualMessage: msg, gameTime: Clock.getGameTime() });
+			this._bufferedMessagesToSend.push({
+				actualMessage: msg,
+				gameTime: Clock.getGameTime()
+			});
 		}
 	};
 	GameConnection.prototype.flush = function() {

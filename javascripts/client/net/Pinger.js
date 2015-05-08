@@ -1,13 +1,13 @@
 define([
 	'client/net/RawConnection',
-	'client/Clock',
-	'client/Constants',
+	'client/game/Clock',
+	'client/config',
 	'shared/utils/EventHelper',
 	'shared/utils/now'
 ], function(
 	RawConnection,
 	Clock,
-	Constants,
+	config,
 	EventHelper,
 	now
 ) {
@@ -74,7 +74,7 @@ define([
 
 		//the laggiest couple of pings are ignored -- they may be anomalies -- so we choose
 		// the next highest as the one to shoot for
-		var roundTripTime = latencies[Math.min(Constants.PINGS_TO_IGNORE, latencies.length - 1)];
+		var roundTripTime = latencies[Math.min(config.PINGS_TO_IGNORE, latencies.length - 1)];
 
 		//if we don't have a guess for round trip time yet, this is the best estimate to use
 		// OR if the network got worse we can safely adopt the new time -- client will stutter
@@ -88,7 +88,7 @@ define([
 			//we only accept the network got better if the "gains" are worth it
 			var gains = Math.sqrt(adjustedRoundTripTime - roundTripTime); //we undervalue huge gains
 			if(gains * pingsSinceRoundTripTimeLowered >
-				Constants.GAINS_REQUIRED_TO_LOWER_ROUND_TRIP_TIME) {
+				config.GAINS_REQUIRED_TO_LOWER_ROUND_TRIP_TIME) {
 				adjustedRoundTripTime = roundTripTime;
 				Clock.setRoundTripTime(roundTripTime);
 			}
@@ -102,7 +102,7 @@ define([
 		ping: function() {
 			var id = nextPingId++;
 			pings.push({ pingId: id, sent: now(), received: null });
-			if(pings.length > Constants.NUM_CACHED_PINGS) { pings.shift(); }
+			if(pings.length > config.NUM_CACHED_PINGS) { pings.shift(); }
 			RawConnection.send({ messageType: 'ping', pingId: id });
 		},
 		reset: function() {

@@ -2,17 +2,20 @@ define({
 	//render
 	CANVAS_WIDTH: 800,
 	CANVAS_HEIGHT: 600,
-	DEBUG_HIDE_SPRITES: false,
-	DEBUG_TRACE_SPRITES: false,
 
 	//input bindings
 	KEY_BINDINGS: {
 		32: 'JUMP', //space bar
 		90: 'STRONG_HIT', //z key
 		88: 'WEAK_HIT', //x key
-		37: 'MOVE_LEFT', 65: 'MOVE_LEFT', //left arrow key / a key
-		39: 'MOVE_RIGHT', 68: 'MOVE_RIGHT' //right arrow key / d key
+		38: 'UP', 87: 'UP', //up arrow key / w key
+		40: 'DOWN', 83: 'DOWN', //down arrow key / s key
+		37: 'LEFT', 65: 'LEFT', //left arrow key / a key
+		39: 'RIGHT', 68: 'RIGHT' //right arrow key / d key
 	},
+
+	//simulation
+	DEBUG_DISABLE_SERVER_SIMULATIONS: false,
 
 	//simulation speed and syncing
 	TIME_REQUIRED_TO_SPEED_UP_SIM: 3 / 60,

@@ -1,300 +1,301 @@
 define([
-	'shared/utils/EventHelper',
-	'shared/utils/capValue',
-	'shared/collision/getActivePlayerHitBoxes',
-	'shared/Constants'
+	'shared/entity/Entity',
+	'shared/config'
 ], function(
-	EventHelper,
-	capValue,
-	getActivePlayerHitBoxes,
-	SharedConstants
+	SUPERCLASS,
+	config
 ) {
-	var MIN_JUMP_SPEED = 100;
-	var MAX_JUMP_SPEED = 200;
-	var MAX_HORIZONTAL_JUMP_SPEED = 200;
-	var GRAVITY = 100;
 	function Player(state) {
-		//constants (not stateful)
+		//constants
+		this.walkSpeed = 200;
+		this.aimSpeed = 1.0;
 		this.width = 40;
 		this.height = 60;
-		this.moveSpeed = 200;
-		this.aimSpeed = 2.0;
-		this.minJumpChargeTime = 5 / 60;
-		this.maxJumpChargeTime = 50 / 60;
-		this.absoluteMaxJumpChargeTime = 70 / 60;
-		this.swingTime = {
-			spike: 60 / 60,
-			bump: 100 / 60,
-			set: 20 / 60,
-			block: 20 / 60
+		this.gravity = 150;
+		this.jumpProperties = {
+			timeToMaxCharge: 90 / 60
 		};
-		this.swingChargeTime = {
-			spike: 50 / 60,
-			bump: 50 / 60,
-			set: 50 / 60,
-			block: 50 / 60
+		this.swingProperties = {
+			bump: { isGrounded: true, swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60 },
+			set: { isGrounded: true, swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60 },
+			spike: { isGrounded: false, swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60 },
+			block: { isGrounded: false, swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60 }
 		};
-		this.wallBouncePercent = 0.30;
-
-		//non-stateful non-constants
-		this.activeHitBoxes = null;
 
 		//stateful vars
 		this.x = 0;
-		this.y = SharedConstants.BOTTOM_BOUND - this.height;
-		this.waypointX = null;
-		this.waypointDir = 0;
-		this.aimPos = null;
-		this.aimDir = 0;
-		this.currentTask = null;
-		this.currentTaskTime = null;
-		this.currentTaskTimeRemaining = null;
-		this.currentHit = null;
-		this.freezeTimeRemaining = null;
+		this.y = config.FLOOR_Y - this.height;
+		this.walkWaypoint = null;
+		this.walkWaypointChange = null;
 		this.jumpVelX = null;
 		this.jumpVelY = null;
-		this.team = 'red';
+		this.task = null;
+		this.taskTimeSpent = null;
+		this.taskTimeRemaining = null;
+		this.swingType = null;
+		this.charge = null;
+		this.chargeRate = null;
+		this.aim = null;
+		this.aimWaypoint = null;
+		this.aimWaypointChange = null;
 
-		this._events = new EventHelper([ 'perform-action' ]);
-
-		//if a state was given, apply it
-		if(state) {
-			this.setState(state);
-		}
+		SUPERCLASS.call(this, 'Player', state, [
+			'x', 'y', 'walkWaypoint', 'walkWaypointChange', 'jumpVelX', 'jumpVelY',
+			'task', 'taskTimeSpent', 'taskTimeRemaining', 'swingType', 'charge', 'chargeRate',
+			'aim', 'aimWaypoint', 'aimWaypointChange' ]);
 	}
-	Player.prototype.checkForBallHit = function(ball) {
-		if(this.activeHitBoxes && this.activeHitBoxes.length > 0) {
-			for(var i = 0; i < this.activeHitBoxes.length; i++) {
-				var hit = this.activeHitBoxes[i].checkForHit(this, ball);
-				if(hit) {
-					return hit;
-				}
-			}
-		}
-		return null;
+	Player.prototype = Object.create(SUPERCLASS.prototype);
+	Player.prototype.clearTask = function() {
+		this.setTask(null);
 	};
-	Player.prototype._setTask = function(task, taskDuration) {
-		this.currentTask = task || null;
-		this.currentTaskTime = (!this.currentTask ? null : 0.0);
-		this.currentTaskTimeRemaining = (!this.currentTask || !taskDuration ?
-			null : taskDuration + 0.5 / SharedConstants.FRAME_RATE);
+	Player.prototype.setTask = function(task, duration) {
+		this.task = task;
+		this.taskTimeSpent = 0.0;
+		this.taskTimeRemaining = (task && duration ? duration + 0.5 / config.FRAME_RATE : null);
+	};
+	Player.prototype.clearWaypoint = function() {
+		this.walkWaypoint = null;
+		this.walkWaypointChange = null;
+	};
+	Player.prototype.dropToFloor = function() {
+		this.bottom = config.FLOOR_Y;
+		this.jumpVelX = null;
+		this.jumpVelY = null;
+	};
+	Player.prototype.isGrounded = function() {
+		return this.bottom >= config.FLOOR_Y && this.jumpVelY === null;
+	};
+	Player.prototype.isAirborne = function() {
+		return !this.isGrounded();
+	};
+	Player.prototype.returnToNeutralGroundedState = function() {
+		this.dropToFloor();
+		this.clearTask();
+		this.clearWaypoint();
+		this.stopAiming();
+		this.stopSwinging();
+		this.stopCharging();
+	};
+	Player.prototype.returnToNeutralAirborneState = function() {
+		this.clearTask();
+		this.clearWaypoint();
+		this.stopAiming();
+		this.stopSwinging();
+		this.stopCharging();
 	};
 	Player.prototype.canPerformAction = function(action) {
-		if(action.actionType === 'follow-waypoint') {
-			return !this.isJumping() && this.currentTask === null;
+		var swing;
+		if(action.type === 'walk') {
+			return this.isGrounded() && !this.task;
 		}
-		else if(action.actionType === 'charge-jump') {
-			return !this.isJumping() && !this.currentTask;
-		}
-		else if(action.actionType === 'release-jump') {
-			//TODO allow auto-release if not charging
-			return this.currentTask === 'charging-jump';
-		}
-		else if(action.actionType === 'aim') {
+		else if(action.type === 'aim') {
 			return this.isAiming();
 		}
-		else if(action.actionType === 'charge-hit') {
-			if(action.hit === 'spike' || action.hit === 'block') {
-				return this.isJumping() && !this.currentTask;
-			}
-			else {
-				return !this.isJumping() && !this.currentTask;
-			}
+		else if(action.type === 'charge-jump') {
+			return this.isGrounded() && !this.task;
 		}
-		else if(action.actionType === 'release-hit') {
-			//TODO allow auto-release if not charging
-			return this.currentTask === 'charging-hit' && this.currentHit === action.hit;
+		else if(action.type === 'release-jump') {
+			return this.isGrounded() && this.task === 'charging-jump';
 		}
-		else if(action.actionType === 'hit-ball') {
-			return this.currentTask === 'swinging' && this.currentHit === action.hit;
+		else if(action.type === 'charge-swing') {
+			swing = this.swingProperties[action.swingType];
+			return !this.task && (swing.isGrounded ? this.isGrounded() : this.isAirborne());
+		}
+		else if(action.type === 'release-swing') {
+			swing = this.swingProperties[action.swingType];
+			return this.task === 'charging-swing' && this.swingType === action.swingType &&
+				(swing.isGrounded ? this.isGrounded() : this.isAirborne());
 		}
 		return false;
 	};
 	Player.prototype.performAction = function(action) {
-		if(action.actionType === 'follow-waypoint') {
-			if(this.waypointX !== action.x || this.waypointDir !== action.dir) {
-				this.waypointX = action.x;
-				this.waypointDir = action.dir;
-				this._events.trigger('perform-action', action);
+		var swing;
+		if(action.type === 'walk') {
+			this.returnToNeutralGroundedState();
+			this.teleportTo(action.x);
+			this.walkWaypoint = action.walkWaypoint;
+			this.walkWaypointChange = action.walkWaypointChange;
+		}
+		else if(action.type === 'aim') {
+			if(!this.isAiming()) {
+				this.startAiming();
 			}
+			this.aimWaypoint = action.aimWaypoint;
+			this.aimWaypointChange = action.aimWaypointChange;
 		}
-		else if(action.actionType === 'charge-jump') {
-			this._setTask('charging-jump');
-			this.waypointX = null;
-			this.waypointDir = 0;
-			this.aimPos = 0;
-			this.aimDir = action.dir;
-			this.x = action.x;
-			this._events.trigger('perform-action', action);
+		else if(action.type === 'charge-jump') {
+			this.returnToNeutralGroundedState();
+			this.teleportTo(action.x);
+			this.startAiming();
+			this.setTask('charging-jump');
+			this.startCharging(this.jumpProperties.timeToMaxCharge);
 		}
-		else if(action.actionType === 'release-jump') {
-			this._setTask(null);
-			this.aimPos = null;
-			this.aimDir = 0;
-			var chargeTime = (action.chargeTime <= this.minJumpChargeTime +
-				0.5 / SharedConstants.FRAME_RATE ? 0.0 : action.chargeTime / this.maxJumpChargeTime);
-			chargeTime = capValue(0.0, chargeTime, 1.0);
-			this.jumpVelY = -(MIN_JUMP_SPEED + (MAX_JUMP_SPEED - MIN_JUMP_SPEED) * chargeTime);
-			this.jumpVelX = MAX_HORIZONTAL_JUMP_SPEED * action.dir;
-			this._events.trigger('perform-action', action);
+		else if(action.type === 'release-jump') {
+			this.returnToNeutralGroundedState();
+			this.teleportTo(action.x);
+			this.jumpVelX = 50 * action.charge * action.aim;
+			this.jumpVelY = -100 + -100 * action.charge;
 		}
-		else if(action.actionType === 'aim') {
-			if(this.aimPos !== action.pos || this.aimDir !== action.dir) {
-				this.aimPos = action.pos;
-				this.aimDir = action.dir;
-				this._events.trigger('perform-action', action);
+		else if(action.type === 'charge-swing') {
+			swing = this.swingProperties[action.swingType];
+			if(swing.isGrounded) {
+				this.returnToNeutralGroundedState();
+				this.teleportTo(action.x);
 			}
-		}
-		else if(action.actionType === 'charge-hit') {
-			this._setTask('charging-hit');
-			this.waypointX = null;
-			this.waypointDir = 0;
-			this.aimPos = 0;
-			this.aimDir = action.dir;
-			if(!this.isJumping() && action.x !== null) {
-				this.x = action.x;
+			else {
+				this.returnToNeutralAirborneState();
 			}
-			this.currentHit = action.hit;
-			this._events.trigger('perform-action', action);
+			this.setTask('charging-swing');
+			this.swingType = action.swingType;
+			this.startAiming();
+			this.startCharging(swing.timeToMaxCharge);
 		}
-		else if(action.actionType === 'release-hit') {
-			this._setTask('swinging', this.swingTime[action.hit]);
-			this.currentHit = action.hit;
-			this.waypointX = null;
-			this.waypointDir = 0;
-			this.aimPos = null;
-			this.aimDir = action.dir;
-			this._events.trigger('perform-action', action);
+		else if(action.type === 'release-swing') {
+			swing = this.swingProperties[action.swingType];
+			if(swing.isGrounded) {
+				this.returnToNeutralGroundedState();
+				this.teleportTo(action.x);
+			}
+			else {
+				this.returnToNeutralAirborneState();
+			}
+			this.setTask('swinging', swing.swingDuration);
+			this.swingType = action.swingType;
+			this.charge = action.charge;
+			this.aim = action.aim;
 		}
-		else if(action.actionType === 'hit-ball') {
-			this.x = action.x;
-			this.y = action.y;
-			this.jumpVelX = (this.isJumping() ? 0 : null);
-			this.jumpVelY = (this.isJumping() ? 0 : null);
-			this.currentHit = action.hit;
-			this._setTask('hitting-ball', 50 / 60);
-			this.freezeTimeRemaining = 30 / 60;
-			this._events.trigger('perform-action', action);
-		}
+	};
+	Player.prototype.startCharging = function(timeToMaxCharge) {
+		this.charge = 0;
+		this.chargeRate = 1 / (timeToMaxCharge + 0.5 / config.FRAME_RATE);
+	};
+	Player.prototype.stopCharging = function() {
+		this.charge = null;
+		this.chargeRate = null;
+	};
+	Player.prototype.isCharging = function() {
+		return this.chargeRate !== null;
+	};
+	Player.prototype.stopSwinging = function() {
+		this.swingType = null;
+		this.charge = null;
+	};
+	Player.prototype.teleportTo = function(x) {
+		this.x = x;
+	};
+	Player.prototype.startAiming = function() {
+		this.aim = 0;
+		this.aimWaypoint = 0;
+		this.aimWaypointChange = 0;
+	};
+	Player.prototype.stopAiming = function() {
+		this.aim = null;
+		this.aimWaypoint = null;
+		this.aimWaypointChange = null;
 	};
 	Player.prototype.isAiming = function() {
-		return this.aimPos !== null;
+		return this.aim !== null && this.aimWaypoint !== null && this.aimWaypointChange !== null;
 	};
-	Player.prototype.getEventualAimDir = function() {
-		return this.aimDir;
+	Player.prototype.isAimingHorizontally = function() {
+		return this.isAiming(); //TODO
+	};
+	Player.prototype.isAimingVertically = function() {
+		return this.isAiming(); //TODO
+	};
+	Player.prototype.getAimDir = function() {
+		return this.aimWaypointChange === null ? 0 : this.aimWaypointChange;
+	};
+	Player.prototype.canWalk = function() {
+		return this.isGrounded() && !this.task;
 	};
 	Player.prototype.isWalking = function() {
-		return this.waypointX !== null;
+		return this.canWalk() && this.walkWaypoint !== null;
 	};
-	Player.prototype.isJumping = function() {
-		return this.jumpVelY !== null;
-	};
-	Player.prototype.getEventualWalkDir = function() {
-		return this.waypointDir;
-	};
-	Player.prototype.getState = function() {
-		return {
-			x: this.x,
-			y: this.y,
-			waypointX: this.waypointX,
-			waypointDir: this.waypointDir,
-			aimPos: this.aimPos,
-			aimDir: this.aimDir,
-			currentTask: this.currentTask,
-			currentTaskTime: this.currentTaskTime,
-			currentTaskTimeRemaining: this.currentTaskTimeRemaining,
-			currentHit: this.currentHit,
-			freezeTimeRemaining: this.freezeTimeRemaining,
-			team: this.team,
-			jumpVelX: this.jumpVelX,
-			jumpVelY: this.jumpVelY
-		};
-	};
-	Player.prototype.setState = function(state) {
-		this.x = state.x;
-		this.y = state.y;
-		this.waypointX = state.waypointX;
-		this.waypointDir = state.waypointDir;
-		this.aimPos = state.aimPos;
-		this.aimDir = state.aimDir;
-		this.currentTask = state.currentTask;
-		this.currentTaskTime = state.currentTaskTime;
-		this.currentTaskTimeRemaining = state.currentTaskTimeRemaining;
-		this.currentHit = state.currentHit;
-		this.freezeTimeRemaining = state.freezeTimeRemaining;
-		this.team = state.team;
-		this.jumpVelX = state.jumpVelX;
-		this.jumpVelY = state.jumpVelY;
+	Player.prototype.getWalkDir = function() {
+		return this.walkWaypointChange === null ? 0 : this.walkWaypointChange;
 	};
 	Player.prototype.startOfFrame = function(t) {
-		if(this.currentTask && this.freezeTimeRemaining === null) {
-			this.currentTaskTime += t;
-			if(this.currentTaskTimeRemaining !== null) {
-				this.currentTaskTimeRemaining -= t;
-				if(this.currentTaskTimeRemaining <= 0.0) {
-					this._setTask(null);
-				}
-			}
-		}
-		this.activeHitBoxes = getActivePlayerHitBoxes(this);
+		SUPERCLASS.prototype.startOfFrame.call(this, t);
 	};
 	Player.prototype.tick = function(t) {
-		//if we're in freeze frames, we skip most of the tick step
-		if(this.freezeTimeRemaining === null) {
-			//player is in the air, jumping
-			if(this.isJumping()) {
-				this.jumpVelY += GRAVITY * t;
-				this.y += this.jumpVelY * t;
-				this.x += this.jumpVelX * t;
-				if(this.y >= SharedConstants.BOTTOM_BOUND - this.height && this.jumpVelY > 0) {
-					//landed on the ground
-					this.y = SharedConstants.BOTTOM_BOUND - this.height;
-					this.jumpVelY = null;
-					this._setTask('landing', 25 / 60);
-				}
-			}
-			//player is walking (following a waypoint)
-			else if(this.waypointX !== null) {
-				//update the waypoint the player is following
-				this.waypointX += this.waypointDir * this.moveSpeed * t;
-				//move towards the waypoint
-				if(this.x < this.waypointX) {
-					this.x = Math.min(this.x + this.moveSpeed * t, this.waypointX);
-				}
-				else if(this.x > this.waypointX) {
-					this.x = Math.max(this.x - this.moveSpeed * t, this.waypointX);
-				}
-			}
-			//player is aiming
-			if(this.aimPos !== null) {
-				this.aimPos = capValue(-1.0, this.aimPos + this.aimDir * this.aimSpeed * t, 1.0);
-			}
-		}
+		SUPERCLASS.prototype.tick.call(this, t);
 
-		//keep player in bounds
-		if(this.x < SharedConstants.LEFT_BOUND) {
-			this.x = SharedConstants.LEFT_BOUND;
-			if(this.jumpVelX !== null) {
-				this.jumpVelX *= (this.jumpVelX < 0 ? -1 : 1) * this.wallBouncePercent;
+		//update task
+		if(this.task !== null) {
+			this.taskTimeSpent += t;
+			if(this.taskTimeRemaining !== null) {
+				this.taskTimeRemaining -= t;
+				if(this.taskTimeRemaining <= 0.0) {
+					this.task = null;
+					this.taskTimeSpent = null;
+					this.taskTimeRemaining = null;
+				}
 			}
 		}
-		if(this.x > SharedConstants.RIGHT_BOUND - this.width) {
-			this.x = SharedConstants.RIGHT_BOUND - this.width;
-			if(this.jumpVelX !== null) {
-				this.jumpVelX *= (this.jumpVelX > 0 ? -1 : 1) * this.wallBouncePercent;
+		//keep charging
+		if(this.chargeRate !== null) {
+			this.charge = Math.min(this.charge + this.chargeRate * t, 1.0);
+		}
+		//aim
+		if(this.isAiming()) {
+			this.aimWaypoint += this.aimWaypointChange * this.aimSpeed * t;
+			if(this.aim < this.aimWaypoint) {
+				this.aim = Math.min(this.aimWaypoint, this.aim + this.aimSpeed * t);
 			}
+			else if(this.aim > this.aimWaypoint) {
+				this.aim = Math.max(this.aimWaypoint, this.aim - this.aimSpeed * t);
+			}
+			this.aim = Math.max(-1.0, Math.min(this.aim, 1.0));
+		}
+		//jump
+		if(this.isAirborne()) {
+			var oldJumpVelY = this.jumpVelY;
+			this.jumpVelY += this.gravity * t;
+			this.x += this.jumpVelX * t;
+			this.y += (this.jumpVelY + oldJumpVelY) / 2 * t;
+			if(this.bottom >= config.FLOOR_Y) {
+				this.returnToNeutralGroundedState();
+				this.setTask('landing', 20 / 60);
+			}
+		}
+		//follow waypoint
+		else if(this.walkWaypoint !== null) {
+			this.walkWaypoint += this.walkWaypointChange * this.walkSpeed * t;
+			if(this.x < this.walkWaypoint) {
+				this.x = Math.min(this.walkWaypoint, this.x + this.walkSpeed * t);
+			}
+			else if(this.x > this.walkWaypoint) {
+				this.x = Math.max(this.walkWaypoint, this.x - this.walkSpeed * t);
+			}
+		}
+		//keep in bounds
+		if(this.left < config.LEFT_WALL_X) {
+			this.left = config.LEFT_WALL_X;
+		}
+		else if(this.right > config.RIGHT_WALL_X) {
+			this.right = config.RIGHT_WALL_X;
 		}
 	};
 	Player.prototype.endOfFrame = function(t) {
-		if(this.freezeTimeRemaining !== null) {
-			this.freezeTimeRemaining -= t;
-			if(this.freezeTimeRemaining <= 0) {
-				this.freezeTimeRemaining = null;
-			}
-		}
+		SUPERCLASS.prototype.endOfFrame.call(this, t);
 	};
-	Player.prototype.on = function(eventName, callback) {
-		this._events.on(eventName, callback);
-	};
+	Object.defineProperties(Player.prototype, {
+		left: { get: function() { return this.x; },
+			set: function(left) { this.x = left; } },
+		right: { get: function() { return this.x + this.width; },
+			set: function(right) { this.x = right - this.width; } },
+		top: { get: function() { return this.y; },
+			set: function(top) { this.y = top; } },
+		bottom: { get: function() { return this.y + this.height; },
+			set: function(bottom) { this.y = bottom - this.height; } },
+		centerX: { get: function() { return this.x + this.width / 2; },
+			set: function(x) { this.x = x - this.width / 2; } },
+		centerY: { get: function() { return this.y + this.height / 2; },
+			set: function(y) { this.y = y - this.height / 2; } }
+	});
 	return Player;
 });

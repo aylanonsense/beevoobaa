@@ -1,14 +1,14 @@
 define([
-	'shared/utils/EventHelper',
-	'shared/Constants'
+	'shared/entity/Entity',
+	'shared/config'
 ], function(
-	EventHelper,
-	SharedConstants
+	SUPERCLASS,
+	config
 ) {
-	var GRAVITY = 100;
 	function Ball(state) {
-		//constants (not stateful)
-		this.radius = 40;
+		//constants
+		this.radius = 25;
+		this.gravity = 150;
 
 		//stateful vars
 		this.x = 0;
@@ -16,88 +16,82 @@ define([
 		this.velX = 0;
 		this.velY = 0;
 		this.verticalEnergy = 0;
-		this.claimedTeam = null;
-		this.power = 0;
-		this.spin = 0;
-		this._recalculateVerticalEnergy();
+		this._recalculateEnergy();
 
-		this._events = new EventHelper([ 'perform-action' ]);
-
-		//if a state was given, apply it
-		if(state) {
-			this.setState(state);
-		}
+		SUPERCLASS.call(this, 'Ball', state, [ 'x', 'y', 'velX', 'velY', 'verticalEnergy' ]);
 	}
-	Ball.prototype.handleHit = function(hit) {
-		//TODO
-		this.velY = -150;
-		this.velX = 0;
-	};
-	Ball.prototype.setPositionAndVelocity = function(x, y, velX, velY) {
-		this.x = x;
-		this.y = y;
-		this.velX = velX;
-		this.velY = velY;
-		this._recalculateVerticalEnergy();
-	};
+	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype.canPerformAction = function(action) {
 		return false;
 	};
 	Ball.prototype.performAction = function(action) {};
-	Ball.prototype.getState = function() {
-		return {
-			x: this.x,
-			y: this.y,
-			velX: this.velX,
-			velY: this.velY,
-			verticalEnergy: this.verticalEnergy,
-			power: this.power,
-			spin: this.spin,
-			claimedTeam: this.claimedTeam
-		};
+	Ball.prototype.teleportTo = function(x, y) {
+		this.x = x;
+		this.y = y;
+		this._recalculateEnergy();
+	};
+	Ball.prototype.setVelocity = function(x, y) {
+		this.velX = x;
+		this.velY = y;
+		this._recalculateEnergy();
 	};
 	Ball.prototype.setState = function(state) {
-		this.x = state.x;
-		this.y = state.y;
-		this.velX = state.velX;
-		this.velY = state.velY;
-		this.verticalEnergy = state.verticalEnergy;
-		this.power = state.power;
-		this.spin = state.spin;
-		this.claimedTeam = state.claimedTeam;
+		SUPERCLASS.prototype.setState.call(this, state);
 	};
-	Ball.prototype._recalculateVerticalEnergy = function() {
-		var height = SharedConstants.BOTTOM_BOUND - this.y - this.radius;
-		this.verticalEnergy = this.velY * this.velY / 2 + height * GRAVITY;
+	Ball.prototype._recalculateEnergy = function() {
+		var height = config.FLOOR_Y - this.bottom;
+		this.verticalEnergy = this.velY * this.velY / 2 + height * this.gravity;
 	};
-	Ball.prototype.startOfFrame = function(t) {};
+	Ball.prototype.startOfFrame = function(t) {
+		SUPERCLASS.prototype.startOfFrame.call(this, t);
+	};
 	Ball.prototype.tick = function(t) {
-		//update velocity
-		var oldVelX = this.velX;
+		SUPERCLASS.prototype.tick.call(this, t);
+
 		var oldVelY = this.velY;
-		this.velY += GRAVITY * t;
-
-		//apply velocity
-		this.x += t * (this.velX + oldVelX) / 2;
-		this.y += t * (this.velY + oldVelY) / 2;
-
-		//keep ball in bounds
-		if(this.x < SharedConstants.LEFT_BOUND + this.radius) {
-			this.x = SharedConstants.LEFT_BOUND + this.radius;
-			this.velX *= (this.velX < 0 ? -1 : 1);
+		this.velY += this.gravity * t;
+		this.x += this.velX * t;
+		this.y += (this.velY + oldVelY) / 2 * t;
+		//keep in bounds
+		if(this.left < config.LEFT_WALL_X) {
+			this.left = config.LEFT_WALL_X;
+			if(this.velX < 0) {
+				this.velX *= -1;
+			}
 		}
-		if(this.x > SharedConstants.RIGHT_BOUND - this.radius) {
-			this.x = SharedConstants.RIGHT_BOUND - this.radius;
-			this.velX *= (this.velX > 0 ? -1 : 1);
+		else if(this.right > config.RIGHT_WALL_X) {
+			this.right = config.RIGHT_WALL_X;
+			if(this.velX > 0) {
+				this.velX *= -1;
+			}
 		}
-		if(this.y > SharedConstants.BOTTOM_BOUND - this.radius) {
-			this.y = SharedConstants.BOTTOM_BOUND - this.radius;
-			this.velY = -Math.sqrt(2 * this.verticalEnergy);
+		else if(this.bottom > config.FLOOR_Y) {
+			this.bottom = config.FLOOR_Y;
+			if(this.velY > 0) {
+				this.velY = -Math.sqrt(2 * this.verticalEnergy);
+			}
 		}
 	};
-	Ball.prototype.endOfFrame = function(t) {};
-	Ball.prototype.on = function(eventName, callback) {
-		this._events.on(eventName, callback);
+	Ball.prototype.endOfFrame = function(t) {
+		SUPERCLASS.prototype.endOfFrame.call(this, t);
 	};
+	Object.defineProperties(Ball.prototype, {
+		left: { get: function() { return this.x - this.radius; },
+			set: function(left) { this.x = left + this.radius; } },
+		right: { get: function() { return this.x + this.radius; },
+			set: function(right) { this.x = right - this.radius; } },
+		top: { get: function() { return this.y - this.radius; },
+			set: function(top) { this.y = top + this.radius; } },
+		bottom: { get: function() { return this.y + this.radius; },
+			set: function(bottom) { this.y = bottom - this.radius; } },
+		centerX: { get: function() { return this.x; },
+			set: function(x) { this.x = x; } },
+		centerY: { get: function() { return this.y; },
+			set: function(y) { this.y = y; } },
+		width: { get: function() { return 2 * this.radius; },
+			set: function(width) { this.radius = width / 2; } },
+		height: { get: function() { return 2 * this.radius; },
+			set: function(height) { this.raddius = height / 2; } }
+	});
 	return Ball;
 });

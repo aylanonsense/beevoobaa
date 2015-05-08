@@ -1,12 +1,12 @@
 define([
+	'shared/net/generateFakeLag',
 	'shared/utils/DelayQueue',
 	'shared/utils/EventHelper',
-	'shared/utils/generateFakeLag',
 	'shared/utils/now'
 ], function(
+	generateFakeLag,
 	DelayQueue,
 	EventHelper,
-	generateFakeLag,
 	now
 ) {
 	var socket = null;
