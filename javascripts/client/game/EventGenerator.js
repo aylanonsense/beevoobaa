@@ -254,6 +254,7 @@ define([
 				playerId: player.entityId,
 				playerX: player.x,
 				playerY: player.y,
+				playerIsGrounded: player.isGrounded(),
 				playerSwingType: player.swingType,
 				playerCharge: player.charge,
 				playerAim: player.aim,
@@ -262,7 +263,9 @@ define([
 				ballX: ball.x,
 				ballY: ball.y,
 				ballVelX: ball.velX,
-				ballVelY: ball.velY
+				ballVelY: ball.velY,
+				ballSpin: ball.spin,
+				ballPower: ball.power
 			});
 			return true;
 		}

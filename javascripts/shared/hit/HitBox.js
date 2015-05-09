@@ -11,6 +11,7 @@ define([
 		this.orientationY = params.orientationY;
 		this.isSweet = params.isSweet || false;
 		this.isSour = params.isSour || false;
+		this.onHitFunc = params.onHitFunc;
 		var squareOrientationLength = this.orientationX * this.orientationX +
 			this.orientationY * this.orientationY;
 		if(squareOrientationLength !== 1) {
@@ -38,13 +39,7 @@ define([
 			hitY <= ballY && ballY <= hitY + this.height;
 	};
 	HitBox.prototype.getHitProperties = function(player, ball) {
-		//TODO better hit properties
-		return {
-			ballX: ball.x,
-			ballY: ball.y,
-			ballVelX: 0,
-			ballVelY: -100
-		};
+		return this.onHitFunc.call(this, player, ball);
 	};
 	return HitBox;
 });

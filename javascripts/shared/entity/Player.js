@@ -84,6 +84,12 @@ define([
 		this.stopAiming();
 		this.stopSwinging();
 		this.stopCharging();
+		if(this.jumpVelX === null) {
+			this.jumpVelX = 0;
+		}
+		if(this.jumpVelY === null) {
+			this.jumpVelY = 0;
+		}
 	};
 	Player.prototype.canPerformAction = function(action) {
 		var swing;
@@ -162,14 +168,23 @@ define([
 			else {
 				this.returnToNeutralAirborneState();
 			}
-			this.setTask('swinging', swing.swingDuration);
+			this.setTask('swinging', swing.swingTime);
 			this.swingType = action.swingType;
 			this.charge = action.charge;
 			this.aim = action.aim;
 		}
 	};
 	Player.prototype.hitBall = function(params) {
-		throw new Error("Not sure how to hit ball, but should be pretty easy based on params");
+		if(params.isGrounded) {
+			this.returnToNeutralGroundedState();
+		}
+		else {
+			this.returnToNeutralAirborneState();
+			this.y = params.y;
+		}
+		this.x = params.x;
+		this.setTask('hitting', playerSwingProperties[params.swingType].swingSuccessTime);
+		this.swingType = params.swingType;
 	};
 	Player.prototype.getActiveHitBoxes = function() {
 		if(this.task === 'swinging' &&
@@ -183,7 +198,7 @@ define([
 	};
 	Player.prototype.checkForHit = function(ball) {
 		//the player is swinging and has hitboxes active, but which hitbox is the one hitting the ball?
-	var activeHitBoxes = this.getActiveHitBoxes();
+		var activeHitBoxes = this.getActiveHitBoxes();
 		for(var i = 0; i < activeHitBoxes.length; i++) {
 			if(activeHitBoxes[i].areHitting(this, ball)) {
 				return activeHitBoxes[i].getHitProperties(this, ball);

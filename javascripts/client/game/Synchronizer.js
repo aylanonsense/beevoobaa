@@ -30,7 +30,7 @@ define([
 		//TODO
 	};
 	Synchronizer.prototype._syncBall = function(t, ball, serverBall, futureBall, isPlayerControlled) {
-		var idealBall = (isPlayerControlled ? futureBall : serverBall);
+		var idealBall = futureBall; //TODO (isPlayerControlled ? futureBall : serverBall);
 
 		//measure distance from ball currently to where it should be ideally
 		var distX = idealBall.x - ball.x;
@@ -38,13 +38,13 @@ define([
 		var squareDist = distX * distX + distY * distY;
 
 		//for big mistakes, we snap to the ideal
-		if(squareDist > 30 * 30) {
+		if(squareDist > 20 * 20) {
 			ball.setState(idealBall.getState());
 		}
 		//otherwise we nudge the ball towards the ideal to fix small mistakes
 		else {
-			ball.x += distX / 2 * t;
-			ball.y += distY / 2 * t;
+			ball.x += distX * t;
+			ball.y += distY * t;
 		}
 	};
 	Synchronizer.prototype.reset = function() {};

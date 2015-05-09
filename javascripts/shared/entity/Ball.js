@@ -32,7 +32,13 @@ define([
 	};
 	Ball.prototype.performAction = function(action) {};
 	Ball.prototype.getHit = function(params) {
-		throw new Error("Unsure how to process this but should be easy based on params");
+		this.x = params.x;
+		this.y = params.y;
+		this.velX = params.velX;
+		this.velY = params.velY;
+		this.spin = params.spin;
+		this.power = params.power;
+		this.team = params.team;
 	};
 	Ball.prototype.teleportTo = function(x, y) {
 		this.x = x;

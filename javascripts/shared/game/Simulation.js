@@ -83,21 +83,18 @@ define([
 		player.hitBall({
 			x: evt.playerX,
 			y: evt.playerY,
-			swingType: evt.playerSwingType,
-			charge: evt.playerChage,
-			aim: evt.playerAim
-			//TODO mix in some hit vars
+			isGrounded: evt.playerIsGrounded,
+			swingType: evt.playerSwingType
 		});
 		ball.getHit({
 			x: evt.ballX,
 			y: evt.ballY,
-			velX: evt.ballVekX,
-			velY: evt.ballVelY
-			//TODO mix in some hit vars
-			//TODO spin, power, control?
+			velX: evt.hit.velX,
+			velY: evt.hit.velY,
+			power: evt.hit.power,
+			spin: evt.hit.spin,
+			team: evt.hit.team
 		});
-		//TODO some additional effects based on hit?
-		throw new Error("This method needs some additional loving");
 	};
 	Simulation.prototype.getEntityById = function(id) {
 		for(var i = 0; i < this.entities.length; i++) {

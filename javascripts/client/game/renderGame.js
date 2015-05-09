@@ -14,7 +14,7 @@ define([
 	sharedConfig
 ) {
 	return function(simulation, ctx, renderMode) {
-		var i;
+		var i, entity;
 		if(renderMode === 'background') {
 			ctx.fillStyle = '#fff';
 			ctx.fillRect(0, 0, config.CANVAS_WIDTH, config.CANVAS_HEIGHT);
@@ -22,23 +22,39 @@ define([
 		else if(renderMode === 'silhouettes') {
 			ctx.fillStyle = '#0f6';
 			for(i = 0; i < simulation.entities.length; i++) {
-				ctx.fillRect(simulation.entities[i].left, simulation.entities[i].top,
-					simulation.entities[i].width, simulation.entities[i].height);
+				entity = simulation.entities[i];
+				if(entity.entityType === 'Player') {
+					ctx.fillRect(simulation.entities[i].left, simulation.entities[i].top,
+						simulation.entities[i].width, simulation.entities[i].height);
+				}
+				else if(entity.entityType === 'Ball') {
+					ctx.beginPath();
+					ctx.arc(entity.x, entity.y, entity.radius, 0, 2 * Math.PI);
+					ctx.fill();
+				}
 			}
 		}
 		else if(renderMode === 'outlines') {
 			ctx.strokeStyle = '#0f6';
 			ctx.lineWidth = 1;
 			for(i = 0; i < simulation.entities.length; i++) {
-				ctx.strokeRect(simulation.entities[i].left, simulation.entities[i].top,
-					simulation.entities[i].width, simulation.entities[i].height);
+				entity = simulation.entities[i];
+				if(entity.entityType === 'Player') {
+					ctx.strokeRect(simulation.entities[i].left, simulation.entities[i].top,
+						simulation.entities[i].width, simulation.entities[i].height);
+				}
+				else if(entity.entityType === 'Ball') {
+					ctx.beginPath();
+					ctx.arc(entity.x, entity.y, entity.radius, 0, 2 * Math.PI);
+					ctx.stroke();
+				}
 			}
 		}
 		else {
 			ctx.strokeStyle = '#000';
 			ctx.lineWidth = 2;
 			for(i = 0; i < simulation.entities.length; i++) {
-				var entity = simulation.entities[i];
+				entity = simulation.entities[i];
 				ctx.fillStyle = '#f00';
 				if(entity.entityType === 'Player') {
 					if(entity.task === 'charging-swing') {
@@ -48,8 +64,8 @@ define([
 						ctx.fillStyle = '#f0f';
 					}
 				}
-				ctx.fillRect(entity.left, entity.top, entity.width, entity.height);
 				if(entity.entityType === 'Player') {
+					ctx.fillRect(entity.left, entity.top, entity.width, entity.height);
 					if(entity.isAiming()) {
 						ctx.beginPath();
 						ctx.moveTo(entity.centerX, entity.centerY);
@@ -71,6 +87,12 @@ define([
 						ctx.fillRect(entity.centerX + hitBox.offsetX, entity.centerY + hitBox.offsetY,
 							hitBox.width, hitBox.height);
 					}
+				}
+				else if(entity.entityType === 'Ball') {
+					ctx.fillStyle = '#009';
+					ctx.beginPath();
+					ctx.arc(entity.x, entity.y, entity.radius, 0, 2 * Math.PI);
+					ctx.fill();
 				}
 			}
 		}
