@@ -1,29 +1,76 @@
 define([
 	'shared/entity/Entity',
+	'shared/hit/HitBox',
 	'shared/config'
 ], function(
 	SUPERCLASS,
+	HitBox,
 	config
 ) {
 	function Player(state) {
 		//constants
-		this.walkSpeed = 200;
-		this.aimSpeed = 1.0;
-		this.width = 40;
-		this.height = 60;
-		this.gravity = 150;
+		this.walkSpeed = 100;
+		this.aimSpeed = 1.75;
+		this.width = 32;
+		this.height = 50;
+		this.gravity = 60;
 		this.jumpProperties = {
-			timeToMaxCharge: 90 / 60
+			minSpeed: 50,
+			maxSpeed: 170,
+			maxHorizontalSpeed: 70,
+			timeToMaxCharge: 75 / 60,
+			landingTime: 30 / 60
 		};
 		this.swingProperties = {
-			bump: { isGrounded: true, swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60 },
-			set: { isGrounded: true, swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60 },
-			spike: { isGrounded: false, swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60 },
-			block: { isGrounded: false, swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60 }
+			bump: {
+				isGrounded: true,
+				swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60,
+				activeStartTime: 3 / 60,
+				activeEndTime: 56 / 60,
+				hitBoxes: [
+					new HitBox({ offsetX: 20,  offsetY: -30, width: 20, height: 20, orientationX: -1, orientationY: 1, isSweet: true }),
+					new HitBox({ offsetX: 5,   offsetY: -40, width: 50, height: 50, orientationX: -1, orientationY: 1 }),
+					new HitBox({ offsetX: -15, offsetY: -40, width: 20, height: 50, orientationX: -1, orientationY: 1, isSour: true }),
+					new HitBox({ offsetX: 55,  offsetY: -40, width: 20, height: 50, orientationX: -1, orientationY: 1, isSour: true })
+				]
+			}, set: {
+				isGrounded: true,
+				swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60,
+				activeStartTime: 3 / 60,
+				activeEndTime: 56 / 60,
+				hitBoxes: [
+					new HitBox({ offsetX: -10, offsetY: -60, width: 20, height: 20, orientationX: 0, orientationY: 1, isSweet: true }),
+					new HitBox({ offsetX: -30, offsetY: -70, width: 60, height: 40, orientationX: 0, orientationY: 1 }),
+					new HitBox({ offsetX: -50, offsetY: -70, width: 30, height: 40, orientationX: 0, orientationY: 1, isSour: true }),
+					new HitBox({ offsetX: 20,  offsetY: -70, width: 30, height: 40, orientationX: 0, orientationY: 1, isSour: true })
+				]
+			}, spike: {
+				isGrounded: false,
+				swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60,
+				activeStartTime: 3 / 60,
+				activeEndTime: 56 / 60,
+				hitBoxes: [
+					new HitBox({ offsetX: 35, offsetY: -30, width: 20, height: 20, orientationX: -1, orientationY: 0, isSweet: true }),
+					new HitBox({ offsetX: 15, offsetY: -50, width: 45, height: 55, orientationX: -1, orientationY: 0 }),
+					new HitBox({ offsetX: 0,  offsetY: -60, width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true }),
+					new HitBox({ offsetX: 25, offsetY: 0,   width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true })
+				]
+			}, block: {
+				isGrounded: false,
+				swingDuration: 45 / 60,
+				timeToMaxCharge: 90 / 60,
+				activeStartTime: 3 / 60,
+				activeEndTime: 56 / 60,
+				hitBoxes: [
+					new HitBox({ offsetX: 25, offsetY: -30, width: 20, height: 35, orientationX: -1, orientationY: 0, isSweet: true }),
+					new HitBox({ offsetX: 15, offsetY: -40, width: 45, height: 65, orientationX: -1, orientationY: 0 }),
+					new HitBox({ offsetX: 0,  offsetY: -50, width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true }),
+					new HitBox({ offsetX: 0,  offsetY: 0,   width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true })
+				]
+			}
 		};
 
 		//stateful vars
@@ -137,8 +184,9 @@ define([
 		else if(action.type === 'release-jump') {
 			this.returnToNeutralGroundedState();
 			this.teleportTo(action.x);
-			this.jumpVelX = 50 * action.charge * action.aim;
-			this.jumpVelY = -100 + -100 * action.charge;
+			this.jumpVelX = this.jumpProperties.maxHorizontalSpeed * action.aim;
+			this.jumpVelY = -this.jumpProperties.minSpeed * (1 - action.charge) -
+				this.jumpProperties.maxSpeed * (action.charge);
 		}
 		else if(action.type === 'charge-swing') {
 			swing = this.swingProperties[action.swingType];
@@ -167,6 +215,28 @@ define([
 			this.swingType = action.swingType;
 			this.charge = action.charge;
 			this.aim = action.aim;
+		}
+	};
+	Player.prototype.hitBall = function(params) {
+		throw new Error("Not sure how to hit ball, but should be pretty easy based on params");
+	};
+	Player.prototype.getActiveHitBoxes = function() {
+		if(this.task === 'swinging' &&
+			this.taskTimeSpent >= this.swingProperties[this.swingType].activeStartTime &&
+			this.taskTimeSpent < this.swingProperties[this.swingType].activeEndTime) {
+			return this.swingProperties[this.swingType].hitBoxes;
+		}
+		else {
+			return [];
+		}
+	};
+	Player.prototype.checkForHit = function(ball) {
+		//the player is swinging and has hitboxes active, but which hitbox is the one hitting the ball?
+	var activeHitBoxes = this.getActiveHitBoxes();
+		for(var i = 0; i < activeHitBoxes.length; i++) {
+			if(activeHitBoxes[i].areHitting(this, ball)) {
+				return activeHitBoxes[i].getHitProperties(this, ball);
+			}
 		}
 	};
 	Player.prototype.startCharging = function(timeToMaxCharge) {
@@ -259,7 +329,7 @@ define([
 			this.y += (this.jumpVelY + oldJumpVelY) / 2 * t;
 			if(this.bottom >= config.FLOOR_Y) {
 				this.returnToNeutralGroundedState();
-				this.setTask('landing', 20 / 60);
+				this.setTask('landing', this.jumpProperties.landingTime);
 			}
 		}
 		//follow waypoint

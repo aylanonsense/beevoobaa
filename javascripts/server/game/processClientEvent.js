@@ -85,12 +85,16 @@ define([
 		}
 	}
 
+	function processPlayerHitBall(simulation, player, ball, evt) {
+		throw new Error("Need to write how server responds to player hitting ball");
+	}
+
 	return function(conn, simulation, evt) {
 		var playableEntityId = conn.data.playableEntityId;
 		if(typeof playableEntityId !== 'number') { return; }
 		var entity = simulation.getEntityById(playableEntityId);
 
-		if(evt.type === 'perform-entity-action' && evt.entityId === playableEntityId) {
+		if(evt.type === 'perform-entity-action' && entity && evt.entityId === playableEntityId) {
 			var action = processEntityAction(simulation, entity, evt.action);
 			if(action === 'buffer-input') {
 				return 'buffer-input';
@@ -102,8 +106,11 @@ define([
 					action: action
 				};
 			}
-			else {
-				return undefined;
+		}
+		else if(evt.type === 'player-hit-ball' && entity && evt.playerId === playableEntityId) {
+			var ball = simulation.getEntityById(evt.ballId);
+			if(ball) {
+				return processPlayerHitBall(simulation, entity, ball, evt);
 			}
 		}
 	};

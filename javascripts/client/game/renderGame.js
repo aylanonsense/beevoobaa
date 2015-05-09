@@ -38,24 +38,38 @@ define([
 			ctx.strokeStyle = '#000';
 			ctx.lineWidth = 2;
 			for(i = 0; i < simulation.entities.length; i++) {
+				var entity = simulation.entities[i];
 				ctx.fillStyle = '#f00';
-				if(simulation.entities[i].entityType === 'Player') {
-					if(simulation.entities[i].task === 'charging-swing') {
+				if(entity.entityType === 'Player') {
+					if(entity.task === 'charging-swing') {
 						ctx.fillStyle = '#f08';
 					}
-					else if(simulation.entities[i].task === 'swinging') {
-						ctx.fillStyle = '#f0f'
+					else if(entity.task === 'swinging') {
+						ctx.fillStyle = '#f0f';
 					}
 				}
-				ctx.fillRect(simulation.entities[i].left, simulation.entities[i].top,
-					simulation.entities[i].width, simulation.entities[i].height);
-				if(simulation.entities[i].entityType === 'Player') {
-					if(simulation.entities[i].isAiming()) {
+				ctx.fillRect(entity.left, entity.top, entity.width, entity.height);
+				if(entity.entityType === 'Player') {
+					if(entity.isAiming()) {
 						ctx.beginPath();
-						ctx.moveTo(simulation.entities[i].centerX, simulation.entities[i].centerY);
-						ctx.lineTo(simulation.entities[i].centerX + simulation.entities[i].aim * 100,
-							simulation.entities[i].centerY - 50 - simulation.entities[i].charge * 100);
+						ctx.moveTo(entity.centerX, entity.centerY);
+						ctx.lineTo(entity.centerX + entity.aim * 100, entity.centerY - 50 - entity.charge * 100);
 						ctx.stroke();
+					}
+					var hitBoxes = entity.getActiveHitBoxes();
+					for(var j = hitBoxes.length - 1; j >= 0; j--) {
+						var hitBox = hitBoxes[j];
+						if(hitBox.isSweet) {
+							ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+						}
+						else if(hitBox.isSour) {
+							ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+						}
+						else {
+							ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
+						}
+						ctx.fillRect(entity.centerX + hitBox.offsetX, entity.centerY + hitBox.offsetY,
+							hitBox.width, hitBox.height);
 					}
 				}
 			}

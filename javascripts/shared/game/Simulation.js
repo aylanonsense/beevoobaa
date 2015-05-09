@@ -38,6 +38,9 @@ define([
 		else if(evt.type === 'perform-entity-action') {
 			this._performEntityAction(evt.entityId, evt.action);
 		}
+		else if(evt.type === 'player-hit-ball') {
+			this._playerHitBall(evt);
+		}
 		else {
 			throw new Error("Unknown event of type '" + evt.type + "'");
 		}
@@ -73,6 +76,28 @@ define([
 	};
 	Simulation.prototype._performEntityAction = function(id, action) {
 		this.getEntityById(id).performAction(action);
+	};
+	Simulation.prototype._playerHitBall = function(evt) {
+		var player = this.getEntityById(evt.playerId);
+		var ball = this.getEntityById(evt.ballId);
+		player.hitBall({
+			x: evt.playerX,
+			y: evt.playerY,
+			swingType: evt.playerSwingType,
+			charge: evt.playerChage,
+			aim: evt.playerAim
+			//TODO mix in some hit vars
+		});
+		ball.getHit({
+			x: evt.ballX,
+			y: evt.ballY,
+			velX: evt.ballVekX,
+			velY: evt.ballVelY
+			//TODO mix in some hit vars
+			//TODO spin, power, control?
+		});
+		//TODO some additional effects based on hit?
+		throw new Error("This method needs some additional loving");
 	};
 	Simulation.prototype.getEntityById = function(id) {
 		for(var i = 0; i < this.entities.length; i++) {

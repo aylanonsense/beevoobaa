@@ -3,9 +3,9 @@ define({
 	FRAME_RATE: 60,
 
 	//game vars
-	FLOOR_Y: 475,
-	LEFT_WALL_X: 100,
-	RIGHT_WALL_X: 700,
+	FLOOR_Y: 485,
+	LEFT_WALL_X: 25,
+	RIGHT_WALL_X: 775,
 
 	//network
 	CLIENT_OUTGOING_MESSAGE_BUFFER_TIME: 3 / 60,

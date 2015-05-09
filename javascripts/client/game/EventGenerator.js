@@ -111,6 +111,11 @@ define([
 		if(typeof playableEntityId !== 'number') { return; }
 		var entity = this._simulation.getEntityById(playableEntityId);
 
+		//get all hittable balls
+		var balls = this._simulation.entities.filter(function(entity) {
+			return entity.entityType === 'Ball';
+		});
+
 		//try to charge a jump
 		if(this._heldInput === 'JUMP') {
 			if(this._tryToChargeJump(entity)) {
@@ -136,6 +141,12 @@ define([
 		if(entity.isAiming() && entity.isAimingHorizontally() &&
 			entity.getAimDir() !== this._dirX) {
 			this._tryToAim(entity, this._dirX);
+		}
+		//try to hit balls
+		for(var i = 0; i < balls.length; i++) {
+			if(this._tryToHitBall(entity, balls[i])) {
+				break;
+			}
 		}
 	};
 	EventGenerator.prototype._tryToWalk = function(player, dir) {
@@ -233,6 +244,30 @@ define([
 				charge: player.charge,
 				aim: player.aim
 			});
+		}
+	};
+	EventGenerator.prototype._tryToHitBall = function(player, ball) {
+		var hit = player.checkForHit(ball);
+		if(hit) {
+			this._events.trigger('event', {
+				type: 'player-hit-ball',
+				playerId: player.entityId,
+				playerX: player.x,
+				playerY: player.y,
+				playerSwingType: player.swingType,
+				playerCharge: player.charge,
+				playerAim: player.aim,
+				hit: hit,
+				ballId: ball.entityId,
+				ballX: ball.x,
+				ballY: ball.y,
+				ballVelX: ball.velX,
+				ballVelY: ball.velY
+			});
+			return true;
+		}
+		else {
+			return false;
 		}
 	};
 	EventGenerator.prototype._tryEntityAction = function(entity, action) {

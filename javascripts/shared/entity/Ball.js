@@ -8,7 +8,9 @@ define([
 	function Ball(state) {
 		//constants
 		this.radius = 25;
-		this.gravity = 150;
+		this.gravity = 60;
+		this.horizontalFriction = 0.25;
+		this.spinFriction = 0.25;
 
 		//stateful vars
 		this.x = 0;
@@ -16,15 +18,22 @@ define([
 		this.velX = 0;
 		this.velY = 0;
 		this.verticalEnergy = 0;
+		this.spin = 0;
+		this.team = null;
+		this.power = 0;
 		this._recalculateEnergy();
 
-		SUPERCLASS.call(this, 'Ball', state, [ 'x', 'y', 'velX', 'velY', 'verticalEnergy' ]);
+		SUPERCLASS.call(this, 'Ball', state, [ 'x', 'y', 'velX', 'velY', 'verticalEnergy',
+			'spin', 'team,', 'power' ]);
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype.canPerformAction = function(action) {
 		return false;
 	};
 	Ball.prototype.performAction = function(action) {};
+	Ball.prototype.getHit = function(params) {
+		throw new Error("Unsure how to process this but should be easy based on params");
+	};
 	Ball.prototype.teleportTo = function(x, y) {
 		this.x = x;
 		this.y = y;
@@ -48,10 +57,32 @@ define([
 	Ball.prototype.tick = function(t) {
 		SUPERCLASS.prototype.tick.call(this, t);
 
+		//keep track of old velocities
+		var oldVelX = this.velX;
 		var oldVelY = this.velY;
+
+		//calculate new velocity vector
+		//lose horizontal velocity very quickly
+		this.velX *= Math.pow(Math.E, -this.horizontalFriction * t);
+		//apply gravity
 		this.velY += this.gravity * t;
-		this.x += this.velX * t;
+		//spin vector
+		if(this.spin !== 0) {
+			var angle = this.spin / (40 * Math.PI) * t;
+			var cosAngle = Math.cos(angle);
+			var sinAngle = Math.sin(angle);
+			var tempVelX = this.velX;
+			this.velX = tempVelX * cosAngle - this.velY * sinAngle;
+			this.velY = tempVelX * sinAngle + this.velY * cosAngle;
+		}
+
+		//apply velocity to position (averaging old and new velocity is better, trust me)
+		this.x += (this.velX + oldVelX) / 2 * t;
 		this.y += (this.velY + oldVelY) / 2 * t;
+
+		//degrade spin
+		this.spin *= Math.pow(Math.E, -this.spinFriction * t);
+
 		//keep in bounds
 		if(this.left < config.LEFT_WALL_X) {
 			this.left = config.LEFT_WALL_X;
