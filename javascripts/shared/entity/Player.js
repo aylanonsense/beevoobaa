@@ -1,10 +1,12 @@
 define([
 	'shared/entity/Entity',
 	'shared/hit/HitBox',
+	'shared/entity/playerSwingProperties',
 	'shared/config'
 ], function(
 	SUPERCLASS,
 	HitBox,
+	playerSwingProperties,
 	config
 ) {
 	function Player(state) {
@@ -20,57 +22,6 @@ define([
 			maxHorizontalSpeed: 70,
 			timeToMaxCharge: 75 / 60,
 			landingTime: 30 / 60
-		};
-		this.swingProperties = {
-			bump: {
-				isGrounded: true,
-				swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60,
-				activeStartTime: 3 / 60,
-				activeEndTime: 56 / 60,
-				hitBoxes: [
-					new HitBox({ offsetX: 20,  offsetY: -30, width: 20, height: 20, orientationX: -1, orientationY: 1, isSweet: true }),
-					new HitBox({ offsetX: 5,   offsetY: -40, width: 50, height: 50, orientationX: -1, orientationY: 1 }),
-					new HitBox({ offsetX: -15, offsetY: -40, width: 20, height: 50, orientationX: -1, orientationY: 1, isSour: true }),
-					new HitBox({ offsetX: 55,  offsetY: -40, width: 20, height: 50, orientationX: -1, orientationY: 1, isSour: true })
-				]
-			}, set: {
-				isGrounded: true,
-				swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60,
-				activeStartTime: 3 / 60,
-				activeEndTime: 56 / 60,
-				hitBoxes: [
-					new HitBox({ offsetX: -10, offsetY: -60, width: 20, height: 20, orientationX: 0, orientationY: 1, isSweet: true }),
-					new HitBox({ offsetX: -30, offsetY: -70, width: 60, height: 40, orientationX: 0, orientationY: 1 }),
-					new HitBox({ offsetX: -50, offsetY: -70, width: 30, height: 40, orientationX: 0, orientationY: 1, isSour: true }),
-					new HitBox({ offsetX: 20,  offsetY: -70, width: 30, height: 40, orientationX: 0, orientationY: 1, isSour: true })
-				]
-			}, spike: {
-				isGrounded: false,
-				swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60,
-				activeStartTime: 3 / 60,
-				activeEndTime: 56 / 60,
-				hitBoxes: [
-					new HitBox({ offsetX: 35, offsetY: -30, width: 20, height: 20, orientationX: -1, orientationY: 0, isSweet: true }),
-					new HitBox({ offsetX: 15, offsetY: -50, width: 45, height: 55, orientationX: -1, orientationY: 0 }),
-					new HitBox({ offsetX: 0,  offsetY: -60, width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true }),
-					new HitBox({ offsetX: 25, offsetY: 0,   width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true })
-				]
-			}, block: {
-				isGrounded: false,
-				swingDuration: 45 / 60,
-				timeToMaxCharge: 90 / 60,
-				activeStartTime: 3 / 60,
-				activeEndTime: 56 / 60,
-				hitBoxes: [
-					new HitBox({ offsetX: 25, offsetY: -30, width: 20, height: 35, orientationX: -1, orientationY: 0, isSweet: true }),
-					new HitBox({ offsetX: 15, offsetY: -40, width: 45, height: 65, orientationX: -1, orientationY: 0 }),
-					new HitBox({ offsetX: 0,  offsetY: -50, width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true }),
-					new HitBox({ offsetX: 0,  offsetY: 0,   width: 30, height: 30, orientationX: -1, orientationY: 0, isSour: true })
-				]
-			}
 		};
 
 		//stateful vars
@@ -149,11 +100,11 @@ define([
 			return this.isGrounded() && this.task === 'charging-jump';
 		}
 		else if(action.type === 'charge-swing') {
-			swing = this.swingProperties[action.swingType];
+			swing = playerSwingProperties[action.swingType];
 			return !this.task && (swing.isGrounded ? this.isGrounded() : this.isAirborne());
 		}
 		else if(action.type === 'release-swing') {
-			swing = this.swingProperties[action.swingType];
+			swing = playerSwingProperties[action.swingType];
 			return this.task === 'charging-swing' && this.swingType === action.swingType &&
 				(swing.isGrounded ? this.isGrounded() : this.isAirborne());
 		}
@@ -189,7 +140,7 @@ define([
 				this.jumpProperties.maxSpeed * (action.charge);
 		}
 		else if(action.type === 'charge-swing') {
-			swing = this.swingProperties[action.swingType];
+			swing = playerSwingProperties[action.swingType];
 			if(swing.isGrounded) {
 				this.returnToNeutralGroundedState();
 				this.teleportTo(action.x);
@@ -203,7 +154,7 @@ define([
 			this.startCharging(swing.timeToMaxCharge);
 		}
 		else if(action.type === 'release-swing') {
-			swing = this.swingProperties[action.swingType];
+			swing = playerSwingProperties[action.swingType];
 			if(swing.isGrounded) {
 				this.returnToNeutralGroundedState();
 				this.teleportTo(action.x);
@@ -222,9 +173,9 @@ define([
 	};
 	Player.prototype.getActiveHitBoxes = function() {
 		if(this.task === 'swinging' &&
-			this.taskTimeSpent >= this.swingProperties[this.swingType].activeStartTime &&
-			this.taskTimeSpent < this.swingProperties[this.swingType].activeEndTime) {
-			return this.swingProperties[this.swingType].hitBoxes;
+			this.taskTimeSpent >= playerSwingProperties[this.swingType].activeStartTime &&
+			this.taskTimeSpent < playerSwingProperties[this.swingType].activeEndTime) {
+			return playerSwingProperties[this.swingType].hitBoxes;
 		}
 		else {
 			return [];
