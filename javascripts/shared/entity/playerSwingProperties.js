@@ -1,7 +1,9 @@
 define([
-	'shared/hit/HitBox'
+	'shared/hit/HitBox',
+	'shared/math/Vector'
 ], function(
-	HitBox
+	HitBox,
+	Vector
 ) {
 	function createOnHitFunc() {
 		return function() {
@@ -16,12 +18,24 @@ define([
 	}
 
 	function bump(player, ball) {
+		var vel = new Vector(ball.velX, ball.velY);
+		var angle = (new Vector(1, -0.5 * player.aim)).angle();
+		vel.rotate(angle);
+		if(vel.y > 0) {
+			vel.y *= -1;
+		}
+		else if(angle !== 0) {
+			vel.x *= -1;
+		}
+		var addedVel = -75 - 100 * player.charge;
+		vel.y = Math.min(vel.y, addedVel) * 0.75 + Math.max(vel.y, addedVel) * 0.25;
+		vel.unrotate(angle);
 		return {
-			velX: -50,
-			velY: -150,
-			spin: -50,
-			power: 0,
-			team: null
+			velX: vel.x,
+			velY: vel.y,
+			spin: ball.spin,
+			power: ball.power,
+			team: ball.team
 		};
 	}
 

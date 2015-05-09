@@ -39,6 +39,7 @@ define([
 		this.spin = params.spin;
 		this.power = params.power;
 		this.team = params.team;
+		this._recalculateEnergy();
 	};
 	Ball.prototype.teleportTo = function(x, y) {
 		this.x = x;

@@ -89,15 +89,22 @@ define([
 	});
 
 	function predictFutureState() {
+		var i, eventGameTime;
 		futureSimulation.setState(serverSimulation.getState());
 		var roundTripTime = Clock.getRoundTripTime();
 		var currentGameTime = Clock.getClientGameTime();
 		var futureGameTime = currentGameTime + roundTripTime;
 		var gameTime = currentGameTime;
+		for(i = 0; i < recentClientEvents.length; i++) {
+			eventGameTime = recentClientEvents[i].gameTime + roundTripTime;
+			if(gameTime <= eventGameTime - 2 / sharedConfig.FRAME_RATE && eventGameTime < gameTime) {
+				futureSimulation.applyEvent(recentClientEvents[i].evt);
+			}
+		}
 		while(gameTime < futureGameTime) {
 			var t = Math.min(1 / sharedConfig.FRAME_RATE, futureGameTime - gameTime);
-			for(var i = 0; i < recentClientEvents.length; i++) {
-				var eventGameTime = recentClientEvents[i].gameTime + roundTripTime;
+			for(i = 0; i < recentClientEvents.length; i++) {
+				eventGameTime = recentClientEvents[i].gameTime + roundTripTime;
 				if(gameTime <= eventGameTime && eventGameTime < gameTime + t) {
 					futureSimulation.applyEvent(recentClientEvents[i].evt);
 				}
