@@ -7,7 +7,7 @@ define([
 		this.entityId = null;
 		this.entityType = entityType;
 		this._statefulVars = statefulVars;
-		this.timeSpentAlive = 0;
+		this.lifeTime = 0;
 
 		//if a state was given, apply it
 		if(state) {
@@ -23,7 +23,7 @@ define([
 	Entity.prototype.getState = function() {
 		var state = {
 			entityId: this.entityId,
-			timeSpentAlive: this.timeSpentAlive
+			lifeTime: this.lifeTime
 		};
 		for(var i = 0; i < this._statefulVars.length; i++) {
 			state[this._statefulVars[i]] = this[this._statefulVars[i]];
@@ -32,13 +32,13 @@ define([
 	};
 	Entity.prototype.setState = function(state) {
 		this.entityId = state.entityId;
-		this.timeSpentAlive = state.timeSpentAlive;
+		this.lifeTime = state.lifeTime;
 		for(var i = 0; i < this._statefulVars.length; i++) {
 			this[this._statefulVars[i]] = state[this._statefulVars[i]];
 		}
 	};
 	Entity.prototype.startOfFrame = function(t) {
-		this.timeSpentAlive += t;
+		this.lifeTime += t;
 	};
 	Entity.prototype.tick = function(t) {};
 	Entity.prototype.endOfFrame = function(t) {};

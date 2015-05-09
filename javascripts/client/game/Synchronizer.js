@@ -1,7 +1,11 @@
 define([
-	'client/net/GameConnection'
+	'client/net/GameConnection',
+	'shared/entity/Ball',
+	'shared/config'
 ], function(
-	GameConnection
+	GameConnection,
+	Ball,
+	sharedConfig
 ) {
 	function Synchronizer(simulation, serverSimulation, futureSimulation) {
 		this._simulation = simulation;
@@ -30,15 +34,42 @@ define([
 		//TODO
 	};
 	Synchronizer.prototype._syncBall = function(t, ball, serverBall, futureBall, isPlayerControlled) {
-		var idealBall = futureBall; //TODO (isPlayerControlled ? futureBall : serverBall);
+		var distX, distY, squareDist;
+		var idealBall = serverBall;
+
+		//find the player character
+		var player = this._futureSimulation.getEntityById(GameConnection.data.playableEntityId);
+		if(player) {
+			//figure out how close the player is to the future place ball
+			distX = Math.abs(futureBall.x - player.centerX);
+			distY = Math.abs(futureBall.y - player.centerY);
+			var dist = Math.sqrt(distX * distX + 0.5 * distY * 0.5 * distY);
+
+			//figure out an ideal ball based on that
+			if(dist < 100) {
+				idealBall = futureBall;
+			}
+			else if(dist > 200) {
+				idealBall = serverBall;
+			}
+			else {
+				//we need to find a place in-between the server and future states
+				var closeness = (200 - dist) / 100;
+				idealBall = new Ball(serverBall.getState());
+				for(var t2 = closeness * (futureBall.lifeTime - serverBall.lifeTime);
+					t2 > 0; t2 -= 1 / sharedConfig.FRAME_RATE) {
+					idealBall.tick(Math.min(t2, 1 / sharedConfig.FRAME_RATE));
+				}
+			}
+		}
 
 		//measure distance from ball currently to where it should be ideally
-		var distX = idealBall.x - ball.x;
-		var distY = idealBall.y - ball.y;
-		var squareDist = distX * distX + distY * distY;
+		distX = 3 * idealBall.x - ball.x;
+		distY = 3 * idealBall.y - ball.y;
+		squareDist = distX * distX + distY * distY;
 
 		//for big mistakes, we snap to the ideal
-		if(squareDist > 20 * 20) {
+		if(squareDist > 35 * 35) {
 			ball.setState(idealBall.getState());
 		}
 		//otherwise we nudge the ball towards the ideal to fix small mistakes
