@@ -19,24 +19,44 @@ define([
 	}
 
 	function onBump(player, ball) {
-		var power = overcomePower(30 + 65 * player.charge, player, ball);
+		var power = overcomePower(15 + 55 * player.charge, player, ball);
 		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
-		var angle = (new Vector(1, -0.5 * player.aim)).angle();
-		vel.rotate(angle);
-		if(vel.y > 0) {
-			vel.y *= -1;
+		var angle, controlledVel, spin;
+		//controlled hit
+		if(team === player.team || team === null) {
+			angle = (new Vector(1, -0.5 * player.aim)).angle();
+			vel.rotate(angle);
+			if(vel.y > 0) {
+				vel.y *= -1;
+			}
+			else if(angle !== 0) {
+				vel.x *= -1;
+			}
+			controlledVel = -75 - 100 * player.charge;
+			vel.y = Math.min(vel.y, controlledVel) * 0.75 + Math.max(vel.y, controlledVel) * 0.25;
+			vel.unrotate(angle);
+			spin = ball.spin + 25 * player.aim;
 		}
-		else if(angle !== 0) {
-			vel.x *= -1;
+		//deflected hit
+		else {
+			angle = (new Vector(1, -0.15 * player.aim)).angle();
+			vel.rotate(angle);
+			if(vel.y > 0) {
+				vel.y *= -1;
+			}
+			else if(angle !== 0) {
+				vel.x *= -1;
+			}
+			controlledVel = -100 - 75 * player.charge;
+			vel.y = vel.y * 0.85 + controlledVel * 0.15;
+			vel.unrotate(angle);
+			spin = 1.2 * ball.spin + 80 * player.aim;
 		}
-		var controlledVel = -75 - 100 * player.charge;
-		vel.y = Math.min(vel.y, controlledVel) * 0.75 + Math.max(vel.y, controlledVel) * 0.25;
-		vel.unrotate(angle);
 		return {
 			velX: vel.x,
 			velY: vel.y,
-			spin: ball.spin + 25 * player.aim,
+			spin: spin,
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
@@ -48,17 +68,32 @@ define([
 		var power = overcomePower(5 + 20 * player.charge, player, ball);
 		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
-		if(vel.y > 0) {
-			vel.y *= -1;
+		var spin, controlledVel;
+		//controlled hit
+		if(team === player.team || team === null) {
+			if(vel.y > 0) {
+				vel.y *= -1;
+			}
+			vel.x *= 0.5;
+			vel.x += player.aim * player.charge * 35;
+			controlledVel = -60 - 90 * player.charge;
+			vel.y = controlledVel * 0.75 + vel.y * 0.25;
+			spin = ball.spin * 0.5;
 		}
-		vel.x *= 0.5;
-		vel.x += player.aim * player.charge * 35;
-		var controlledVel = -60 - 90 * player.charge;
-		vel.y = controlledVel * 0.75 + vel.y * 0.25;
+		//deflected hit
+		else {
+			if(vel.y > 0) {
+				vel.y *= -0.5;
+			}
+			vel.x += player.aim * player.charge * 10;
+			controlledVel = -30 - 45 * player.charge;
+			vel.y = vel.y * 0.85 + controlledVel * 0.15;
+			spin = 1.2 * ball.spin + 20 * player.charge + 80 * player.aim;
+		}
 		return {
 			velX: vel.x,
 			velY: vel.y,
-			spin: ball.spin * 0.5,
+			spin: spin,
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
@@ -67,7 +102,7 @@ define([
 	}
 
 	function onSpike(player, ball) {
-		var hitPower = 20 + 50 * player.charge;
+		var hitPower = 25 + 55 * player.charge;
 		var stoppingPower = 0.9 * hitPower;
 		var power, team;
 		if(ball.team === player.team || ball.team === null) {
@@ -84,14 +119,25 @@ define([
 		}
 		var vel = new Vector(ball.velX, ball.velY);
 		var angle = (new Vector(-0.7 - 0.3 * player.aim, -1)).angle();
+		var spin;
 		vel.rotate(angle);
-		vel.x = 0;
-		vel.y = -75 - 150 * player.charge;
+		//controlled hit
+		if(team === player.team || team === null) {
+			vel.x = 0;
+			vel.y = -75 - 150 * player.charge;
+			spin = ball.spin + 20 * player.aim + 20 * player.aim * player.charge;
+		}
+		//deflected hit
+		else {
+			vel.x *= 0.8;
+			vel.y -= 30 + 40 * player.charge;
+			spin = ball.spin * 1.4 + 30 + 60 * player.aim;
+		}
 		vel.unrotate(angle);
 		return {
 			velX: vel.x,
 			velY: vel.y,
-			spin: ball.spin + 20 * player.aim + 20 * player.aim * player.charge,
+			spin: spin,
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
@@ -103,12 +149,22 @@ define([
 		var power = overcomePower(25 + 50 * player.charge, player, ball);
 		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
-		vel.x = Math.max(vel.x, 25 + 40 * player.charge);
-		vel.y = 0.5 * vel.y - 10 + (10 + 20 * player.charge) * player.aim;
+		var spin;
+		//controlled hit
+		if(team === player.team || team === null) {
+			vel.x = Math.max(vel.x, 25 + 40 * player.charge);
+			vel.y = 0.5 * vel.y - 10 + (10 + 20 * player.charge) * player.aim;
+			spin = 0.75 * ball.spin + 10 * player.aim;
+		}
+		//deflected hit
+		else {
+			vel.y += 10 + (10 + 20 * player.charge) * player.aim;
+			spin = 1.2 * ball.spin + 70 * player.aim;
+		}
 		return {
 			velX: vel.x,
 			velY: vel.y,
-			spin: 0.75 * ball.spin + 10 * player.aim,
+			spin: spin,
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
