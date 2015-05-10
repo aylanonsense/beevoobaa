@@ -89,7 +89,15 @@ define([
 					}
 				}
 				else if(entity.entityType === 'Ball') {
-					ctx.fillStyle = '#009';
+					if(entity.team === 'red') {
+						ctx.fillStyle = 'rgb(' + Math.floor(55 + 2 * entity.power) + ', 0, 0)';
+					}
+					else if(entity.team === 'blue') {
+						ctx.fillStyle = 'rgb(0, 0, ' + Math.floor(55 + 2 * entity.power) + ')';
+					}
+					else {
+						ctx.fillStyle = 'rgb(0, 0, 0)';
+					}
 					ctx.beginPath();
 					ctx.arc(entity.x, entity.y, entity.radius, 0, 2 * Math.PI);
 					ctx.fill();

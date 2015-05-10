@@ -41,11 +41,12 @@ define([
 		this.aimWaypoint = null;
 		this.aimWaypointChange = null;
 		this.freezeTime = 0;
+		this.team = 'red';
 
 		SUPERCLASS.call(this, 'Player', state, [
 			'x', 'y', 'walkWaypoint', 'walkWaypointChange', 'jumpVelX', 'jumpVelY',
 			'task', 'taskTimeSpent', 'taskTimeRemaining', 'swingType', 'charge', 'chargeRate',
-			'aim', 'aimWaypoint', 'aimWaypointChange', 'freezeTime' ]);
+			'aim', 'aimWaypoint', 'aimWaypointChange', 'freezeTime', 'team' ]);
 	}
 	Player.prototype = Object.create(SUPERCLASS.prototype);
 	Player.prototype.clearTask = function() {

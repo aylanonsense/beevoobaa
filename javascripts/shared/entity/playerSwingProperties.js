@@ -5,7 +5,18 @@ define([
 	HitBox,
 	Vector
 ) {
+	function overcomePower(power, player, ball) {
+		if(ball.team === null || ball.team === player.team) {
+			return 0;
+		}
+		else {
+			return Math.max(0, ball.power - power);
+		}
+	}
+
 	function onBump(player, ball) {
+		var power = overcomePower(30 + 65 * player.charge, player, ball);
+		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
 		var angle = (new Vector(1, -0.5 * player.aim)).angle();
 		vel.rotate(angle);
@@ -22,13 +33,15 @@ define([
 			velX: vel.x,
 			velY: vel.y,
 			spin: ball.spin + 25 * player.aim,
-			power: ball.power,
-			team: ball.team,
+			power: power,
+			team: team,
 			freezeTime: 40 / 60
 		};
 	}
 
 	function onSet(player, ball) {
+		var power = overcomePower(5 + 20 * player.charge, player, ball);
+		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
 		if(vel.y > 0) {
 			vel.y *= -1;
@@ -41,13 +54,27 @@ define([
 			velX: vel.x,
 			velY: vel.y,
 			spin: ball.spin * 0.5,
-			power: ball.power,
-			team: ball.team,
+			power: power,
+			team: team,
 			freezeTime: 40 / 60
 		};
 	}
 
 	function onSpike(player, ball) {
+		var hitPower = 20 + 50 * player.charge;
+		var power, team;
+		if(ball.team === player.team || ball.team === null) {
+			power = Math.max(ball.power, hitPower);
+			team = player.team;
+		}
+		else if(hitPower >= ball.power) {
+			power = ball.power - hitPower;
+			team = player.team;
+		}
+		else {
+			power = ball.power - hitPower;
+			team = ball.team;
+		}
 		var vel = new Vector(ball.velX, ball.velY);
 		var angle = (new Vector(-0.7 - 0.3 * player.aim, -1)).angle();
 		vel.rotate(angle);
@@ -58,13 +85,15 @@ define([
 			velX: vel.x,
 			velY: vel.y,
 			spin: ball.spin + 20 * player.aim + 20 * player.aim * player.charge,
-			power: ball.power,
-			team: ball.team,
+			power: power,
+			team: team,
 			freezeTime: 40 / 60
 		};
 	}
 
 	function onBlock(player, ball) {
+		var power = overcomePower(25 + 50 * player.charge, player, ball);
+		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
 		vel.x = Math.max(vel.x, 25 + 40 * player.charge);
 		vel.y = 0.5 * vel.y - 10 + (10 + 20 * player.charge) * player.aim;
@@ -72,8 +101,8 @@ define([
 			velX: vel.x,
 			velY: vel.y,
 			spin: 0.75 * ball.spin + 10 * player.aim,
-			power: ball.power,
-			team: ball.team,
+			power: power,
+			team: team,
 			freezeTime: 40 / 60
 		};
 	}

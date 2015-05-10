@@ -24,12 +24,16 @@
 	var nextEntityId = 0;
 
 	//spawn initial entities
-	applyEventAndSend({
-		type: 'spawn-ball',
-		id: nextEntityId++,
-		x: 400, y: 250,
-		velX: 100, velY: 0
-	});
+	for(var i = 0; i < 10; i++) {
+		applyEventAndSend({
+			type: 'spawn-ball',
+			id: nextEntityId++,
+			x: Math.round(100 + 600 * Math.random()),
+			y: Math.round(100 + 300 * Math.random()),
+			velX: Math.round(100 * Math.random() - 50),
+			velY: Math.round(100 * Math.random() - 50)
+		});
+	}
 
 	//set up network handlers
 	GameConnectionServer.on('connect', function(conn) {

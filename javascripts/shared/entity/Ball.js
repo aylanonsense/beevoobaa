@@ -25,7 +25,7 @@ define([
 		this._recalculateEnergy();
 
 		SUPERCLASS.call(this, 'Ball', state, [ 'x', 'y', 'velX', 'velY', 'verticalEnergy',
-			'spin', 'team,', 'power', 'freezeTime' ]);
+			'spin', 'team', 'power', 'freezeTime' ]);
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype.canPerformAction = function(action) {
