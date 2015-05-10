@@ -26,12 +26,12 @@ define([
 		var ballY = ball.y;
 		if(ball.radius > MAX_BALL_RADIUS) {
 			var amtToMoveOutwards = ball.radius - MAX_BALL_RADIUS;
-			ballX += amtToMoveOutwards * this.orientationX;
+			ballX += (player.isFlipped ? -1 : 1) * amtToMoveOutwards * this.orientationX;
 			ballY += amtToMoveOutwards * this.orientationY;
 		}
 
 		//the hitbox is relative to the player
-		var hitX = player.centerX + this.offsetX;
+		var hitX = player.centerX + (player.isFlipped ? -this.offsetX - this.width : this.offsetX);
 		var hitY = player.centerY + this.offsetY;
 
 		//return true if the ball point is inside the hitbox, false otherwise

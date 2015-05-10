@@ -42,11 +42,12 @@ define([
 		this.aimWaypointChange = null;
 		this.freezeTime = 0;
 		this.team = 'red';
+		this.isFlipped = false;
 
 		SUPERCLASS.call(this, 'Player', state, [
 			'x', 'y', 'walkWaypoint', 'walkWaypointChange', 'jumpVelX', 'jumpVelY',
 			'task', 'taskTimeSpent', 'taskTimeRemaining', 'swingType', 'charge', 'chargeRate',
-			'aim', 'aimWaypoint', 'aimWaypointChange', 'freezeTime', 'team' ]);
+			'aim', 'aimWaypoint', 'aimWaypointChange', 'freezeTime', 'team', 'isFlipped' ]);
 	}
 	Player.prototype = Object.create(SUPERCLASS.prototype);
 	Player.prototype.clearTask = function() {
@@ -182,7 +183,7 @@ define([
 		}
 		else {
 			this.returnToNeutralAirborneState();
-			this.jumpVelX = -35;
+			this.jumpVelX = (this.isFlipped ? 35 : -35);
 			this.jumpVelY = -50;
 			this.y = params.y;
 		}

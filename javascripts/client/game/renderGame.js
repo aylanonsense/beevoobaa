@@ -87,8 +87,15 @@ define([
 						else {
 							ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
 						}
-						ctx.fillRect(entity.centerX + hitBox.offsetX, entity.centerY + hitBox.offsetY,
-							hitBox.width, hitBox.height);
+						if(entity.isFlipped) {
+							ctx.fillRect(entity.centerX - hitBox.offsetX - hitBox.width,
+								entity.centerY + hitBox.offsetY,
+								hitBox.width, hitBox.height);
+						}
+						else {
+							ctx.fillRect(entity.centerX + hitBox.offsetX, entity.centerY + hitBox.offsetY,
+								hitBox.width, hitBox.height);
+						}
 					}
 				}
 				else if(entity.entityType === 'Ball') {

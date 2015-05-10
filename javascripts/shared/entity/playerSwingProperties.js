@@ -118,7 +118,7 @@ define([
 			team = ball.team;
 		}
 		var vel = new Vector(ball.velX, ball.velY);
-		var angle = (new Vector(-0.7 - 0.3 * player.aim, -1)).angle();
+		var angle = (new Vector(-0.7 - 0.3 * player.aim, (player.isFlipped ? 1 : -1))).angle();
 		var spin;
 		vel.rotate(angle);
 		//controlled hit
@@ -152,7 +152,12 @@ define([
 		var spin;
 		//controlled hit
 		if(team === player.team || team === null) {
-			vel.x = Math.max(vel.x, 25 + 40 * player.charge);
+			if(player.isFlipped) {
+				vel.x = Math.min(vel.x, -25 - 40 * player.charge);
+			}
+			else {
+				vel.x = Math.max(vel.x, 25 + 40 * player.charge);
+			}
 			vel.y = 0.5 * vel.y - 10 + (10 + 20 * player.charge) * player.aim;
 			spin = 0.75 * ball.spin + 10 * player.aim;
 		}
