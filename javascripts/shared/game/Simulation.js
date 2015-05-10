@@ -84,7 +84,8 @@ define([
 			x: evt.playerX,
 			y: evt.playerY,
 			isGrounded: evt.playerIsGrounded,
-			swingType: evt.playerSwingType
+			swingType: evt.playerSwingType,
+			freezeTime: evt.hit.freezeTime
 		});
 		ball.getHit({
 			x: evt.ballX,
@@ -93,7 +94,8 @@ define([
 			velY: evt.hit.velY,
 			power: evt.hit.power,
 			spin: evt.hit.spin,
-			team: evt.hit.team
+			team: evt.hit.team,
+			freezeTime: evt.hit.freezeTime
 		});
 	};
 	Simulation.prototype.getEntityById = function(id) {

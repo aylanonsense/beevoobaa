@@ -40,11 +40,12 @@ define([
 		this.aim = null;
 		this.aimWaypoint = null;
 		this.aimWaypointChange = null;
+		this.freezeTime = 0;
 
 		SUPERCLASS.call(this, 'Player', state, [
 			'x', 'y', 'walkWaypoint', 'walkWaypointChange', 'jumpVelX', 'jumpVelY',
 			'task', 'taskTimeSpent', 'taskTimeRemaining', 'swingType', 'charge', 'chargeRate',
-			'aim', 'aimWaypoint', 'aimWaypointChange' ]);
+			'aim', 'aimWaypoint', 'aimWaypointChange', 'freezeTime' ]);
 	}
 	Player.prototype = Object.create(SUPERCLASS.prototype);
 	Player.prototype.clearTask = function() {
@@ -180,11 +181,14 @@ define([
 		}
 		else {
 			this.returnToNeutralAirborneState();
+			this.jumpVelX = -35;
+			this.jumpVelY = -50;
 			this.y = params.y;
 		}
 		this.x = params.x;
 		this.setTask('hitting', playerSwingProperties[params.swingType].swingSuccessTime);
 		this.swingType = params.swingType;
+		this.freezeTime = params.freezeTime + 0.5 / config.FRAME_RATE;
 	};
 	Player.prototype.getActiveHitBoxes = function() {
 		if(this.task === 'swinging' &&
@@ -259,6 +263,12 @@ define([
 	};
 	Player.prototype.tick = function(t) {
 		SUPERCLASS.prototype.tick.call(this, t);
+
+		//freeze frames will prevent anything from happening
+		if(this.freezeTime > 0) {
+			this.freezeTime = Math.max(0, this.freezeTime - t);
+			return;
+		}
 
 		//update task
 		if(this.task !== null) {

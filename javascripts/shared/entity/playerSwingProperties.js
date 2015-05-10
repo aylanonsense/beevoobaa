@@ -23,7 +23,8 @@ define([
 			velY: vel.y,
 			spin: ball.spin + 25 * player.aim,
 			power: ball.power,
-			team: ball.team
+			team: ball.team,
+			freezeTime: 40 / 60
 		};
 	}
 
@@ -41,7 +42,8 @@ define([
 			velY: vel.y,
 			spin: ball.spin * 0.5,
 			power: ball.power,
-			team: ball.team
+			team: ball.team,
+			freezeTime: 40 / 60
 		};
 	}
 
@@ -57,20 +59,22 @@ define([
 			velY: vel.y,
 			spin: ball.spin + 20 * player.aim + 20 * player.aim * player.charge,
 			power: ball.power,
-			team: ball.team
+			team: ball.team,
+			freezeTime: 40 / 60
 		};
 	}
 
 	function onBlock(player, ball) {
 		var vel = new Vector(ball.velX, ball.velY);
 		vel.x = Math.max(vel.x, 25 + 40 * player.charge);
-		vel.y = 0.5 * vel.y - 30 + (10 + 30 * player.charge) * player.aim;
+		vel.y = 0.5 * vel.y - 10 + (10 + 20 * player.charge) * player.aim;
 		return {
 			velX: vel.x,
 			velY: vel.y,
 			spin: 0.75 * ball.spin + 10 * player.aim,
 			power: ball.power,
-			team: ball.team
+			team: ball.team,
+			freezeTime: 40 / 60
 		};
 	}
 

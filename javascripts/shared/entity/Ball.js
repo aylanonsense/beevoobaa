@@ -21,10 +21,11 @@ define([
 		this.spin = 0;
 		this.team = null;
 		this.power = 0;
+		this.freezeTime = 0;
 		this._recalculateEnergy();
 
 		SUPERCLASS.call(this, 'Ball', state, [ 'x', 'y', 'velX', 'velY', 'verticalEnergy',
-			'spin', 'team,', 'power' ]);
+			'spin', 'team,', 'power', 'freezeTime' ]);
 	}
 	Ball.prototype = Object.create(SUPERCLASS.prototype);
 	Ball.prototype.canPerformAction = function(action) {
@@ -39,6 +40,7 @@ define([
 		this.spin = params.spin;
 		this.power = params.power;
 		this.team = params.team;
+		this.freezeTime = params.freezeTime + 0.5 / config.FRAME_RATE;
 		this._recalculateEnergy();
 	};
 	Ball.prototype.teleportTo = function(x, y) {
@@ -63,6 +65,10 @@ define([
 	};
 	Ball.prototype.tick = function(t) {
 		SUPERCLASS.prototype.tick.call(this, t);
+		if(this.freezeTime > 0) {
+			this.freezeTime = Math.max(0, this.freezeTime - t);
+			return;
+		}
 
 		//keep track of old velocities
 		var oldVelX = this.velX;
