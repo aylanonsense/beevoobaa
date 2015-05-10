@@ -187,7 +187,12 @@ define([
 			this.y = params.y;
 		}
 		this.x = params.x;
-		this.setTask('hitting', playerSwingProperties[params.swingType].swingSuccessTime);
+		if(params.dizzyTime !== null) {
+			this.setTask('dizzy', params.dizzyTime);
+		}
+		else {
+			this.setTask('hitting', playerSwingProperties[params.swingType].swingSuccessTime);
+		}
 		this.swingType = params.swingType;
 		this.freezeTime = params.freezeTime + 0.5 / config.FRAME_RATE;
 	};
@@ -306,7 +311,12 @@ define([
 			this.y += (this.jumpVelY + oldJumpVelY) / 2 * t;
 			if(this.bottom >= config.FLOOR_Y) {
 				this.returnToNeutralGroundedState();
-				this.setTask('landing', this.jumpProperties.landingTime);
+				if(this.task === 'dizzy') {
+					this.setTask('dizzy', Math.max(this.taskTimeRemaining, this.jumpProperties.landingTime));
+				}
+				else {
+					this.setTask('landing', this.jumpProperties.landingTime);
+				}
 			}
 		}
 		//follow waypoint

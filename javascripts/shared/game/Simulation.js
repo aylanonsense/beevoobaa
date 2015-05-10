@@ -85,6 +85,7 @@ define([
 			y: evt.playerY,
 			isGrounded: evt.playerIsGrounded,
 			swingType: evt.playerSwingType,
+			dizzyTime: evt.hit.dizzyTime,
 			freezeTime: evt.hit.freezeTime
 		});
 		ball.getHit({

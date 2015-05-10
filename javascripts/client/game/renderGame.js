@@ -63,6 +63,9 @@ define([
 					else if(entity.task === 'swinging') {
 						ctx.fillStyle = '#f0f';
 					}
+					else if(entity.task === 'dizzy') {
+						ctx.fillStyle = '#ca0';
+					}
 				}
 				if(entity.entityType === 'Player') {
 					ctx.fillRect(entity.left, entity.top, entity.width, entity.height);

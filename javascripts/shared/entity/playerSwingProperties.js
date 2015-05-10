@@ -14,6 +14,10 @@ define([
 		}
 	}
 
+	function calcDizzyTime(power) {
+		return 45 / 60 + Math.floor(power / 10) * 10 / 60;
+	}
+
 	function onBump(player, ball) {
 		var power = overcomePower(30 + 65 * player.charge, player, ball);
 		var team = (power === 0 ? null : ball.team);
@@ -35,6 +39,7 @@ define([
 			spin: ball.spin + 25 * player.aim,
 			power: power,
 			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
 			freezeTime: 40 / 60
 		};
 	}
@@ -56,23 +61,25 @@ define([
 			spin: ball.spin * 0.5,
 			power: power,
 			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
 			freezeTime: 40 / 60
 		};
 	}
 
 	function onSpike(player, ball) {
 		var hitPower = 20 + 50 * player.charge;
+		var stoppingPower = 0.9 * hitPower;
 		var power, team;
 		if(ball.team === player.team || ball.team === null) {
 			power = Math.max(ball.power, hitPower);
 			team = player.team;
 		}
-		else if(hitPower >= ball.power) {
-			power = ball.power - hitPower;
+		else if(stoppingPower >= ball.power) {
+			power = hitPower;
 			team = player.team;
 		}
 		else {
-			power = ball.power - hitPower;
+			power = ball.power - stoppingPower;
 			team = ball.team;
 		}
 		var vel = new Vector(ball.velX, ball.velY);
@@ -87,6 +94,7 @@ define([
 			spin: ball.spin + 20 * player.aim + 20 * player.aim * player.charge,
 			power: power,
 			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
 			freezeTime: 40 / 60
 		};
 	}
@@ -103,6 +111,7 @@ define([
 			spin: 0.75 * ball.spin + 10 * player.aim,
 			power: power,
 			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
 			freezeTime: 40 / 60
 		};
 	}
