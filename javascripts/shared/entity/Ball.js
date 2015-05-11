@@ -9,7 +9,7 @@ define([
 		//constants
 		this.radius = 25;
 		this.gravity = 60;
-		this.horizontalFriction = 0.25;
+		this.horizontalFriction = 0.00;
 		this.spinFriction = 0.25;
 
 		//stateful vars

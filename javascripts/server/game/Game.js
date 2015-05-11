@@ -24,7 +24,7 @@
 	var nextEntityId = 0;
 
 	//spawn initial entities
-	for(var i = 0; i < 10; i++) {
+	for(var i = 0; i < 3; i++) {
 		applyEventAndSend({
 			type: 'spawn-ball',
 			id: nextEntityId++,

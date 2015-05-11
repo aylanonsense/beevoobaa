@@ -3,12 +3,14 @@ define([
 	'server/game/Clock',
 	'shared/utils/EventHelper',
 	'shared/utils/DelayQueue',
+	'shared/Config',
 	'shared/utils/now'
 ], function(
 	RawConnection,
 	Clock,
 	EventHelper,
 	DelayQueue,
+	sharedConfig,
 	now
 ) {
 	var nextConnId = 0;
@@ -51,7 +53,8 @@ define([
 				else if(msg.messageType === 'game-messages') {
 					for(var i = 0; i < msg.messages.length; i++) {
 						self._messagesReceivedEarly.enqueue(msg.messages[i],
-							now() + msg.messages[i].gameTime - Clock.getGameTime());
+							now() + msg.messages[i].gameTime - Clock.getGameTime() -
+							0.5 / sharedConfig.FRAME_RATE);
 					}
 				}
 			}

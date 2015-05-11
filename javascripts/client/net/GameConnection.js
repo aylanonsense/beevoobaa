@@ -4,6 +4,7 @@ define([
 	'shared/utils/EventHelper',
 	'shared/utils/DelayQueue',
 	'client/net/Pinger',
+	'shared/Config',
 	'shared/utils/now'
 ], function(
 	RawConnection,
@@ -11,6 +12,7 @@ define([
 	EventHelper,
 	DelayQueue,
 	Pinger,
+	sharedConfig,
 	now
 ) {
 	var bufferedMessagesToSend = [];
@@ -33,7 +35,8 @@ define([
 		if(msg.messageType === 'game-messages') {
 			for(var i = 0; i < msg.messages.length; i++) {
 				messagesReceivedEarly.enqueue(msg.messages[i],
-					now() + msg.messages[i].gameTime - Clock.getClientGameTime());
+					now() + msg.messages[i].gameTime - Clock.getClientGameTime() -
+					0.5 / sharedConfig.FRAME_RATE);
 			}
 		}
 	});

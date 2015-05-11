@@ -158,8 +158,63 @@ define([
 			freezeTime: 40 / 60
 		};
 	}
+	function onSourSetForward(player, ball) {
+		var hitPower = (5 + 20 * player.charge) * 0.5;
+		var power = overcomePower(hitPower, player, ball);
+		var team = (power === 0 ? null : ball.team);
+		var vel = new Vector(ball.velX, ball.velY);
+		var angle, controlledVel, spin;
+		angle = (new Vector(1, (player.isFlipped ? 0.2 : -0.2) - 0.05 * player.aim)).angle();
+		vel.rotate(angle);
+		if(vel.y > 0) {
+			vel.y *= -1;
+		}
+		else if(angle !== 0) {
+			vel.x *= -1;
+		}
+		vel.unrotate(angle);
+		spin = ball.spin + (player.isFlipped ? -80 : 80);
+		return {
+			velX: vel.x,
+			velY: vel.y,
+			spin: spin,
+			power: power,
+			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
+			freezeTime: 40 / 60
+		};
+	}
+	function onSourSetBackward(player, ball) {
+		var hitPower = (5 + 20 * player.charge) * 0.5;
+		var power = overcomePower(hitPower, player, ball);
+		var team = (power === 0 ? null : ball.team);
+		var vel = new Vector(ball.velX, ball.velY);
+		var angle, controlledVel, spin;
+		angle = (new Vector(1, (player.isFlipped ? -0.2 : 0.2) - 0.05 * player.aim)).angle();
+		vel.rotate(angle);
+		if(vel.y > 0) {
+			vel.y *= -1;
+		}
+		else if(angle !== 0) {
+			vel.x *= -1;
+		}
+		vel.unrotate(angle);
+		spin = ball.spin + (player.isFlipped ? 80 : -80);
+		return {
+			velX: vel.x,
+			velY: vel.y,
+			spin: spin,
+			power: power,
+			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
+			freezeTime: 40 / 60
+		};
+	}
 
-	function onSpike(player, ball) {itPower = 25 + 55 * player.charge + (this.isSweet ? 10 : 0);
+	function onSpike(player, ball) {
+		var hitPower = 25 + 55 * player.charge + (this.isSweet ? 10 : 0);
 		var stoppingPower = 0.85 * hitPower;
 		var power, team;
 		if(ball.team === player.team || ball.team === null) {
@@ -202,6 +257,59 @@ define([
 			freezeTime: 40 / 60
 		};
 	}
+	function onSourSpikeAbove(player, ball) {
+		var hitPower = (25 + 55 * player.charge) * 0.5;
+		var power = overcomePower(hitPower, player, ball);
+		var team = (power === 0 ? null : ball.team);
+		var vel = new Vector(ball.velX, ball.velY);
+		var angle, controlledVel, spin;
+
+		angle = (new Vector(1, (player.isFlipped ? 0.8 : -0.8))).angle();
+		vel.rotate(angle);
+		vel.x *= 0.7;
+		if(vel.y > 0) {
+			vel.y *= -1;
+		}
+		vel.y -= 10 + 20 * player.charge;
+		vel.unrotate(angle);
+		spin = ball.power + (player.isFlipped ? 60 : -60);
+		return {
+			velX: vel.x,
+			velY: vel.y,
+			spin: spin,
+			power: power,
+			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
+			freezeTime: 40 / 60
+		};
+	}
+	function onSourSpikeBelow(player, ball) {
+		var hitPower = (25 + 55 * player.charge) * 0.5;
+		var power = overcomePower(hitPower, player, ball);
+		var team = (power === 0 ? null : ball.team);
+		var vel = new Vector(ball.velX, ball.velY);
+		var angle, controlledVel, spin;
+
+		angle = (new Vector(-1, (player.isFlipped ? 0.8 : -0.8))).angle();
+		vel.rotate(angle);
+		vel.x *= 0.7;
+		if(vel.y > 0) {
+			vel.y *= -1;
+		}
+		vel.y -= 10 + 20 * player.charge;
+		vel.unrotate(angle);
+		spin = ball.power + (player.isFlipped ? -60 : 60);
+		return {
+			velX: vel.x,
+			velY: vel.y,
+			spin: spin,
+			power: power,
+			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
+			freezeTime: 40 / 60
+		};}
 
 	function onBlock(player, ball) {
 		var hitPower = 25 + 50 * player.charge + (this.isSweet ? 10 : 0);
@@ -236,6 +344,8 @@ define([
 			freezeTime: 40 / 60
 		};
 	}
+	function onSourBlockAbove(player, ball) {}
+	function onSourBlockBelow(player, ball) {}
 
 	return {
 		bump: {
@@ -288,19 +398,19 @@ define([
 					offsetX: -30, offsetY: -70, width: 60, height: 40,
 					orientationX: 0, orientationY: 1,
 					onHitFunc: onSet
-				})/*,
+				}),
 				new HitBox({
 					isSour: true,
 					offsetX: -50, offsetY: -70, width: 30, height: 40,
 					orientationX: 0, orientationY: 1,
-					onHitFunc: createOnHitFunc()
+					onHitFunc: onSourSetBackward
 				}),
 				new HitBox({
 					isSour: true,
 					offsetX: 20, offsetY: -70, width: 30, height: 40,
 					orientationX: 0, orientationY: 1,
-					onHitFunc: createOnHitFunc()
-				})*/
+					onHitFunc: onSourSetForward
+				})
 			]
 		}, spike: {
 			isGrounded: false,
@@ -320,19 +430,19 @@ define([
 					offsetX: 15, offsetY: -50, width: 45, height: 55,
 					orientationX: -1, orientationY: 0,
 					onHitFunc: onSpike
-				})/*,
-				new HitBox({
-					isSour: true,
-					offsetX: 0, offsetY: -60, width: 30, height: 30,
-					orientationX: -1, orientationY: 0,
-					onHitFunc: createOnHitFunc()
 				}),
 				new HitBox({
 					isSour: true,
-					offsetX: 25, offsetY: 0, width: 30, height: 30,
+					offsetX: 0, offsetY: -60, width: 60, height: 30,
 					orientationX: -1, orientationY: 0,
-					onHitFunc: createOnHitFunc()
-				})*/
+					onHitFunc: onSourSpikeAbove
+				}),
+				new HitBox({
+					isSour: true,
+					offsetX: 25, offsetY: 0, width: 60, height: 30,
+					orientationX: -1, orientationY: 0,
+					onHitFunc: onSourSpikeBelow
+				})
 			]
 		}, block: {
 			isGrounded: false,
@@ -357,13 +467,13 @@ define([
 					isSour: true,
 					offsetX: 0, offsetY: -50, width: 30, height: 30,
 					orientationX: -1, orientationY: 0,
-					onHitFunc: createOnHitFunc()
+					onHitFunc: onSourBlockBelow
 				}),
 				new HitBox({
 					isSour: true,
 					offsetX: 0, offsetY: 0, width: 30, height: 30,
 					orientationX: -1, orientationY: 0,
-					onHitFunc: createOnHitFunc()
+					onHitFunc: onSourBlockAbove
 				})*/
 			]
 		}
