@@ -19,7 +19,8 @@ define([
 	}
 
 	function onBump(player, ball) {
-		var power = overcomePower(15 + 55 * player.charge, player, ball);
+		var hitPower = 15 + 55 * player.charge + (this.isSweet ? 10 : 0);
+		var power = overcomePower(hitPower, player, ball);
 		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
 		var angle, controlledVel, spin;
@@ -60,12 +61,68 @@ define([
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
+			freezeTime: 40 / 60
+		};
+	}
+	function onSourBumpForward(player, ball) {
+		var hitPower = (15 + 55 * player.charge) * 0.5;
+		var power = overcomePower(hitPower, player, ball);
+		var team = (power === 0 ? null : ball.team);
+		var vel = new Vector(ball.velX, ball.velY);
+		var angle, controlledVel, spin;
+		angle = (new Vector(1, (player.isFlipped ? 0.7 : -0.7) - 0.5 * player.aim)).angle();
+		vel.rotate(angle);
+		if(vel.y > 0) {
+			vel.y *= -1;
+		}
+		else if(angle !== 0) {
+			vel.x *= -1;
+		}
+		vel.unrotate(angle);
+		spin = ball.spin + (player.isFlipped ? -80 : 80);
+		return {
+			velX: vel.x,
+			velY: vel.y,
+			spin: spin,
+			power: power,
+			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
+			freezeTime: 40 / 60
+		};
+	}
+	function onSourBumpBackward(player, ball) {
+		var hitPower = (15 + 55 * player.charge) * 0.5;
+		var power = overcomePower(hitPower, player, ball);
+		var team = (power === 0 ? null : ball.team);
+		var vel = new Vector(ball.velX, ball.velY);
+		var angle, controlledVel, spin;
+		angle = (new Vector(1, (player.isFlipped ? -0.7 : 0.7) - 0.5 * player.aim)).angle();
+		vel.rotate(angle);
+		if(vel.y > 0) {
+			vel.y *= -1;
+		}
+		else if(angle !== 0) {
+			vel.x *= -1;
+		}
+		vel.unrotate(angle);
+		spin = ball.spin + (player.isFlipped ? 80 : -80);
+		return {
+			velX: vel.x,
+			velY: vel.y,
+			spin: spin,
+			power: power,
+			team: team,
+			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
 			freezeTime: 40 / 60
 		};
 	}
 
 	function onSet(player, ball) {
-		var power = overcomePower(5 + 20 * player.charge, player, ball);
+		var hitPower = 5 + 20 * player.charge + (this.isSweet ? 10 : 0);
+		var power = overcomePower(hitPower, player, ball);
 		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
 		var spin, controlledVel;
@@ -97,13 +154,13 @@ define([
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
 			freezeTime: 40 / 60
 		};
 	}
 
-	function onSpike(player, ball) {
-		var hitPower = 25 + 55 * player.charge;
-		var stoppingPower = 0.9 * hitPower;
+	function onSpike(player, ball) {itPower = 25 + 55 * player.charge + (this.isSweet ? 10 : 0);
+		var stoppingPower = 0.85 * hitPower;
 		var power, team;
 		if(ball.team === player.team || ball.team === null) {
 			power = Math.max(ball.power, hitPower);
@@ -141,12 +198,14 @@ define([
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
 			freezeTime: 40 / 60
 		};
 	}
 
 	function onBlock(player, ball) {
-		var power = overcomePower(25 + 50 * player.charge, player, ball);
+		var hitPower = 25 + 50 * player.charge + (this.isSweet ? 10 : 0);
+		var power = overcomePower(hitPower, player, ball);
 		var team = (power === 0 ? null : ball.team);
 		var vel = new Vector(ball.velX, ball.velY);
 		var spin;
@@ -173,6 +232,7 @@ define([
 			power: power,
 			team: team,
 			dizzyTime: (team === player.team || team === null ? null : calcDizzyTime(power)),
+			isSweet: this.isSweet,
 			freezeTime: 40 / 60
 		};
 	}
@@ -186,29 +246,29 @@ define([
 			activeStartTime: 3 / 60,
 			activeEndTime: 56 / 60,
 			hitBoxes: [
-				/*new HitBox({
+				new HitBox({
 					isSweet: true,
 					offsetX: 20, offsetY: -30, width: 20, height: 20,
 					orientationX: -1, orientationY: 1,
-					onHitFunc: createOnHitFunc()
-				}),*/
+					onHitFunc: onBump
+				}),
 				new HitBox({
 					offsetX: 5, offsetY: -40, width: 50, height: 50,
 					orientationX: -1, orientationY: 1,
 					onHitFunc: onBump
-				})/*,
+				}),
 				new HitBox({
 					isSour: true,
 					offsetX: -15, offsetY: -40, width: 20, height: 50,
 					orientationX: -1, orientationY: 1,
-					onHitFunc: createOnHitFunc()
+					onHitFunc: onSourBumpBackward
 				}),
 				new HitBox({
 					isSour: true,
 					offsetX: 55, offsetY: -40, width: 20, height: 50,
 					orientationX: -1, orientationY: 1,
-					onHitFunc: createOnHitFunc()
-				})*/
+					onHitFunc: onSourBumpForward
+				})
 			]
 		}, set: {
 			isGrounded: true,
@@ -218,12 +278,12 @@ define([
 			activeStartTime: 3 / 60,
 			activeEndTime: 56 / 60,
 			hitBoxes: [
-				/*new HitBox({
+				new HitBox({
 					isSweet: true,
 					offsetX: -10, offsetY: -60, width: 20, height: 20,
 					orientationX: 0, orientationY: 1,
-					onHitFunc: createOnHitFunc()
-				}),*/
+					onHitFunc: onSet
+				}),
 				new HitBox({
 					offsetX: -30, offsetY: -70, width: 60, height: 40,
 					orientationX: 0, orientationY: 1,
@@ -250,12 +310,12 @@ define([
 			activeStartTime: 3 / 60,
 			activeEndTime: 56 / 60,
 			hitBoxes: [
-				/*new HitBox({
+				new HitBox({
 					isSweet: true,
 					offsetX: 35, offsetY: -30, width: 20, height: 20,
 					orientationX: -1, orientationY: 0,
-					onHitFunc: createOnHitFunc()
-				}),*/
+					onHitFunc: onSpike
+				}),
 				new HitBox({
 					offsetX: 15, offsetY: -50, width: 45, height: 55,
 					orientationX: -1, orientationY: 0,
@@ -282,12 +342,12 @@ define([
 			activeStartTime: 3 / 60,
 			activeEndTime: 56 / 60,
 			hitBoxes: [
-				/*new HitBox({
+				new HitBox({
 					isSweet: true,
 					offsetX: 25, offsetY: -30, width: 20, height: 35,
 					orientationX: -1, orientationY: 0,
-					onHitFunc: createOnHitFunc()
-				}),*/
+					onHitFunc: onBlock
+				}),
 				new HitBox({
 					offsetX: 15, offsetY: -40, width: 45, height: 65,
 					orientationX: -1, orientationY: 0,
