@@ -4,7 +4,7 @@ define([
 	'shared/utils/EventHelper',
 	'shared/utils/DelayQueue',
 	'client/net/Pinger',
-	'shared/Config',
+	'shared/config',
 	'shared/utils/now'
 ], function(
 	RawConnection,
