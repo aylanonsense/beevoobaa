@@ -3,7 +3,7 @@ define([
 	'server/game/Clock',
 	'shared/utils/EventHelper',
 	'shared/utils/DelayQueue',
-	'shared/Config',
+	'shared/config',
 	'shared/utils/now'
 ], function(
 	RawConnection,
