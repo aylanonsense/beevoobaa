@@ -1,9 +1,32 @@
 <html>
 	<head>
 		<title>multiplayer-game</title>
-		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
-		<script type="text/javascript" src="/client/lib/require.js" data-main="/client/Main.js"></script>
-		<link rel="stylesheet" href="/stylesheets/style.css"></link>
+		<style>
+			body{margin:0;padding:0;background-color:black}
+			canvas{display:block;margin:15px auto}
+			#instructions{color:#777;width:600px;margin:0 auto}
+		</style>
+		<script type="text/javascript">
+			var PROTOCOL = 'http';
+			var HOST_NAME = window.location.host;
+			var BASE_URL = window.location.pathname;
+			if (BASE_URL.endsWith('/')) {
+				BASE_URL = BASE_URL.substring(0, BASE_URL.length - 1);
+			}
+			(function() {
+				// add scripts
+				var scripts = document.createElement('script');
+				scripts.setAttribute('src', BASE_URL + '/socket.io/socket.io.js');
+				document.head.appendChild(scripts);
+
+				setTimeout(function() {
+					scripts = document.createElement('script');
+					scripts.setAttribute('src', BASE_URL + '/client/lib/require.js');
+					scripts.setAttribute('data-main', BASE_URL + '/client/Main.js');
+					document.head.appendChild(scripts);
+				}, 500);
+			})();
+		</script>
 	</head>
 	<body>
 		<div id="game-canvas-area"></div>

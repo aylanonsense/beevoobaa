@@ -53,7 +53,7 @@ define([
 	}
 
 	function connect() {
-		socket = io();
+		socket = io(PROTOCOL + '://' + HOST_NAME, { path: BASE_URL + '/socket.io' });
 		//set up socket io
 		socket.on('connect', function() {
 			for(var i = 0; i < onConnectedCallbacks.length; i++) {

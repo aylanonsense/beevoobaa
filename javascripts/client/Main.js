@@ -1,9 +1,9 @@
 //configure requirejs
 requirejs.config({
-	baseUrl: '/',
+	baseUrl: BASE_URL,
 	paths: {
-		jquery: '/client/lib/jquery',
-		create: '/client/lib/instanqi8'
+		jquery: 'client/lib/jquery',
+		create: 'client/lib/instanqi8'
 	}
 });
 

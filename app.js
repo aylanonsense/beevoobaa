@@ -5,13 +5,11 @@ require = requirejs;
 
 //dependencies
 var express = require('express');
-var lessMiddleware = require('less-middleware');
 var socketIO = require('socket.io');
 var ConnectionServer = require('server/net/Server');
 
 //set up node server
 var app = express();
-app.use(lessMiddleware({ src: __dirname + "/public", compress: true }));
 app.use(express.static(__dirname + '/public'));
 app.use('/client', express.static(__dirname + '/javascripts/client'));
 app.use('/shared', express.static(__dirname + '/javascripts/shared'));
