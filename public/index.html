@@ -2,12 +2,26 @@
 	<head>
 		<title>multiplayer-game</title>
 		<style>
-			body{margin:0;padding:0;background-color:black}
-			canvas{display:block;margin:15px auto}
-			#instructions{color:#777;width:600px;margin:0 auto}
+			body{
+				margin: 0;
+				padding: 0;
+				background-color: #222;
+			}
+			canvas{
+				display: block;
+				margin: 0 auto;
+				width: 600px;
+				height: 450px;
+			}
+			#instructions{
+				color: #777;
+				width: 600px;
+				margin: 0 auto;
+				display: none;
+			}
 		</style>
 		<script type="text/javascript">
-			var PROTOCOL = 'http';
+			var PROTOCOL = window.location.protocol;
 			var HOST_NAME = window.location.host;
 			var BASE_URL = window.location.pathname;
 			if (BASE_URL.endsWith('/')) {
