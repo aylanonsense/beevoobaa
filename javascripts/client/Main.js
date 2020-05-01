@@ -78,6 +78,7 @@ requirejs([
 			evt.gameKey = Constants.KEY_BINDINGS[evt.which];
 			Game.onKeyboardEvent(evt, keyboard);
 		}
+		evt.preventDefault();
 	});
 	$canvas.on('mousemove mouseup mousedown', Game.onMouseEvent);
 
